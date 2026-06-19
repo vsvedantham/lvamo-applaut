@@ -1,19 +1,29 @@
-cat > .gitignore << 'EOF'
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 .venv/
 venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
 
 # Node
 node_modules/
-dist/
-.vite/
-
-# Env
-.env
-.env.local
+frontend/dist/
+frontend/.vite/
 
 # OS
 .DS_Store
-EOF
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
