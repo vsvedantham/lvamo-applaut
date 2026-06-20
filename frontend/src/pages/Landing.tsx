@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function Landing() {
   return (
     <div style={{ maxWidth: '640px' }}>
@@ -9,12 +11,18 @@ export default function Landing() {
         Reduce job application effort from hours per day to 10–20 minutes.
       </p>
       <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-        <button style={{ padding: '0.625rem 1.5rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+        <Link
+          to="/register"
+          style={{ padding: '0.625rem 1.5rem', background: '#111827', color: '#fff', borderRadius: '6px', textDecoration: 'none' }}
+        >
           Get started
-        </button>
-        <button style={{ padding: '0.625rem 1.5rem', background: 'transparent', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer' }}>
+        </Link>
+        <Link
+          to="/login"
+          style={{ padding: '0.625rem 1.5rem', background: 'transparent', color: '#111827', border: '1px solid #d1d5db', borderRadius: '6px', textDecoration: 'none' }}
+        >
           Log in
-        </button>
+        </Link>
       </div>
     </div>
   )
