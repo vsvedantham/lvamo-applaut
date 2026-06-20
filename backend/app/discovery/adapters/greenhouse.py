@@ -33,9 +33,17 @@ class GreenhouseAdapter(JobSourceAdapter):
 
             location_raw = job.get("location", {}).get("name")
             country_code = resolve_country(location_raw)
+            # Use location-only for filtering (description is too noisy)
+            location_remote = resolve_remote_option(location_raw)
+            remote_option = resolve_remote_option(location_raw, job.get("content"))
 
+            # Accept if country matches OR job is remote in location with no explicit non-target country
             if not matches_countries(country_code, target_countries):
-                continue
+                if location_remote != "remote":
+                    continue
+                # Remote with explicit non-target country (e.g. "Remote - US") → skip
+                if country_code and not matches_countries(country_code, target_countries):
+                    continue
 
             results.append(
                 JobListing(
@@ -47,7 +55,7 @@ class GreenhouseAdapter(JobSourceAdapter):
                     location_raw=location_raw,
                     country_code=country_code,
                     description=job.get("content"),
-                    remote_option=resolve_remote_option(location_raw, job.get("content")),
+                    remote_option=remote_option,
                     raw_data=job,
                 )
             )

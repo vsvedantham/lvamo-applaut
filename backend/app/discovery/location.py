@@ -29,10 +29,14 @@ COUNTRY_KEYWORDS: dict[str, list[str]] = {
     "HU": ["hungary", "magyarország", "budapest", "debrecen", "pécs", "miskolc"],
     "US": ["united states", "usa", "u.s.", "new york", "san francisco", "seattle",
            "chicago", "boston", "austin", "los angeles", "denver", "atlanta",
-           "remote us", "us remote", "anywhere in the us"],
+           "remote us", "us remote", "anywhere in the us", "remote - us", "remote - usa",
+           "north america", "remote (north america)", "remote (us"],
 }
 
-REMOTE_KEYWORDS = ["remote", "anywhere", "distributed", "work from home", "wfh", "fully remote"]
+REMOTE_KEYWORDS = [
+    "remote", "anywhere", "distributed", "work from home", "wfh", "fully remote",
+    "worldwide", "global", "emea", "apac", "latam",
+]
 HYBRID_KEYWORDS = ["hybrid"]
 
 

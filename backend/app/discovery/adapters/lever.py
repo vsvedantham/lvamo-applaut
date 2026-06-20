@@ -34,9 +34,14 @@ class LeverAdapter(JobSourceAdapter):
             categories = job.get("categories", {})
             location_raw = categories.get("location") or categories.get("allLocations", [""])[0]
             country_code = resolve_country(location_raw)
+            location_remote = resolve_remote_option(location_raw)
+            remote_option = resolve_remote_option(location_raw, job.get("descriptionPlain"))
 
             if not matches_countries(country_code, target_countries):
-                continue
+                if location_remote != "remote":
+                    continue
+                if country_code and not matches_countries(country_code, target_countries):
+                    continue
 
             results.append(
                 JobListing(
@@ -48,7 +53,7 @@ class LeverAdapter(JobSourceAdapter):
                     location_raw=location_raw,
                     country_code=country_code,
                     description=job.get("descriptionPlain") or job.get("description"),
-                    remote_option=resolve_remote_option(location_raw, job.get("descriptionPlain")),
+                    remote_option=remote_option,
                     raw_data=job,
                 )
             )
