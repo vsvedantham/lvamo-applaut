@@ -9,6 +9,7 @@ import Onboarding from './pages/Onboarding'
 import ResumePage from './pages/Resume'
 import Opportunities from './pages/Opportunities'
 import OpportunityDetail from './pages/OpportunityDetail'
+import Scores from './pages/Scores'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -58,6 +59,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="scores"
+              element={
+                <ProtectedRoute>
+                  <Scores />
                 </ProtectedRoute>
               }
             />

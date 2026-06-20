@@ -81,6 +81,15 @@ export default function Dashboard() {
               label="View opportunities →"
             />
           )}
+
+          {profile && resume && (
+            <Cta
+              title="Score & review"
+              description="Run scoring to rank discovered jobs and review near misses that could become good matches."
+              href="/scores"
+              label="View scores →"
+            />
+          )}
         </div>
       )}
     </div>

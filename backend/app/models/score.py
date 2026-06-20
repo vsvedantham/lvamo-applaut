@@ -41,6 +41,9 @@ class Score(Base, UUIDPrimaryKey, TimestampMixin):
 
     explanation: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     ai_model: Mapped[Optional[str]] = mapped_column(String(200))
+    scoring_mode: Mapped[str] = mapped_column(String(20), nullable=False, default="rule_based")
+    near_miss_keywords: Mapped[Optional[dict]] = mapped_column(JSONB)
+    user_decision: Mapped[Optional[str]] = mapped_column(String(30))
 
     opportunity: Mapped[Opportunity] = relationship(back_populates="scores")
     profile: Mapped[Profile] = relationship(back_populates="scores")
