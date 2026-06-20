@@ -28,7 +28,7 @@ export default function Register() {
     setLoading(true)
     try {
       await register(name, email, password)
-      navigate('/dashboard')
+      navigate('/onboarding')
     } catch (err: any) {
       setError(err.response?.data?.detail ?? 'Registration failed. Please try again.')
     } finally {
