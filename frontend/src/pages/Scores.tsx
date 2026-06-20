@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getOpportunity, type OpportunityDetail } from '../api/opportunity'
 import {
   decideNearMiss,
@@ -123,6 +123,8 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
 
 function GoodMatchCard({ score }: { score: Score }) {
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
+  const navigate = useNavigate()
+
   useEffect(() => {
     getOpportunity(score.opportunity_id).then(setOpp).catch(() => null)
   }, [score.opportunity_id])
@@ -141,7 +143,7 @@ function GoodMatchCard({ score }: { score: Score }) {
         <ScoreBadge score={score.total_score} />
       </div>
       {dims && (
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
           {Object.entries(dims).map(([key, d]) => (
             <span key={key} title={d.explanation} style={{ padding: '0.15rem 0.5rem', background: '#f3f4f6', borderRadius: '999px', fontSize: '0.75rem', cursor: 'help' }}>
               {key}: {d.score}/{d.max}
@@ -149,6 +151,12 @@ function GoodMatchCard({ score }: { score: Score }) {
           ))}
         </div>
       )}
+      <button
+        onClick={() => navigate(`/documents/${score.opportunity_id}`)}
+        style={{ padding: '0.35rem 0.9rem', background: 'transparent', border: '1px solid #111827', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+      >
+        Generate documents →
+      </button>
     </div>
   )
 }

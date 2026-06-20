@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime, String
+from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +18,9 @@ class GeneratedDocument(Base, UUIDPrimaryKey):
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    profile_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), sa.ForeignKey("profiles.id", ondelete="CASCADE")
     )
     application_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), sa.ForeignKey("applications.id", ondelete="SET NULL")
@@ -35,11 +38,13 @@ class GeneratedDocument(Base, UUIDPrimaryKey):
         sa.Enum(DocumentTypeEnum, name="document_type_enum", create_type=False),
         nullable=False,
     )
+    generation_mode: Mapped[str] = mapped_column(String(20), nullable=False, default="template")
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
     file_name: Mapped[Optional[str]] = mapped_column(String(500))
     r2_key: Mapped[Optional[str]] = mapped_column(String(1000))
     ai_model: Mapped[Optional[str]] = mapped_column(String(200))
+    is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # Documents are immutable — no updated_at
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=sa.func.now(), nullable=False
     )
