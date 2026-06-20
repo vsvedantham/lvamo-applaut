@@ -235,7 +235,7 @@ export default function Onboarding() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Job preferences</h1>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Target countries</label>
+            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Target countries</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               {COUNTRIES.map(c => (
                 <label key={c.code} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.5rem', border: `1px solid ${targetCountries.includes(c.code) ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: targetCountries.includes(c.code) ? '#f3f4f6' : 'transparent' }}>
@@ -246,7 +246,7 @@ export default function Onboarding() {
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Remote preference</label>
+            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Remote preference</p>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {REMOTE_OPTIONS.map(o => (
                 <label key={o.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.75rem', border: `1px solid ${remotePreference === o.value ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: remotePreference === o.value ? '#f3f4f6' : 'transparent' }}>
@@ -257,7 +257,7 @@ export default function Onboarding() {
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Employment types</label>
+            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Employment type</p>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {EMPLOYMENT_TYPES.map(e => (
                 <label key={e.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.75rem', border: `1px solid ${employmentTypes.includes(e.value) ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: employmentTypes.includes(e.value) ? '#f3f4f6' : 'transparent' }}>

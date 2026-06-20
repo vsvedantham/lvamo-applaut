@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Onboarding from './pages/Onboarding'
+import ResumePage from './pages/Resume'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -23,6 +24,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Onboarding />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="resume"
+              element={
+                <ProtectedRoute>
+                  <ResumePage />
                 </ProtectedRoute>
               }
             />
