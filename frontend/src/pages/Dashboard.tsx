@@ -74,7 +74,12 @@ export default function Dashboard() {
           )}
 
           {profile && resume && (
-            <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Job discovery and applications coming soon.</p>
+            <Cta
+              title="Find jobs"
+              description="Run discovery to search across Greenhouse, Lever, Ashby and Personio job boards."
+              href="/opportunities"
+              label="View opportunities →"
+            />
           )}
         </div>
       )}
