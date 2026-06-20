@@ -14,7 +14,7 @@ export default function Dashboard() {
           Log out
         </button>
       </div>
-      <p>Welcome back, <strong>{user?.name}</strong>.</p>
+      <p>Hello, <strong>{user?.name}</strong>.</p>
       <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>More features coming soon.</p>
     </div>
   )
