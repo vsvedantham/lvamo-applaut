@@ -35,6 +35,7 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [deciding, setDeciding] = useState(false)
+  const [promoted, setPromoted] = useState<{ newScore: number } | null>(null)
 
   useEffect(() => {
     getOpportunity(score.opportunity_id).then(setOpp).catch(() => null)
@@ -48,14 +49,33 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
   const decide = async (action: 'keep' | 'dismiss' | 'keep_with_keywords') => {
     setDeciding(true)
     try {
-      await decideNearMiss(score.id, action, action === 'keep_with_keywords' ? selected : [])
-      onDecide()
+      const updated = await decideNearMiss(score.id, action, action === 'keep_with_keywords' ? selected : [])
+      if (action === 'keep_with_keywords' && updated.total_score >= 85) {
+        setPromoted({ newScore: updated.total_score })
+        setTimeout(() => onDecide(), 2500)
+      } else {
+        onDecide()
+      }
     } finally {
       setDeciding(false)
     }
   }
 
   if (score.user_decision && score.user_decision !== 'pending_review') return null
+
+  if (promoted) {
+    return (
+      <div style={{ border: '1px solid #bbf7d0', borderRadius: '8px', padding: '1.25rem', background: '#f0fdf4', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700, background: '#059669', color: '#fff' }}>{promoted.newScore}</span>
+        <div>
+          <p style={{ fontWeight: 600, margin: 0, color: '#166534' }}>Promoted to Good Match!</p>
+          <p style={{ fontSize: '0.8rem', color: '#166534', margin: '0.15rem 0 0' }}>
+            {opp?.title} · {opp?.company_name} — moving to Good Matches tab…
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ border: '1px solid #fbbf24', borderRadius: '8px', padding: '1.25rem', background: '#fffbeb' }}>

@@ -142,6 +142,25 @@ async def decide_near_miss(
         if new_skills:
             profile.skills = list(profile.skills or []) + new_skills
 
+        # Re-score immediately with the updated profile
+        resume = await _get_resume(user, db)
+        opp = await db.get(Opportunity, score.opportunity_id)
+        if opp:
+            try:
+                result = score_opportunity(opp, profile, resume)
+                score.total_score = result.total
+                score.skills_score = result.dimensions["skills"].score
+                score.experience_score = result.dimensions["experience"].score
+                score.location_score = result.dimensions["location"].score
+                score.employment_type_score = result.dimensions["employment_type"].score
+                score.explanation = result.to_explanation_dict()
+                score.near_miss_keywords = result.near_miss_keywords if result.near_miss_keywords else None
+                # Crossed the threshold → move it to Good Matches by clearing the decision
+                if result.is_good_match:
+                    score.user_decision = None
+            except Exception as exc:
+                logger.warning("Re-scoring failed for score %s: %s", score_id, exc)
+
     if action == "dismiss":
         opp = await db.get(Opportunity, score.opportunity_id)
         if opp:
