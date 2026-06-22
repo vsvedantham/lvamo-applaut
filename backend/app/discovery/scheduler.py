@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
@@ -10,33 +11,98 @@ from app.models.profile import Profile
 logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
+_JOB_PREFIX = "discovery_"
 
-async def _run_all_active_profiles() -> None:
+
+async def _run_profile(profile_id: str) -> None:
+    async with AsyncSessionLocal() as db:
+        profile = await db.get(Profile, profile_id)
+        if not profile or not profile.is_active or not profile.discovery_enabled:
+            return
+
+        try:
+            count = await run_discovery_for_profile(profile, db)
+            profile.last_discovery_at = datetime.now(timezone.utc)
+            logger.info("Discovery: %d new jobs for profile %s", count, profile_id)
+        except Exception as exc:
+            logger.error("Discovery failed for profile %s: %s", profile_id, exc)
+            return
+
+        # Auto-score after discovery
+        try:
+            from app.services.scoring import run_scoring
+            from app.models.user import User
+            user = await db.get(User, profile.user_id)
+            if user:
+                result = await run_scoring(user, db, mode="rule_based")
+                profile.last_scored_at = datetime.now(timezone.utc)
+                logger.info(
+                    "Auto-scoring: %d scored, %d good, %d near-miss for profile %s",
+                    result["scored"], result["good_matches"], result["near_misses"], profile_id,
+                )
+        except Exception as exc:
+            logger.error("Auto-scoring failed for profile %s: %s", profile_id, exc)
+
+        await db.commit()
+
+
+def schedule_profile(profile: Profile) -> None:
+    job_id = f"{_JOB_PREFIX}{profile.id}"
+    if not profile.is_active or not profile.discovery_enabled:
+        if scheduler.get_job(job_id):
+            scheduler.remove_job(job_id)
+            logger.info("Removed discovery job for profile %s", profile.id)
+        return
+
+    hours = max(1, profile.discovery_frequency_hours or 24)
+    scheduler.add_job(
+        _run_profile,
+        trigger="interval",
+        hours=hours,
+        args=[str(profile.id)],
+        id=job_id,
+        replace_existing=True,
+    )
+    logger.info("Scheduled discovery for profile %s every %dh", profile.id, hours)
+
+
+def unschedule_profile(profile_id: str) -> None:
+    job_id = f"{_JOB_PREFIX}{profile_id}"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+
+
+def get_scheduler_status() -> list[dict]:
+    jobs = [j for j in scheduler.get_jobs() if j.id.startswith(_JOB_PREFIX)]
+    return [
+        {
+            "profile_id": j.id.removeprefix(_JOB_PREFIX),
+            "next_run_at": j.next_run_time.isoformat() if j.next_run_time else None,
+            "interval_hours": int(j.trigger.interval.total_seconds() // 3600),
+        }
+        for j in jobs
+    ]
+
+
+async def _load_all_profiles() -> None:
     async with AsyncSessionLocal() as db:
         profiles = await db.scalars(
-            select(Profile).where(
-                Profile.is_active == True,
-                Profile.discovery_enabled == True,
-            )
+            select(Profile).where(Profile.is_active == True)
         )
         for profile in profiles:
-            try:
-                count = await run_discovery_for_profile(profile, db)
-                logger.info("Discovery: %d new jobs for profile %s", count, profile.id)
-            except Exception as exc:
-                logger.error("Discovery failed for profile %s: %s", profile.id, exc)
+            schedule_profile(profile)
 
 
 def start_scheduler() -> None:
+    scheduler.start()
+    # Defer profile loading until the event loop is running
     scheduler.add_job(
-        _run_all_active_profiles,
-        trigger="interval",
-        hours=6,
-        id="discovery",
+        _load_all_profiles,
+        trigger="date",
+        id="bootstrap_profiles",
         replace_existing=True,
     )
-    scheduler.start()
-    logger.info("Discovery scheduler started (runs every 6h)")
+    logger.info("Discovery scheduler started")
 
 
 def stop_scheduler() -> None:

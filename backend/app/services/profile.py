@@ -7,6 +7,14 @@ from app.models.user import User
 from app.schemas.profile import CreateProfileRequest, UpdateProfileRequest
 
 
+def _reschedule(profile: Profile) -> None:
+    try:
+        from app.discovery.scheduler import schedule_profile
+        schedule_profile(profile)
+    except Exception:
+        pass
+
+
 async def create_profile(
     payload: CreateProfileRequest, user: User, db: AsyncSession
 ) -> Profile:
@@ -33,6 +41,7 @@ async def create_profile(
     db.add(profile)
     await db.commit()
     await db.refresh(profile)
+    _reschedule(profile)
     return profile
 
 
@@ -61,4 +70,5 @@ async def update_profile(
         setattr(profile, field, value)
     await db.commit()
     await db.refresh(profile)
+    _reschedule(profile)
     return profile

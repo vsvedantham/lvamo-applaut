@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Optional
 
 import sqlalchemy as sa
-from sqlalchemy import Boolean, SmallInteger, String
+from sqlalchemy import Boolean, DateTime, SmallInteger, String
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -44,6 +45,8 @@ class Profile(Base, UUIDPrimaryKey, TimestampMixin):
         # CHECK (discovery_frequency_hours IN (6, 12, 24)) enforced in migration
     )
     discovery_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    last_discovery_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_scored_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 

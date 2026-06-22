@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.routers import applications, auth, documents, health, opportunity, profile, resume, scoring, stats
+from app.api.v1.routers import applications, auth, documents, health, opportunity, profile, resume, scheduler, scoring, stats
 
 router = APIRouter()
 router.include_router(health.router, tags=["health"])
@@ -12,3 +12,4 @@ router.include_router(scoring.router, tags=["scoring"])
 router.include_router(documents.router, tags=["documents"])
 router.include_router(applications.router, tags=["applications"])
 router.include_router(stats.router, tags=["stats"])
+router.include_router(scheduler.router, tags=["scheduler"])

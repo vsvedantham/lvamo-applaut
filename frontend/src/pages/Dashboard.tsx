@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyProfile, type Profile } from '../api/profile'
 import { getMyResume, type Resume } from '../api/resume'
 import { getDashboardStats, type DashboardStats } from '../api/stats'
+import { disableDiscovery, enableDiscovery, getSchedulerStatus, type SchedulerStatus } from '../api/scheduler'
 
 function StatCard({ label, value, sub, href, color }: {
   label: string
@@ -72,6 +73,73 @@ function StatsGrid({ stats }: { stats: DashboardStats }) {
   )
 }
 
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
+function timeUntil(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now()
+  if (diff <= 0) return 'any moment'
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  return `${Math.floor(hrs / 24)}d`
+}
+
+function DiscoveryWidget({ hasProfile }: { hasProfile: boolean }) {
+  const [sched, setSched] = useState<SchedulerStatus | null>(null)
+  const [toggling, setToggling] = useState(false)
+
+  useEffect(() => {
+    if (!hasProfile) return
+    getSchedulerStatus().then(setSched).catch(() => null)
+  }, [hasProfile])
+
+  if (!hasProfile || !sched) return null
+
+  const nextRun = sched.jobs[0]?.next_run_at ?? null
+
+  const toggle = async () => {
+    setToggling(true)
+    try {
+      const updated = sched.discovery_enabled ? await disableDiscovery() : await enableDiscovery()
+      setSched(updated)
+    } finally {
+      setToggling(false)
+    }
+  }
+
+  return (
+    <div style={{ padding: '1rem 1.25rem', border: '1px solid #e5e7eb', borderRadius: '10px', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: sched.discovery_enabled ? '#059669' : '#d1d5db', flexShrink: 0 }} />
+        <div>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem' }}>
+            Automatic discovery — {sched.discovery_enabled ? `every ${sched.discovery_frequency_hours}h` : 'off'}
+          </p>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: '#6b7280' }}>
+            {sched.last_discovery_at ? `Last run ${timeAgo(sched.last_discovery_at)}` : 'Never run'}
+            {sched.discovery_enabled && nextRun ? ` · Next in ${timeUntil(nextRun)}` : ''}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={toggling}
+        style={{ padding: '0.35rem 0.9rem', background: sched.discovery_enabled ? 'transparent' : '#111827', color: sched.discovery_enabled ? '#dc2626' : '#fff', border: sched.discovery_enabled ? '1px solid #dc2626' : 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', opacity: toggling ? 0.7 : 1 }}
+      >
+        {toggling ? '…' : sched.discovery_enabled ? 'Disable' : 'Enable'}
+      </button>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { user, logout } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -107,6 +175,9 @@ export default function Dashboard() {
         <p style={{ color: '#6b7280' }}>Loading…</p>
       ) : (
         <>
+          {/* Discovery status */}
+          <DiscoveryWidget hasProfile={profile !== null} />
+
           {/* Stats */}
           {stats && <StatsGrid stats={stats} />}
 
