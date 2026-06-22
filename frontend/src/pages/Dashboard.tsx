@@ -90,6 +90,15 @@ export default function Dashboard() {
               label="View scores →"
             />
           )}
+
+          {profile && resume && (
+            <Cta
+              title="Track applications"
+              description="Monitor your applications through the pipeline: from pending review to offer or rejection."
+              href="/applications"
+              label="View applications →"
+            />
+          )}
         </div>
       )}
     </div>

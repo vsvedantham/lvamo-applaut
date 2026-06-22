@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { createApplication } from '../api/applications'
 import { generateDocuments, getOpportunityDocuments, type DocumentItem, type GenerationMode, type OpportunityDocuments } from '../api/documents'
 import { getOpportunity, type OpportunityDetail } from '../api/opportunity'
 
@@ -45,6 +46,7 @@ function DownloadButton({ content, filename }: { content: string; filename: stri
 
 export default function DocumentDetail() {
   const { opportunityId } = useParams<{ opportunityId: string }>()
+  const navigate = useNavigate()
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
   const [docs, setDocs] = useState<OpportunityDocuments | null>(null)
   const [activeTab, setActiveTab] = useState<'resume' | 'cover_letter'>('resume')
@@ -52,6 +54,8 @@ export default function DocumentDetail() {
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [startingApp, setStartingApp] = useState(false)
+  const [appStarted, setAppStarted] = useState(false)
 
   useEffect(() => {
     if (!opportunityId) return
@@ -79,6 +83,21 @@ export default function DocumentDetail() {
       setError(err.response?.data?.detail ?? 'Generation failed.')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const startApplication = async () => {
+    if (!opportunityId) return
+    setStartingApp(true)
+    try {
+      await createApplication(opportunityId)
+      setAppStarted(true)
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        navigate('/applications')
+      }
+    } finally {
+      setStartingApp(false)
     }
   }
 
@@ -130,6 +149,22 @@ export default function DocumentDetail() {
             <CopyButton text={activeDoc.content} />
             <DownloadButton content={activeDoc.content} filename={filename} />
           </>
+        )}
+        {appStarted ? (
+          <Link
+            to="/applications"
+            style={{ padding: '0.4rem 1rem', background: '#059669', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.875rem' }}
+          >
+            Application started ✓
+          </Link>
+        ) : (
+          <button
+            onClick={startApplication}
+            disabled={startingApp || loading}
+            style={{ padding: '0.4rem 1rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem', opacity: startingApp ? 0.7 : 1 }}
+          >
+            {startingApp ? 'Starting…' : 'Start application'}
+          </button>
         )}
       </div>
 

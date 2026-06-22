@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { createApplication } from '../api/applications'
 import { getOpportunity, type OpportunityDetail } from '../api/opportunity'
 import {
   decideNearMiss,
@@ -143,6 +144,8 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
 
 function GoodMatchCard({ score }: { score: Score }) {
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
+  const [starting, setStarting] = useState(false)
+  const [applicationId, setApplicationId] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -150,6 +153,21 @@ function GoodMatchCard({ score }: { score: Score }) {
   }, [score.opportunity_id])
 
   const dims = score.explanation as Record<string, { score: number; max: number; explanation: string }>
+
+  const startApplication = async () => {
+    setStarting(true)
+    try {
+      const app = await createApplication(score.opportunity_id, score.id)
+      setApplicationId(app.id)
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        // already exists — navigate to applications
+        navigate('/applications')
+      }
+    } finally {
+      setStarting(false)
+    }
+  }
 
   return (
     <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem' }}>
@@ -171,12 +189,30 @@ function GoodMatchCard({ score }: { score: Score }) {
           ))}
         </div>
       )}
-      <button
-        onClick={() => navigate(`/documents/${score.opportunity_id}`)}
-        style={{ padding: '0.35rem 0.9rem', background: 'transparent', border: '1px solid #111827', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
-      >
-        Generate documents →
-      </button>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button
+          onClick={() => navigate(`/documents/${score.opportunity_id}`)}
+          style={{ padding: '0.35rem 0.9rem', background: 'transparent', border: '1px solid #111827', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+        >
+          Generate documents →
+        </button>
+        {applicationId ? (
+          <Link
+            to="/applications"
+            style={{ padding: '0.35rem 0.9rem', background: '#059669', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8rem' }}
+          >
+            Application started ✓
+          </Link>
+        ) : (
+          <button
+            onClick={startApplication}
+            disabled={starting}
+            style={{ padding: '0.35rem 0.9rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', opacity: starting ? 0.7 : 1 }}
+          >
+            {starting ? 'Starting…' : 'Start application'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

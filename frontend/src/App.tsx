@@ -11,6 +11,7 @@ import Opportunities from './pages/Opportunities'
 import OpportunityDetail from './pages/OpportunityDetail'
 import Scores from './pages/Scores'
 import DocumentDetail from './pages/DocumentDetail'
+import Applications from './pages/Applications'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -76,6 +77,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <DocumentDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="applications"
+              element={
+                <ProtectedRoute>
+                  <Applications />
                 </ProtectedRoute>
               }
             />
