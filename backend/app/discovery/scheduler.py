@@ -20,28 +20,55 @@ async def _run_profile(profile_id: str) -> None:
         if not profile or not profile.is_active or not profile.discovery_enabled:
             return
 
+        new_count = 0
         try:
-            count = await run_discovery_for_profile(profile, db)
+            new_count = await run_discovery_for_profile(profile, db)
             profile.last_discovery_at = datetime.now(timezone.utc)
-            logger.info("Discovery: %d new jobs for profile %s", count, profile_id)
+            logger.info("Discovery: %d new jobs for profile %s", new_count, profile_id)
         except Exception as exc:
             logger.error("Discovery failed for profile %s: %s", profile_id, exc)
             return
 
         # Auto-score after discovery
+        good_matches = 0
+        near_misses = 0
         try:
             from app.services.scoring import run_scoring
             from app.models.user import User
             user = await db.get(User, profile.user_id)
             if user:
                 result = await run_scoring(user, db, mode="rule_based")
+                good_matches = result["good_matches"]
+                near_misses = result["near_misses"]
                 profile.last_scored_at = datetime.now(timezone.utc)
                 logger.info(
                     "Auto-scoring: %d scored, %d good, %d near-miss for profile %s",
-                    result["scored"], result["good_matches"], result["near_misses"], profile_id,
+                    result["scored"], good_matches, near_misses, profile_id,
                 )
         except Exception as exc:
             logger.error("Auto-scoring failed for profile %s: %s", profile_id, exc)
+
+        # Notify user of new matches
+        try:
+            from app.services.notification import create_notification
+            if new_count > 0 or good_matches > 0:
+                parts = []
+                if new_count > 0:
+                    parts.append(f"{new_count} new job{'s' if new_count != 1 else ''} found")
+                if good_matches > 0:
+                    parts.append(f"{good_matches} good match{'es' if good_matches != 1 else ''}")
+                if near_misses > 0:
+                    parts.append(f"{near_misses} near miss{'es' if near_misses != 1 else ''}")
+                await create_notification(
+                    user_id=str(profile.user_id),
+                    type="discovery_complete",
+                    title="Discovery complete — " + ", ".join(parts),
+                    body=f"Review your matches on the Scores page.",
+                    metadata={"new_jobs": new_count, "good_matches": good_matches, "near_misses": near_misses},
+                    db=db,
+                )
+        except Exception as exc:
+            logger.error("Notification failed for profile %s: %s", profile_id, exc)
 
         await db.commit()
 
