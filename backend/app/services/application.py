@@ -72,6 +72,17 @@ async def create_application(
         status=ApplicationStatusEnum.pending_review,
     )
     db.add(app)
+
+    from app.services.audit import log_action
+    await log_action(
+        action="application.create",
+        db=db,
+        user_id=str(user.id),
+        entity_type="opportunity",
+        entity_id=str(opp.id),
+        after_state={"status": "pending_review", "company": opp.company_name, "title": opp.title},
+    )
+
     await db.commit()
     await db.refresh(app)
     return _to_response(app, opp)
@@ -134,6 +145,17 @@ async def update_application(
         app.notes = notes
 
     opp = await db.get(Opportunity, app.opportunity_id)
+
+    from app.services.audit import log_action
+    await log_action(
+        action="application.status_change",
+        db=db,
+        user_id=str(user.id),
+        entity_type="application",
+        entity_id=str(app.id),
+        after_state={"status": app.status, "company": opp.company_name if opp else None, "title": opp.title if opp else None},
+    )
+
     await db.commit()
     await db.refresh(app)
     return _to_response(app, opp)

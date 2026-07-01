@@ -148,6 +148,7 @@ export default function Layout() {
           <NavLink to="/opportunities" style={navStyle}>Jobs</NavLink>
           <NavLink to="/scores" style={navStyle}>Scores</NavLink>
           <NavLink to="/applications" style={navStyle}>Applications</NavLink>
+          <NavLink to="/audit" style={navStyle}>Audit</NavLink>
         </nav>
         <NotificationBell />
       </header>

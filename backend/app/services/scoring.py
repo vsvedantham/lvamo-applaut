@@ -86,6 +86,15 @@ async def run_scoring(
         except Exception as exc:
             logger.warning("Scoring failed for opportunity %s: %s", opp.id, exc)
 
+    from app.services.audit import log_action
+    await log_action(
+        action="scoring.run",
+        db=db,
+        user_id=str(user.id),
+        entity_type="profile",
+        entity_id=str(profile.id),
+        after_state={"scored": good + near_miss + below, "good_matches": good, "near_misses": near_miss, "mode": mode},
+    )
     await db.commit()
     return {"scored": good + near_miss + below, "good_matches": good, "near_misses": near_miss, "below_threshold": below, "mode": mode}
 

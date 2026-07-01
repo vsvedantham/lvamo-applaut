@@ -117,6 +117,17 @@ async def generate_documents(
 
     db.add(resume_doc)
     db.add(cover_doc)
+
+    from app.services.audit import log_action
+    await log_action(
+        action="document.generate",
+        db=db,
+        user_id=str(user.id),
+        entity_type="opportunity",
+        entity_id=str(opp.id),
+        after_state={"mode": mode, "company": opp.company_name, "title": opp.title},
+    )
+
     await db.commit()
     await db.refresh(resume_doc)
     await db.refresh(cover_doc)

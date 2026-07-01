@@ -9,7 +9,18 @@ from app.discovery.engine import run_discovery_for_profile
 
 async def trigger_discovery(user: User, db: AsyncSession) -> int:
     profile = await get_active_profile(user, db)
-    return await run_discovery_for_profile(profile, db)
+    count = await run_discovery_for_profile(profile, db)
+    from app.services.audit import log_action
+    await log_action(
+        action="discovery.run",
+        db=db,
+        user_id=str(user.id),
+        entity_type="profile",
+        entity_id=str(profile.id),
+        after_state={"new_jobs_found": count},
+    )
+    await db.commit()
+    return count
 
 
 async def list_opportunities(

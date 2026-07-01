@@ -12,6 +12,7 @@ import OpportunityDetail from './pages/OpportunityDetail'
 import Scores from './pages/Scores'
 import DocumentDetail from './pages/DocumentDetail'
 import Applications from './pages/Applications'
+import AuditLog from './pages/AuditLog'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -85,6 +86,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Applications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="audit"
+              element={
+                <ProtectedRoute>
+                  <AuditLog />
                 </ProtectedRoute>
               }
             />
