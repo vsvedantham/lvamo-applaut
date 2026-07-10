@@ -156,7 +156,7 @@ export default function Onboarding() {
     try {
       await createProfile({
         display_name: displayName,
-        experience_years: experienceYears,
+        total_experience_years: experienceYears,
         target_roles: targetRoles,
         target_countries: countries,
         remote_preference: remotePreference,

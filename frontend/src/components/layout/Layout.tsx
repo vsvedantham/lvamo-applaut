@@ -105,13 +105,13 @@ function NotificationPanel() {
 
   const handleMarkAllRead = async () => {
     await markAllRead()
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
     setUnread(0)
   }
 
   const handleMarkRead = async (id: string) => {
     await markRead(id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
     setUnread(prev => Math.max(0, prev - 1))
   }
 
@@ -172,15 +172,15 @@ function NotificationPanel() {
             ) : notifications.map(n => (
               <div
                 key={n.id}
-                onClick={() => !n.read && handleMarkRead(n.id)}
+                onClick={() => !n.is_read && handleMarkRead(n.id)}
                 style={{
                   padding: '0.75rem 1rem',
                   borderBottom: '1px solid var(--border)',
-                  background: n.read ? 'transparent' : 'var(--accent-glow)',
-                  cursor: n.read ? 'default' : 'pointer',
+                  background: n.is_read ? 'transparent' : 'var(--accent-glow)',
+                  cursor: n.is_read ? 'default' : 'pointer',
                 }}
               >
-                <p style={{ fontSize: '0.8rem', margin: '0 0 0.2rem', color: n.read ? 'var(--text-2)' : 'var(--text-1)' }}>{n.message}</p>
+                <p style={{ fontSize: '0.8rem', margin: '0 0 0.2rem', color: n.is_read ? 'var(--text-2)' : 'var(--text-1)' }}>{n.title}{n.body ? ` — ${n.body}` : ''}</p>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', margin: 0 }}>{timeAgo(n.created_at)}</p>
               </div>
             ))}
