@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createApplication } from '../api/applications'
 import { getOpportunity, type OpportunityDetail } from '../api/opportunity'
+import { getMyProfile, type Profile } from '../api/profile'
 import {
   decideNearMiss,
   listScores,
@@ -32,7 +33,7 @@ function KeywordChip({ kw }: { kw: NearMissKeyword }) {
   )
 }
 
-function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void }) {
+function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodThreshold: number; onDecide: () => void }) {
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [deciding, setDeciding] = useState(false)
@@ -51,7 +52,7 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
     setDeciding(true)
     try {
       const updated = await decideNearMiss(score.id, action, action === 'keep_with_keywords' ? selected : [])
-      if (action === 'keep_with_keywords' && updated.total_score >= 85) {
+      if (action === 'keep_with_keywords' && updated.total_score >= goodThreshold) {
         setPromoted({ newScore: updated.total_score })
         setTimeout(() => onDecide(), 2500)
       } else {
@@ -93,7 +94,7 @@ function NearMissCard({ score, onDecide }: { score: Score; onDecide: () => void 
       {keywords.length > 0 && (
         <>
           <p style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-            Gap keywords — adding these could push your score above 85:
+            Gap keywords — adding these could push your score above {goodThreshold}:
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
             {keywords.map(kw => (
@@ -225,6 +226,12 @@ export default function Scores() {
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string>('')
+  const [profile, setProfile] = useState<Profile | null>(null)
+
+  useEffect(() => { getMyProfile().then(setProfile).catch(() => null) }, [])
+
+  const goodThreshold = profile?.good_threshold ?? 85
+  const nearMissThreshold = profile?.near_miss_threshold ?? 70
 
   const load = async () => {
     setLoading(true)
@@ -296,7 +303,7 @@ export default function Scores() {
             onClick={() => setTab(t)}
             style={{ padding: '0.5rem 1.25rem', background: 'transparent', border: 'none', borderBottom: tab === t ? '2px solid #111827' : '2px solid transparent', cursor: 'pointer', fontWeight: tab === t ? 600 : 400, fontSize: '0.9rem', marginBottom: '-1px' }}
           >
-            {t === 'good' ? 'Good matches (85+)' : 'Near misses (70–84)'}
+            {t === 'good' ? `Good matches (${goodThreshold}+)` : `Near misses (${nearMissThreshold}–${goodThreshold - 1})`}
           </button>
         ))}
       </div>
@@ -314,7 +321,7 @@ export default function Scores() {
             <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>All near misses have been reviewed.</p>
           )}
           {scores.map(s => (
-            <NearMissCard key={s.id} score={s} onDecide={load} />
+            <NearMissCard key={s.id} score={s} goodThreshold={goodThreshold} onDecide={load} />
           ))}
         </div>
       ) : (

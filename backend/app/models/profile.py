@@ -45,6 +45,7 @@ class Profile(Base, UUIDPrimaryKey, TimestampMixin):
         # CHECK (discovery_frequency_hours IN (6, 12, 24)) enforced in migration
     )
     discovery_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    good_threshold: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=85)
     last_discovery_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     last_scored_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 

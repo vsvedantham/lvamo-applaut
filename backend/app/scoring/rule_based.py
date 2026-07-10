@@ -9,10 +9,6 @@ from app.scoring.keywords import (
     extract_tech_keywords_from_jd,
 )
 
-GOOD_THRESHOLD = 85
-NEAR_MISS_THRESHOLD = 70
-
-
 @dataclass
 class DimensionResult:
     score: int
@@ -25,14 +21,6 @@ class ScoreResult:
     total: int
     dimensions: dict[str, DimensionResult]
     near_miss_keywords: list[dict] = field(default_factory=list)
-
-    @property
-    def is_good_match(self) -> bool:
-        return self.total >= GOOD_THRESHOLD
-
-    @property
-    def is_near_miss(self) -> bool:
-        return NEAR_MISS_THRESHOLD <= self.total < GOOD_THRESHOLD
 
     def to_explanation_dict(self) -> dict:
         return {
@@ -170,7 +158,8 @@ def score_opportunity(
     )
 
     # Near-miss gap analysis
-    if result.is_near_miss:
+    near_miss_threshold = profile.good_threshold - 15
+    if near_miss_threshold <= total < profile.good_threshold:
         user_skills = list({s.lower() for s in (profile.skills or []) + resume_skills})
         jd_keywords = extract_tech_keywords_from_jd(jd_text)
         gap_keywords = [kw for kw in jd_keywords if kw not in user_skills]

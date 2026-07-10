@@ -9,7 +9,7 @@ from app.models.profile import Profile
 from app.models.resume import Resume
 from app.models.score import Score
 from app.models.user import User
-from app.scoring.rule_based import GOOD_THRESHOLD, NEAR_MISS_THRESHOLD, score_opportunity
+from app.scoring.rule_based import score_opportunity
 from app.services.profile import get_active_profile
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,8 @@ async def run_scoring(
         return {"scored": 0, "good_matches": 0, "near_misses": 0, "below_threshold": 0, "mode": mode}
 
     good = near_miss = below = 0
+    good_threshold = profile.good_threshold
+    near_miss_threshold = good_threshold - 15
 
     for opp in opportunities:
         try:
@@ -58,6 +60,9 @@ async def run_scoring(
             else:
                 result = score_opportunity(opp, profile, resume)
                 ai_model = None
+
+            is_good = result.total >= good_threshold
+            is_near = near_miss_threshold <= result.total < good_threshold
 
             score = Score(
                 opportunity_id=opp.id,
@@ -72,13 +77,13 @@ async def run_scoring(
                 ai_model=ai_model,
                 scoring_mode=mode,
                 near_miss_keywords=result.near_miss_keywords if result.near_miss_keywords else None,
-                user_decision="pending_review" if result.is_near_miss else None,
+                user_decision="pending_review" if is_near else None,
             )
             db.add(score)
 
-            if result.is_good_match:
+            if is_good:
                 good += 1
-            elif result.is_near_miss:
+            elif is_near:
                 near_miss += 1
             else:
                 below += 1
@@ -106,14 +111,18 @@ async def list_scores(
     page: int = 1,
     page_size: int = 20,
 ) -> tuple[list[Score], int]:
+    profile = await get_active_profile(user, db)
+    good_threshold = profile.good_threshold
+    near_miss_threshold = good_threshold - 15
+
     query = select(Score).where(Score.user_id == user.id)
 
     if filter_type == "good":
-        query = query.where(Score.total_score >= GOOD_THRESHOLD)
+        query = query.where(Score.total_score >= good_threshold)
     elif filter_type == "near_miss":
         query = query.where(
-            Score.total_score >= NEAR_MISS_THRESHOLD,
-            Score.total_score < GOOD_THRESHOLD,
+            Score.total_score >= near_miss_threshold,
+            Score.total_score < good_threshold,
         )
 
     from sqlalchemy import func
@@ -136,16 +145,16 @@ async def decide_near_miss(
     if action not in USER_DECISIONS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"action must be one of {USER_DECISIONS}")
 
+    profile = await get_active_profile(user, db)
     score = await db.get(Score, score_id)
     if not score or score.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Score not found")
-    if score.total_score >= GOOD_THRESHOLD:
+    if score.total_score >= profile.good_threshold:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only near-miss scores require a decision")
 
     score.user_decision = action
 
     if action == "keep_with_keywords" and keywords_to_add:
-        profile = await get_active_profile(user, db)
         existing = set(s.lower() for s in (profile.skills or []))
         new_skills = [kw for kw in keywords_to_add if kw.lower() not in existing]
         if new_skills:
@@ -165,7 +174,7 @@ async def decide_near_miss(
                 score.explanation = result.to_explanation_dict()
                 score.near_miss_keywords = result.near_miss_keywords if result.near_miss_keywords else None
                 # Crossed the threshold → move it to Good Matches by clearing the decision
-                if result.is_good_match:
+                if result.total >= profile.good_threshold:
                     score.user_decision = None
             except Exception as exc:
                 logger.warning("Re-scoring failed for score %s: %s", score_id, exc)

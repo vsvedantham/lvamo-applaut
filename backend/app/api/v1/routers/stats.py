@@ -9,8 +9,8 @@ from app.models.generated_document import GeneratedDocument
 from app.models.opportunity import Opportunity
 from app.models.score import Score
 from app.models.user import User
-from app.scoring.rule_based import GOOD_THRESHOLD, NEAR_MISS_THRESHOLD
 from app.services.auth import get_current_user
+from app.services.profile import get_active_profile
 
 router = APIRouter(prefix="/stats")
 
@@ -37,6 +37,9 @@ async def get_stats(
     db: AsyncSession = Depends(get_db),
 ):
     uid = user.id
+    profile = await get_active_profile(user, db)
+    good_threshold = profile.good_threshold
+    near_miss_threshold = good_threshold - 15
 
     opportunities_found = await db.scalar(
         select(func.count(Opportunity.id)).where(Opportunity.is_active == True)
@@ -45,15 +48,15 @@ async def get_stats(
     good_matches = await db.scalar(
         select(func.count(Score.id)).where(
             Score.user_id == uid,
-            Score.total_score >= GOOD_THRESHOLD,
+            Score.total_score >= good_threshold,
         )
     ) or 0
 
     near_misses = await db.scalar(
         select(func.count(Score.id)).where(
             Score.user_id == uid,
-            Score.total_score >= NEAR_MISS_THRESHOLD,
-            Score.total_score < GOOD_THRESHOLD,
+            Score.total_score >= near_miss_threshold,
+            Score.total_score < good_threshold,
         )
     ) or 0
 

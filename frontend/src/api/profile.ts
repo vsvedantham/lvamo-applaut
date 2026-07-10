@@ -13,6 +13,8 @@ export interface Profile {
   languages: string[]
   discovery_frequency_hours: number
   discovery_enabled: boolean
+  good_threshold: number
+  near_miss_threshold: number
   created_at: string
   updated_at: string
 }
@@ -27,6 +29,7 @@ export interface CreateProfilePayload {
   skills: string[]
   languages: string[]
   discovery_frequency_hours: number
+  good_threshold?: number
 }
 
 export async function createProfile(data: CreateProfilePayload): Promise<Profile> {

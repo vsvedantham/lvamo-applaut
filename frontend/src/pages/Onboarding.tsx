@@ -132,6 +132,7 @@ export default function Onboarding() {
   const [skills, setSkills] = useState<string[]>([])
   const [languages, setLanguages] = useState<string[]>([])
   const [discoveryFrequency, setDiscoveryFrequency] = useState(24)
+  const [goodThreshold, setGoodThreshold] = useState(85)
 
   const toggleCountry = (code: string) =>
     setTargetCountries(prev =>
@@ -176,6 +177,7 @@ export default function Onboarding() {
         skills,
         languages,
         discovery_frequency_hours: discoveryFrequency as 6 | 12 | 24,
+        good_threshold: goodThreshold,
       })
       navigate('/dashboard')
     } catch (err: any) {
@@ -300,6 +302,29 @@ export default function Onboarding() {
                 </label>
               ))}
             </div>
+          </div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem' }}>
+              <label>Match threshold</label>
+              <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{goodThreshold}</span>
+            </div>
+            <input
+              type="range"
+              min={70}
+              max={100}
+              step={1}
+              value={goodThreshold}
+              onChange={e => setGoodThreshold(parseInt(e.target.value))}
+              style={{ width: '100%', accentColor: '#111827' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+              <span>70 (minimum)</span>
+              <span>85 (ideal)</span>
+              <span>100</span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.4rem' }}>
+              Jobs scoring {goodThreshold}+ are <strong>Good matches</strong>. Jobs scoring {goodThreshold - 15}–{goodThreshold - 1} are <strong>Near misses</strong>.
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button onClick={() => { setError(''); setStep(2) }} style={{ flex: 1, padding: '0.625rem', background: 'transparent', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem' }}>

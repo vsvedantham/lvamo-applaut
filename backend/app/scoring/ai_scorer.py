@@ -4,7 +4,7 @@ from app.core.ai import get_openai_client
 from app.models.opportunity import Opportunity
 from app.models.profile import Profile
 from app.models.resume import Resume
-from app.scoring.rule_based import GOOD_THRESHOLD, NEAR_MISS_THRESHOLD, ScoreResult, DimensionResult
+from app.scoring.rule_based import ScoreResult, DimensionResult
 
 AI_MODEL = "gpt-4o-mini"
 
@@ -103,6 +103,7 @@ async def score_opportunity_ai(
         )
 
     total = data.get("total", sum(d.score for d in dims.values()))
-    near_miss = data.get("near_miss_keywords", []) if NEAR_MISS_THRESHOLD <= total < GOOD_THRESHOLD else []
+    near_miss_threshold = profile.good_threshold - 15
+    near_miss = data.get("near_miss_keywords", []) if near_miss_threshold <= total < profile.good_threshold else []
 
     return ScoreResult(total=total, dimensions=dims, near_miss_keywords=near_miss)

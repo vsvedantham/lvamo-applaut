@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import EmploymentTypeEnum, RemotePreferenceEnum
 
@@ -17,6 +17,7 @@ class CreateProfileRequest(BaseModel):
     skills: list[str] = []
     languages: list[str] = []
     discovery_frequency_hours: Literal[6, 12, 24] = 24
+    good_threshold: int = Field(default=85, ge=70, le=100)
 
 
 class UpdateProfileRequest(BaseModel):
@@ -29,6 +30,7 @@ class UpdateProfileRequest(BaseModel):
     skills: Optional[list[str]] = None
     languages: Optional[list[str]] = None
     discovery_frequency_hours: Optional[Literal[6, 12, 24]] = None
+    good_threshold: Optional[int] = Field(default=None, ge=70, le=100)
 
 
 class ProfileResponse(BaseModel):
@@ -44,7 +46,14 @@ class ProfileResponse(BaseModel):
     languages: list[str]
     discovery_frequency_hours: int
     discovery_enabled: bool
+    good_threshold: int
+    near_miss_threshold: int = 0
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="after")
+    def compute_near_miss(self) -> "ProfileResponse":
+        self.near_miss_threshold = self.good_threshold - 15
+        return self
