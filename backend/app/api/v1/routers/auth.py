@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.models.application_setting import ApplicationSetting
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.schemas.user import UserResponse
@@ -14,6 +16,14 @@ router = APIRouter(prefix="/auth")
 async def register_user(
     payload: RegisterRequest, db: AsyncSession = Depends(get_db)
 ):
+    setting = await db.scalar(
+        select(ApplicationSetting).where(ApplicationSetting.setting_name == "allow_new_registrations")
+    )
+    if not setting or setting.value != "1":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is currently closed. Please check back soon.",
+        )
     _, token = await register(payload, db)
     return TokenResponse(access_token=token)
 

@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
-from app.api.v1.routers import applications, audit, auth, documents, health, notifications, opportunity, profile, resume, scheduler, scoring, stats
+from app.api.v1.routers import applications, audit, auth, documents, health, notifications, opportunity, profile, resume, scheduler, scoring, settings, stats
 
 router = APIRouter()
 router.include_router(health.router, tags=["health"])
+router.include_router(settings.router, tags=["settings"])
 router.include_router(auth.router, tags=["auth"])
 router.include_router(profile.router, tags=["profiles"])
 router.include_router(resume.router, tags=["resumes"])
