@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -30,6 +32,14 @@ class Settings(BaseSettings):
     # Server
     backend_cors_origins: List[str] = ["http://localhost:5173"]
     backend_port: int = 8000
+
+    @field_validator("backend_cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: object) -> object:
+        if isinstance(v, str):
+            v = v.strip().strip("[]")
+            return [u.strip().strip('"').strip("'") for u in v.split(",") if u.strip()]
+        return v
 
 
 settings = Settings()
