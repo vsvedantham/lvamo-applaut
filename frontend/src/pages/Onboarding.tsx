@@ -33,9 +33,9 @@ const EMPLOYMENT_TYPES = [
 ]
 
 const REMOTE_OPTIONS = [
-  { value: 'remote', label: 'Remote only' },
+  { value: 'remote_only', label: 'Remote only' },
   { value: 'hybrid', label: 'Hybrid' },
-  { value: 'onsite', label: 'On-site only' },
+  { value: 'onsite', label: 'On-site' },
   { value: 'any', label: 'Any' },
 ]
 
@@ -43,67 +43,51 @@ const inputStyle: React.CSSProperties = {
   display: 'block',
   width: '100%',
   padding: '0.5rem 0.75rem',
-  marginTop: '0.25rem',
-  border: '1px solid #d1d5db',
-  borderRadius: '6px',
-  fontSize: '1rem',
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-strong)',
+  borderRadius: 'var(--radius-xs)',
+  fontSize: '0.875rem',
+  color: 'var(--text-1)',
   boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  outline: 'none',
 }
 
-function TagInput({
-  tags,
-  onChange,
-  placeholder,
-}: {
-  tags: string[]
-  onChange: (tags: string[]) => void
-  placeholder?: string
-}) {
-  const [input, setInput] = useState('')
+const labelStyle: React.CSSProperties = {
+  fontSize: '0.8rem',
+  fontWeight: 500,
+  color: 'var(--text-2)',
+  display: 'block',
+  marginBottom: '0.375rem',
+}
 
+function TagInput({ tags, onChange, placeholder }: { tags: string[]; onChange: (t: string[]) => void; placeholder?: string }) {
+  const [val, setVal] = useState('')
   const add = () => {
-    const val = input.trim()
-    if (val && !tags.includes(val)) onChange([...tags, val])
-    setInput('')
+    const v = val.trim()
+    if (v && !tags.includes(v)) onChange([...tags, v])
+    setVal('')
   }
-
-  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') { e.preventDefault(); add() }
-  }
-
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
         <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={onKey}
-          placeholder={placeholder}
-          style={{ ...inputStyle, marginTop: 0, flex: 1 }}
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
+          style={{ ...inputStyle, flex: 1 }}
+          placeholder={placeholder ?? 'Type and press Enter'}
         />
-        <button
-          type="button"
-          onClick={add}
-          style={{ padding: '0.5rem 1rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-        >
+        <button type="button" onClick={add} style={{ padding: '0.4rem 0.875rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
           Add
         </button>
       </div>
       {tags.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-          {tags.map(tag => (
-            <span
-              key={tag}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', background: '#f3f4f6', borderRadius: '999px', fontSize: '0.875rem' }}
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => onChange(tags.filter(t => t !== tag))}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: '#6b7280' }}
-              >
-                ×
-              </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.625rem' }}>
+          {tags.map(t => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.625rem', background: 'var(--accent-glow)', border: '1px solid var(--accent-border)', borderRadius: '999px', fontSize: '0.775rem', color: 'var(--accent)' }}>
+              {t}
+              <button type="button" onClick={() => onChange(tags.filter(x => x !== t))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--accent)', lineHeight: 1, fontSize: '0.9rem', opacity: 0.7 }}>×</button>
             </span>
           ))}
         </div>
@@ -112,21 +96,30 @@ function TagInput({
   )
 }
 
+function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
 export default function Onboarding() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   // Step 1
   const [displayName, setDisplayName] = useState('')
-  const [experienceYears, setExperienceYears] = useState('')
+  const [experienceYears, setExperienceYears] = useState(0)
   const [targetRoles, setTargetRoles] = useState<string[]>([])
 
   // Step 2
-  const [targetCountries, setTargetCountries] = useState<string[]>([])
+  const [countries, setCountries] = useState<string[]>([])
   const [remotePreference, setRemotePreference] = useState('any')
-  const [employmentTypes, setEmploymentTypes] = useState<string[]>([])
+  const [employmentTypes, setEmploymentTypes] = useState<string[]>(['full_time'])
 
   // Step 3
   const [skills, setSkills] = useState<string[]>([])
@@ -135,207 +128,235 @@ export default function Onboarding() {
   const [goodThreshold, setGoodThreshold] = useState(85)
 
   const toggleCountry = (code: string) =>
-    setTargetCountries(prev =>
-      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code],
-    )
+    setCountries(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])
 
-  const toggleEmploymentType = (val: string) =>
-    setEmploymentTypes(prev =>
-      prev.includes(val) ? prev.filter(e => e !== val) : [...prev, val],
-    )
-
-  const validateStep = () => {
-    if (step === 1) {
-      if (!displayName.trim()) return 'Profile name is required.'
-      if (targetRoles.length === 0) return 'Add at least one target role.'
-    }
-    if (step === 2) {
-      if (targetCountries.length === 0) return 'Select at least one country.'
-      if (employmentTypes.length === 0) return 'Select at least one employment type.'
-    }
-    return ''
-  }
+  const toggleEmployment = (val: string) =>
+    setEmploymentTypes(prev => prev.includes(val) ? prev.filter(t => t !== val) : [...prev, val])
 
   const next = () => {
-    const err = validateStep()
-    if (err) { setError(err); return }
+    if (step === 1 && (!displayName.trim() || targetRoles.length === 0)) {
+      setError('Please enter a profile name and at least one target role.')
+      return
+    }
+    if (step === 2 && countries.length === 0) {
+      setError('Please select at least one country.')
+      return
+    }
     setError('')
     setStep(s => s + 1)
   }
 
   const submit = async () => {
+    if (skills.length === 0) {
+      setError('Please add at least one skill.')
+      return
+    }
     setError('')
-    setLoading(true)
+    setSubmitting(true)
     try {
       await createProfile({
-        display_name: displayName.trim(),
-        total_experience_years: experienceYears ? parseInt(experienceYears) : undefined,
+        display_name: displayName,
+        experience_years: experienceYears,
         target_roles: targetRoles,
-        target_countries: targetCountries,
+        target_countries: countries,
         remote_preference: remotePreference,
         employment_types: employmentTypes,
         skills,
         languages,
-        discovery_frequency_hours: discoveryFrequency as 6 | 12 | 24,
+        discovery_frequency_hours: discoveryFrequency,
         good_threshold: goodThreshold,
       })
-      navigate('/dashboard')
+      navigate('/resume')
     } catch (err: any) {
-      setError(err.response?.data?.detail ?? 'Something went wrong. Please try again.')
+      setError(err.response?.data?.detail ?? 'Failed to create profile. Please try again.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
+  const progress = ((step - 1) / 3) * 100
+
   return (
-    <div style={{ maxWidth: '560px', margin: '0 auto' }}>
-      {/* Progress */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-        {[1, 2, 3].map(s => (
-          <div
-            key={s}
-            style={{
-              flex: 1,
-              height: '4px',
-              borderRadius: '2px',
-              background: s <= step ? '#111827' : '#e5e7eb',
-            }}
-          />
-        ))}
+    <div style={{ maxWidth: '560px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-1)' }}>Set up your profile</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', margin: '0 0 1.25rem' }}>Step {step} of 3 — {['', 'Basics', 'Location & preferences', 'Skills & settings'][step]}</p>
+        <div style={{ height: '3px', background: 'var(--bg-elevated)', borderRadius: '999px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, var(--accent-dim), var(--accent))', borderRadius: '999px', transition: 'width 0.35s ease' }} />
+        </div>
       </div>
 
-      {error && (
-        <p style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem' }}>
-          {error}
-        </p>
-      )}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {error && (
+          <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)' }}>
+            <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>
+          </div>
+        )}
 
-      {/* Step 1 — About you */}
-      {step === 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>About you</h1>
-          <div>
-            <label>Profile name <span style={{ color: '#6b7280', fontWeight: 400 }}>e.g. Data Engineer – DACH</span></label>
-            <input value={displayName} onChange={e => setDisplayName(e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label>Years of experience</label>
-            <input type="number" min={0} max={50} value={experienceYears} onChange={e => setExperienceYears(e.target.value)} style={inputStyle} placeholder="e.g. 5" />
-          </div>
-          <div>
-            <label>Target roles <span style={{ color: '#6b7280', fontWeight: 400 }}>type and press Enter or Add</span></label>
-            <TagInput tags={targetRoles} onChange={setTargetRoles} placeholder="e.g. Data Engineer" />
-          </div>
-          <button onClick={next} style={{ padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem' }}>
-            Next →
-          </button>
-        </div>
-      )}
+        {step === 1 && (
+          <>
+            <FieldGroup label="Profile name">
+              <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Senior Data Engineer" style={inputStyle} />
+            </FieldGroup>
+            <FieldGroup label="Years of experience">
+              <input type="number" min={0} max={50} value={experienceYears} onChange={e => setExperienceYears(Number(e.target.value))} style={{ ...inputStyle, width: '120px' }} />
+            </FieldGroup>
+            <FieldGroup label="Target roles — add each role and press Enter">
+              <TagInput tags={targetRoles} onChange={setTargetRoles} placeholder="e.g. Data Engineer" />
+            </FieldGroup>
+          </>
+        )}
 
-      {/* Step 2 — Job preferences */}
-      {step === 2 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Job preferences</h1>
-          <div>
-            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Target countries</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-              {COUNTRIES.map(c => (
-                <label key={c.code} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.5rem', border: `1px solid ${targetCountries.includes(c.code) ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: targetCountries.includes(c.code) ? '#f3f4f6' : 'transparent' }}>
-                  <input type="checkbox" checked={targetCountries.includes(c.code)} onChange={() => toggleCountry(c.code)} style={{ margin: 0 }} />
-                  <span style={{ fontSize: '0.875rem' }}>{c.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Remote preference</p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {REMOTE_OPTIONS.map(o => (
-                <label key={o.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.75rem', border: `1px solid ${remotePreference === o.value ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: remotePreference === o.value ? '#f3f4f6' : 'transparent' }}>
-                  <input type="radio" name="remote" value={o.value} checked={remotePreference === o.value} onChange={() => setRemotePreference(o.value)} style={{ margin: 0 }} />
-                  <span style={{ fontSize: '0.875rem' }}>{o.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p style={{ fontWeight: 600, margin: '0 0 0.5rem' }}>Employment type</p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {EMPLOYMENT_TYPES.map(e => (
-                <label key={e.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.75rem', border: `1px solid ${employmentTypes.includes(e.value) ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: employmentTypes.includes(e.value) ? '#f3f4f6' : 'transparent' }}>
-                  <input type="checkbox" checked={employmentTypes.includes(e.value)} onChange={() => toggleEmploymentType(e.value)} style={{ margin: 0 }} />
-                  <span style={{ fontSize: '0.875rem' }}>{e.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => { setError(''); setStep(1) }} style={{ flex: 1, padding: '0.625rem', background: 'transparent', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem' }}>
-              ← Back
-            </button>
-            <button onClick={next} style={{ flex: 1, padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem' }}>
-              Next →
-            </button>
-          </div>
-        </div>
-      )}
+        {step === 2 && (
+          <>
+            <FieldGroup label="Target countries">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+                {COUNTRIES.map(c => (
+                  <label
+                    key={c.code}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 0.625rem',
+                      background: countries.includes(c.code) ? 'var(--accent-glow)' : 'var(--bg-elevated)',
+                      border: `1px solid ${countries.includes(c.code) ? 'var(--accent-border)' : 'var(--border)'}`,
+                      borderRadius: 'var(--radius-xs)',
+                      cursor: 'pointer',
+                      fontSize: '0.825rem',
+                      color: countries.includes(c.code) ? 'var(--accent)' : 'var(--text-2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <input type="checkbox" checked={countries.includes(c.code)} onChange={() => toggleCountry(c.code)} style={{ display: 'none' }} />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+            </FieldGroup>
 
-      {/* Step 3 — Skills & schedule */}
-      {step === 3 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Skills & schedule</h1>
-          <div>
-            <label>Skills <span style={{ color: '#6b7280', fontWeight: 400 }}>optional</span></label>
-            <TagInput tags={skills} onChange={setSkills} placeholder="e.g. Python, SQL, dbt" />
-          </div>
-          <div>
-            <label>Languages <span style={{ color: '#6b7280', fontWeight: 400 }}>optional</span></label>
-            <TagInput tags={languages} onChange={setLanguages} placeholder="e.g. English, German" />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Discovery frequency</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {([6, 12, 24] as const).map(h => (
-                <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.375rem 0.75rem', border: `1px solid ${discoveryFrequency === h ? '#111827' : '#e5e7eb'}`, borderRadius: '6px', background: discoveryFrequency === h ? '#f3f4f6' : 'transparent' }}>
-                  <input type="radio" name="freq" value={h} checked={discoveryFrequency === h} onChange={() => setDiscoveryFrequency(h)} style={{ margin: 0 }} />
-                  <span style={{ fontSize: '0.875rem' }}>Every {h}h</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem' }}>
-              <label>Match threshold</label>
-              <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{goodThreshold}</span>
-            </div>
-            <input
-              type="range"
-              min={70}
-              max={100}
-              step={1}
-              value={goodThreshold}
-              onChange={e => setGoodThreshold(parseInt(e.target.value))}
-              style={{ width: '100%', accentColor: '#111827' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              <span>70 (minimum)</span>
-              <span>85 (ideal)</span>
-              <span>100</span>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.4rem' }}>
-              Jobs scoring {goodThreshold}+ are <strong>Good matches</strong>. Jobs scoring {goodThreshold - 15}–{goodThreshold - 1} are <strong>Near misses</strong>.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => { setError(''); setStep(2) }} style={{ flex: 1, padding: '0.625rem', background: 'transparent', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem' }}>
-              ← Back
+            <FieldGroup label="Remote preference">
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {REMOTE_OPTIONS.map(o => (
+                  <label
+                    key={o.value}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.4rem 0.875rem',
+                      background: remotePreference === o.value ? 'var(--accent-glow)' : 'var(--bg-elevated)',
+                      border: `1px solid ${remotePreference === o.value ? 'var(--accent-border)' : 'var(--border)'}`,
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      fontSize: '0.825rem',
+                      color: remotePreference === o.value ? 'var(--accent)' : 'var(--text-2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <input type="radio" name="remote" value={o.value} checked={remotePreference === o.value} onChange={() => setRemotePreference(o.value)} style={{ display: 'none' }} />
+                    {o.label}
+                  </label>
+                ))}
+              </div>
+            </FieldGroup>
+
+            <FieldGroup label="Employment types">
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {EMPLOYMENT_TYPES.map(t => (
+                  <label
+                    key={t.value}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.4rem 0.875rem',
+                      background: employmentTypes.includes(t.value) ? 'var(--accent-glow)' : 'var(--bg-elevated)',
+                      border: `1px solid ${employmentTypes.includes(t.value) ? 'var(--accent-border)' : 'var(--border)'}`,
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      fontSize: '0.825rem',
+                      color: employmentTypes.includes(t.value) ? 'var(--accent)' : 'var(--text-2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <input type="checkbox" checked={employmentTypes.includes(t.value)} onChange={() => toggleEmployment(t.value)} style={{ display: 'none' }} />
+                    {t.label}
+                  </label>
+                ))}
+              </div>
+            </FieldGroup>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <FieldGroup label="Skills — add each skill and press Enter">
+              <TagInput tags={skills} onChange={setSkills} placeholder="e.g. Python, Spark, dbt" />
+            </FieldGroup>
+
+            <FieldGroup label="Languages spoken">
+              <TagInput tags={languages} onChange={setLanguages} placeholder="e.g. English, German" />
+            </FieldGroup>
+
+            <FieldGroup label={`Discovery frequency — every ${discoveryFrequency}h`}>
+              <input
+                type="range"
+                min={1}
+                max={72}
+                value={discoveryFrequency}
+                onChange={e => setDiscoveryFrequency(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-3)', marginTop: '0.25rem' }}>
+                <span>1h</span><span>24h</span><span>72h</span>
+              </div>
+            </FieldGroup>
+
+            <FieldGroup label={`Match threshold — Good: ${goodThreshold}+  ·  Near miss: ${goodThreshold - 15}–${goodThreshold - 1}`}>
+              <input
+                type="range"
+                min={70}
+                max={100}
+                value={goodThreshold}
+                onChange={e => setGoodThreshold(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-3)', marginTop: '0.25rem' }}>
+                <span>70 (relaxed)</span><span>85 (recommended)</span><span>100</span>
+              </div>
+            </FieldGroup>
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: '0.625rem', paddingTop: '0.25rem' }}>
+          {step > 1 && (
+            <button
+              onClick={() => { setError(''); setStep(s => s - 1) }}
+              style={{ flex: 1, padding: '0.625rem', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-1)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.9rem' }}
+            >
+              Back
             </button>
-            <button onClick={submit} disabled={loading} style={{ flex: 1, padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem', opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Saving…' : 'Finish setup'}
+          )}
+          {step < 3 ? (
+            <button
+              onClick={next}
+              style={{ flex: 1, padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
+            >
+              Next
             </button>
-          </div>
+          ) : (
+            <button
+              onClick={submit}
+              disabled={submitting}
+              style={{ flex: 1, padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, opacity: submitting ? 0.7 : 1 }}
+            >
+              {submitting ? 'Creating profile…' : 'Create profile'}
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

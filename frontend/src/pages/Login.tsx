@@ -2,16 +2,8 @@ import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const inputStyle: React.CSSProperties = {
-  display: 'block',
-  width: '100%',
-  padding: '0.5rem 0.75rem',
-  marginTop: '0.25rem',
-  border: '1px solid #d1d5db',
-  borderRadius: '6px',
-  fontSize: '1rem',
-  boxSizing: 'border-box',
-}
+const field: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' }
+const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)' }
 
 export default function Login() {
   const { login } = useAuth()
@@ -29,54 +21,48 @@ export default function Login() {
       await login(email, password)
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.detail ?? 'Login failed. Please try again.')
+      setError(err.response?.data?.detail ?? 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>Log in</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ width: '100%', maxWidth: '380px' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.35rem' }}>Welcome back</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Sign in to your account</p>
+      </div>
+
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem' }}>
         {error && (
-          <p style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '6px', margin: 0 }}>
-            {error}
-          </p>
+          <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
+            <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>
+          </div>
         )}
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            style={inputStyle}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem', opacity: loading ? 0.7 : 1 }}
-        >
-          {loading ? 'Logging in…' : 'Log in'}
-        </button>
-      </form>
-      <p style={{ marginTop: '1.25rem', color: '#6b7280' }}>
-        Don't have an account?{' '}
-        <Link to="/register" style={{ color: '#2563eb' }}>Register</Link>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={field}>
+            <label style={labelStyle}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="email" />
+          </div>
+          <div style={field}>
+            <label style={labelStyle}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" autoComplete="current-password" />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem', opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </div>
+
+      <p style={{ marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
+        No account?{' '}
+        <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 500 }}>Create one</Link>
       </p>
     </div>
   )

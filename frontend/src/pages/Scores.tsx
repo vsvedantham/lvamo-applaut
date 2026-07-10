@@ -12,23 +12,34 @@ import {
   type ScoringMode,
 } from '../api/scoring'
 
-function ScoreBadge({ score }: { score: number }) {
-  const color = score >= 85 ? '#059669' : score >= 70 ? '#d97706' : '#6b7280'
+function ScoreBadge({ score, good, nearMiss }: { score: number; good: number; nearMiss: number }) {
+  const color = score >= good ? 'var(--success)' : score >= nearMiss ? 'var(--warn)' : 'var(--text-3)'
   return (
-    <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700, background: color, color: '#fff' }}>
+    <span style={{
+      padding: '0.2rem 0.625rem',
+      borderRadius: '999px',
+      fontSize: '0.8rem',
+      fontWeight: 700,
+      background: `${color}1a`,
+      color,
+      border: `1px solid ${color}40`,
+      fontVariantNumeric: 'tabular-nums',
+    }}>
       {score}
     </span>
   )
 }
 
 function KeywordChip({ kw }: { kw: NearMissKeyword }) {
-  const color = kw.suitable === true ? '#059669' : kw.suitable === false ? '#dc2626' : '#d97706'
-  const label = kw.suitable === true ? '✓ likely suitable' : kw.suitable === false ? '✗ outside your stack' : '? uncertain'
+  const color = kw.suitable === true ? 'var(--success)' : kw.suitable === false ? 'var(--danger)' : 'var(--warn)'
+  const label = kw.suitable === true ? '✓ suitable' : kw.suitable === false ? '✗ outside stack' : '? uncertain'
   return (
-    <div style={{ padding: '0.5rem 0.75rem', border: `1px solid ${color}`, borderRadius: '6px', fontSize: '0.8rem' }}>
-      <span style={{ fontWeight: 600 }}>{kw.keyword}</span>
-      <span style={{ marginLeft: '0.5rem', color, fontSize: '0.75rem' }}>{label}</span>
-      <p style={{ color: '#6b7280', margin: '0.2rem 0 0', fontSize: '0.75rem' }}>{kw.reason}</p>
+    <div style={{ padding: '0.5rem 0.75rem', border: `1px solid ${color}30`, background: `${color}08`, borderRadius: 'var(--radius-xs)', fontSize: '0.8rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <span style={{ fontWeight: 600, color: 'var(--text-1)' }}>{kw.keyword}</span>
+        <span style={{ color, fontSize: '0.72rem' }}>{label}</span>
+      </div>
+      <p style={{ color: 'var(--text-2)', margin: '0.2rem 0 0', fontSize: '0.72rem' }}>{kw.reason}</p>
     </div>
   )
 }
@@ -38,13 +49,13 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
   const [selected, setSelected] = useState<string[]>([])
   const [deciding, setDeciding] = useState(false)
   const [promoted, setPromoted] = useState<{ newScore: number } | null>(null)
+  const nearMiss = goodThreshold - 15
 
   useEffect(() => {
     getOpportunity(score.opportunity_id).then(setOpp).catch(() => null)
   }, [score.opportunity_id])
 
   const keywords = score.near_miss_keywords || []
-
   const toggleKeyword = (kw: string) =>
     setSelected(prev => prev.includes(kw) ? prev.filter(k => k !== kw) : [...prev, kw])
 
@@ -67,11 +78,11 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
 
   if (promoted) {
     return (
-      <div style={{ border: '1px solid #bbf7d0', borderRadius: '8px', padding: '1.25rem', background: '#f0fdf4', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700, background: '#059669', color: '#fff' }}>{promoted.newScore}</span>
+      <div style={{ border: '1px solid var(--success-border)', borderRadius: 'var(--radius)', padding: '1.25rem', background: 'var(--success-bg)', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700, background: 'var(--success)', color: '#fff' }}>{promoted.newScore}</span>
         <div>
-          <p style={{ fontWeight: 600, margin: 0, color: '#166534' }}>Promoted to Good Match!</p>
-          <p style={{ fontSize: '0.8rem', color: '#166534', margin: '0.15rem 0 0' }}>
+          <p style={{ fontWeight: 600, margin: 0, color: 'var(--success)' }}>Promoted to Good Match!</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--success)', margin: '0.15rem 0 0', opacity: 0.8 }}>
             {opp?.title} · {opp?.company_name} — moving to Good Matches tab…
           </p>
         </div>
@@ -80,32 +91,27 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
   }
 
   return (
-    <div style={{ border: '1px solid #fbbf24', borderRadius: '8px', padding: '1.25rem', background: '#fffbeb' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+    <div style={{ border: '1px solid var(--warn-border)', borderRadius: 'var(--radius)', padding: '1.25rem', background: 'var(--warn-bg)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem' }}>
         <div>
-          <Link to={`/opportunities/${score.opportunity_id}`} style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>
+          <Link to={`/opportunities/${score.opportunity_id}`} style={{ fontWeight: 600, color: 'var(--text-1)', textDecoration: 'none', fontSize: '0.9rem' }}>
             {opp?.title || 'Loading…'}
           </Link>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.15rem 0 0' }}>{opp?.company_name}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '0.825rem', margin: '0.15rem 0 0' }}>{opp?.company_name}</p>
         </div>
-        <ScoreBadge score={score.total_score} />
+        <ScoreBadge score={score.total_score} good={goodThreshold} nearMiss={nearMiss} />
       </div>
 
       {keywords.length > 0 && (
         <>
-          <p style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+          <p style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-1)' }}>
             Gap keywords — adding these could push your score above {goodThreshold}:
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '1rem' }}>
             {keywords.map(kw => (
               <div key={kw.keyword} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                 {kw.suitable !== false && (
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(kw.keyword)}
-                    onChange={() => toggleKeyword(kw.keyword)}
-                    style={{ marginTop: '0.35rem', flexShrink: 0 }}
-                  />
+                  <input type="checkbox" checked={selected.includes(kw.keyword)} onChange={() => toggleKeyword(kw.keyword)} style={{ marginTop: '0.5rem', flexShrink: 0 }} />
                 )}
                 <KeywordChip kw={kw} />
               </div>
@@ -119,7 +125,7 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
           <button
             onClick={() => decide('keep_with_keywords')}
             disabled={deciding}
-            style={{ padding: '0.4rem 0.9rem', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem' }}
+            style={{ padding: '0.4rem 0.875rem', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}
           >
             Add {selected.length} keyword{selected.length > 1 ? 's' : ''} + keep
           </button>
@@ -127,14 +133,14 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
         <button
           onClick={() => decide('keep')}
           disabled={deciding}
-          style={{ padding: '0.4rem 0.9rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem' }}
+          style={{ padding: '0.4rem 0.875rem', background: 'var(--bg-elevated)', color: 'var(--text-1)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem' }}
         >
           Keep without adding
         </button>
         <button
           onClick={() => decide('dismiss')}
           disabled={deciding}
-          style={{ padding: '0.4rem 0.9rem', background: 'transparent', color: '#dc2626', border: '1px solid #dc2626', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem' }}
+          style={{ padding: '0.4rem 0.875rem', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem' }}
         >
           Dismiss
         </button>
@@ -143,7 +149,7 @@ function NearMissCard({ score, goodThreshold, onDecide }: { score: Score; goodTh
   )
 }
 
-function GoodMatchCard({ score }: { score: Score }) {
+function GoodMatchCard({ score, good, nearMiss }: { score: Score; good: number; nearMiss: number }) {
   const [opp, setOpp] = useState<OpportunityDetail | null>(null)
   const [starting, setStarting] = useState(false)
   const [applicationId, setApplicationId] = useState<string | null>(null)
@@ -161,54 +167,55 @@ function GoodMatchCard({ score }: { score: Score }) {
       const app = await createApplication(score.opportunity_id, score.id)
       setApplicationId(app.id)
     } catch (err: any) {
-      if (err.response?.status === 409) {
-        // already exists — navigate to applications
-        navigate('/applications')
-      }
+      if (err.response?.status === 409) navigate('/applications')
     } finally {
       setStarting(false)
     }
   }
 
   return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+    <div style={{ padding: '1.125rem 1.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', transition: 'border-color 0.15s' }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.625rem' }}>
         <div>
-          <Link to={`/opportunities/${score.opportunity_id}`} style={{ fontWeight: 600, color: '#111827', textDecoration: 'none' }}>
+          <Link to={`/opportunities/${score.opportunity_id}`} style={{ fontWeight: 600, color: 'var(--text-1)', textDecoration: 'none', fontSize: '0.9rem' }}>
             {opp?.title || 'Loading…'}
           </Link>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.15rem 0 0' }}>{opp?.company_name} · {opp?.location_raw}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '0.8rem', margin: '0.15rem 0 0' }}>
+            {opp?.company_name}{opp?.location_raw ? ` · ${opp.location_raw}` : ''}
+          </p>
         </div>
-        <ScoreBadge score={score.total_score} />
+        <ScoreBadge score={score.total_score} good={good} nearMiss={nearMiss} />
       </div>
+
       {dims && (
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '0.875rem' }}>
           {Object.entries(dims).map(([key, d]) => (
-            <span key={key} title={d.explanation} style={{ padding: '0.15rem 0.5rem', background: '#f3f4f6', borderRadius: '999px', fontSize: '0.75rem', cursor: 'help' }}>
+            <span key={key} title={d.explanation} style={{ padding: '0.15rem 0.55rem', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '999px', fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'help' }}>
               {key}: {d.score}/{d.max}
             </span>
           ))}
         </div>
       )}
+
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button
           onClick={() => navigate(`/documents/${score.opportunity_id}`)}
-          style={{ padding: '0.35rem 0.9rem', background: 'transparent', border: '1px solid #111827', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+          style={{ padding: '0.35rem 0.875rem', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-1)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem' }}
         >
           Generate documents →
         </button>
         {applicationId ? (
-          <Link
-            to="/applications"
-            style={{ padding: '0.35rem 0.9rem', background: '#059669', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8rem' }}
-          >
+          <Link to="/applications" style={{ padding: '0.35rem 0.875rem', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)', borderRadius: 'var(--radius-xs)', fontSize: '0.8rem' }}>
             Application started ✓
           </Link>
         ) : (
           <button
             onClick={startApplication}
             disabled={starting}
-            style={{ padding: '0.35rem 0.9rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', opacity: starting ? 0.7 : 1 }}
+            style={{ padding: '0.35rem 0.875rem', background: 'var(--blue-bg)', color: 'var(--blue)', border: '1px solid var(--blue-border)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem', opacity: starting ? 0.7 : 1 }}
           >
             {starting ? 'Starting…' : 'Start application'}
           </button>
@@ -217,6 +224,8 @@ function GoodMatchCard({ score }: { score: Score }) {
     </div>
   )
 }
+
+const selectStyle: React.CSSProperties = { width: 'auto', fontSize: '0.8rem', padding: '0.4rem 2rem 0.4rem 0.75rem' }
 
 export default function Scores() {
   const [tab, setTab] = useState<'good' | 'near_miss'>('good')
@@ -263,26 +272,21 @@ export default function Scores() {
   const pendingNearMisses = scores.filter(s => !s.user_decision || s.user_decision === 'pending_review')
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div style={{ maxWidth: '760px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Scores</h1>
-          {total > 0 && <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>{total} results</p>}
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-1)' }}>Scores</h1>
+          {total > 0 && <p style={{ color: 'var(--text-2)', fontSize: '0.825rem', marginTop: '0.2rem' }}>{total} results</p>}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <select
-            value={mode}
-            onChange={e => setMode(e.target.value as ScoringMode)}
-            style={{ padding: '0.4rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}
-          >
+          <select value={mode} onChange={e => setMode(e.target.value as ScoringMode)} style={selectStyle}>
             <option value="rule_based">Rule-based</option>
             <option value="ai">AI (requires API key)</option>
           </select>
           <button
             onClick={runScoringNow}
             disabled={running}
-            style={{ padding: '0.5rem 1.25rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem', opacity: running ? 0.7 : 1 }}
+            style={{ padding: '0.5rem 1.25rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, opacity: running ? 0.7 : 1 }}
           >
             {running ? 'Scoring…' : 'Run scoring'}
           </button>
@@ -290,18 +294,29 @@ export default function Scores() {
       </div>
 
       {runResult && (
-        <p style={{ padding: '0.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#166534', fontSize: '0.875rem', marginBottom: '1rem' }}>
-          {runResult}
-        </p>
+        <div style={{ padding: '0.75rem 1rem', background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
+          <p style={{ color: 'var(--success)', fontSize: '0.85rem', margin: 0 }}>{runResult}</p>
+        </div>
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '1.25rem', gap: '0.125rem' }}>
         {(['good', 'near_miss'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            style={{ padding: '0.5rem 1.25rem', background: 'transparent', border: 'none', borderBottom: tab === t ? '2px solid #111827' : '2px solid transparent', cursor: 'pointer', fontWeight: tab === t ? 600 : 400, fontSize: '0.9rem', marginBottom: '-1px' }}
+            style={{
+              padding: '0.5rem 1.125rem',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
+              cursor: 'pointer',
+              fontWeight: tab === t ? 600 : 400,
+              color: tab === t ? 'var(--accent)' : 'var(--text-2)',
+              fontSize: '0.875rem',
+              marginBottom: '-1px',
+              transition: 'color 0.15s',
+            }}
           >
             {t === 'good' ? `Good matches (${goodThreshold}+)` : `Near misses (${nearMissThreshold}–${goodThreshold - 1})`}
           </button>
@@ -309,24 +324,24 @@ export default function Scores() {
       </div>
 
       {loading ? (
-        <p style={{ color: '#6b7280' }}>Loading…</p>
+        <p style={{ color: 'var(--text-2)' }}>Loading…</p>
       ) : scores.length === 0 ? (
-        <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed #d1d5db', borderRadius: '8px' }}>
-          <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>No results yet</p>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Run discovery first, then click "Run scoring".</p>
+        <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--border-strong)', borderRadius: 'var(--radius)' }}>
+          <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-1)' }}>No results yet</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>Run discovery first, then click "Run scoring".</p>
         </div>
       ) : tab === 'near_miss' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {pendingNearMisses.length === 0 && (
-            <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>All near misses have been reviewed.</p>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>All near misses have been reviewed.</p>
           )}
           {scores.map(s => (
             <NearMissCard key={s.id} score={s} goodThreshold={goodThreshold} onDecide={load} />
           ))}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {scores.map(s => <GoodMatchCard key={s.id} score={s} />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+          {scores.map(s => <GoodMatchCard key={s.id} score={s} good={goodThreshold} nearMiss={nearMissThreshold} />)}
         </div>
       )}
     </div>

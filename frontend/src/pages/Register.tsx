@@ -3,16 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import client from '../api/client'
 
-const inputStyle: React.CSSProperties = {
-  display: 'block',
-  width: '100%',
-  padding: '0.5rem 0.75rem',
-  marginTop: '0.25rem',
-  border: '1px solid #d1d5db',
-  borderRadius: '6px',
-  fontSize: '1rem',
-  boxSizing: 'border-box',
-}
+const field: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' }
+const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)' }
 
 export default function Register() {
   const { register } = useAuth()
@@ -47,57 +39,70 @@ export default function Register() {
   }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>Create account</h1>
+    <div style={{ width: '100%', maxWidth: '380px' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.35rem' }}>Create account</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Start automating your job search</p>
+      </div>
 
-      {registrationOpen === false && (
-        <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem', padding: '0.75rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
-          Registration is currently invite-only while we finish building. Check back soon.
-        </p>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: registrationOpen ? 1 : 0.4, pointerEvents: registrationOpen ? 'auto' : 'none' }}
-      >
-        {error && (
-          <p style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '6px', margin: 0 }}>
-            {error}
-          </p>
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem' }}>
+        {registrationOpen === false && (
+          <div style={{ padding: '0.75rem 0.875rem', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.825rem', margin: 0 }}>
+              Registration is currently invite-only while we finish building. Check back soon.
+            </p>
+          </div>
         )}
-        <div>
-          <label htmlFor="name">Full name</label>
-          <input id="name" type="text" value={name} onChange={e => setName(e.target.value)} required style={inputStyle} />
-        </div>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} />
-        </div>
-        <div>
-          <label htmlFor="password">Password <span style={{ color: '#6b7280', fontWeight: 400 }}>(min. 8 characters)</span></label>
-          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} style={inputStyle} />
-        </div>
-        <button
-          type={registrationOpen ? 'submit' : 'button'}
-          disabled={loading || !registrationOpen}
-          style={{
-            padding: '0.625rem',
-            background: registrationOpen ? '#111827' : '#9ca3af',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: registrationOpen ? 'pointer' : 'not-allowed',
-            fontSize: '1rem',
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading ? 'Creating account…' : registrationOpen ? 'Create account' : 'Registration closed'}
-        </button>
-      </form>
 
-      <p style={{ marginTop: '1.25rem', color: '#6b7280' }}>
+        {error && (
+          <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
+            <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: registrationOpen ? 1 : 0.4, pointerEvents: registrationOpen ? 'auto' : 'none' }}
+        >
+          <div style={field}>
+            <label style={labelStyle}>Full name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Ada Lovelace" />
+          </div>
+          <div style={field}>
+            <label style={labelStyle}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="email" />
+          </div>
+          <div style={field}>
+            <label style={labelStyle}>
+              Password{' '}
+              <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(min. 8 characters)</span>
+            </label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder="••••••••" autoComplete="new-password" />
+          </div>
+          <button
+            type={registrationOpen ? 'submit' : 'button'}
+            disabled={loading || !registrationOpen}
+            style={{
+              marginTop: '0.25rem',
+              padding: '0.625rem',
+              background: registrationOpen ? 'var(--accent)' : 'var(--bg-elevated)',
+              color: registrationOpen ? '#fff' : 'var(--text-3)',
+              border: 'none',
+              borderRadius: 'var(--radius-xs)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              opacity: loading ? 0.7 : 1,
+              cursor: registrationOpen ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {loading ? 'Creating account…' : registrationOpen ? 'Create account' : 'Registration closed'}
+          </button>
+        </form>
+      </div>
+
+      <p style={{ marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
         Already have an account?{' '}
-        <Link to="/login" style={{ color: '#2563eb' }}>Log in</Link>
+        <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 500 }}>Sign in</Link>
       </p>
     </div>
   )
