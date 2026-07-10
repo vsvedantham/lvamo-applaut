@@ -38,53 +38,29 @@ export default function Register() {
 
   return (
     <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>Create account</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {error && (
-          <p style={{ color: '#dc2626', background: '#fef2f2', padding: '0.75rem', borderRadius: '6px', margin: 0 }}>
-            {error}
-          </p>
-        )}
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Create account</h1>
+      <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem', padding: '0.75rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+        Registration is currently invite-only while we finish building. Check back soon.
+      </p>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: 0.4, pointerEvents: 'none' }}>
         <div>
           <label htmlFor="name">Full name</label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <input id="name" type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle} />
         </div>
         <div>
           <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
         </div>
         <div>
           <label htmlFor="password">Password <span style={{ color: '#6b7280', fontWeight: 400 }}>(min. 8 characters)</span></label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            minLength={8}
-            style={inputStyle}
-          />
+          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} />
         </div>
         <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '1rem', opacity: loading ? 0.7 : 1 }}
+          type="button"
+          disabled
+          style={{ padding: '0.625rem', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'not-allowed', fontSize: '1rem' }}
         >
-          {loading ? 'Creating account…' : 'Create account'}
+          Registration closed
         </button>
       </form>
       <p style={{ marginTop: '1.25rem', color: '#6b7280' }}>
