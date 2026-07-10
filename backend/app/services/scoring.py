@@ -23,13 +23,22 @@ async def _get_resume(user: User, db: AsyncSession) -> Resume | None:
     )
 
 
+async def _get_all_active_opportunities(db: AsyncSession) -> list[Opportunity]:
+    result = await db.scalars(select(Opportunity).where(Opportunity.is_active == True))
+    return list(result)
+
+
 async def _get_unscored_opportunities(profile: Profile, db: AsyncSession) -> list[Opportunity]:
-    scored_ids = await db.scalars(
+    scored_ids = set(await db.scalars(
         select(Score.opportunity_id).where(Score.profile_id == profile.id)
-    )
-    scored_set = set(scored_ids)
+    ))
     opps = await db.scalars(select(Opportunity).where(Opportunity.is_active == True))
-    return [o for o in opps if o.id not in scored_set]
+    return [o for o in opps if o.id not in scored_ids]
+
+
+async def _get_existing_scores(profile: Profile, db: AsyncSession) -> dict:
+    rows = await db.scalars(select(Score).where(Score.profile_id == profile.id))
+    return {s.opportunity_id: s for s in rows}
 
 
 async def run_scoring(
@@ -42,14 +51,22 @@ async def run_scoring(
 
     profile = await get_active_profile(user, db)
     resume = await _get_resume(user, db)
-    opportunities = await _get_unscored_opportunities(profile, db)
+    good_threshold = profile.good_threshold
+    near_miss_threshold = good_threshold - 15
+
+    if mode == "rule_based":
+        # Re-score every active opportunity (upsert) — fast and free
+        opportunities = await _get_all_active_opportunities(db)
+        existing_scores = await _get_existing_scores(profile, db)
+    else:
+        # AI mode: only score new opportunities to control API cost
+        opportunities = await _get_unscored_opportunities(profile, db)
+        existing_scores = {}
 
     if not opportunities:
         return {"scored": 0, "good_matches": 0, "near_misses": 0, "below_threshold": 0, "mode": mode}
 
     good = near_miss = below = 0
-    good_threshold = profile.good_threshold
-    near_miss_threshold = good_threshold - 15
 
     for opp in opportunities:
         try:
@@ -63,23 +80,43 @@ async def run_scoring(
 
             is_good = result.total >= good_threshold
             is_near = near_miss_threshold <= result.total < good_threshold
+            near_miss_kw = result.near_miss_keywords if result.near_miss_keywords else None
 
-            score = Score(
-                opportunity_id=opp.id,
-                profile_id=profile.id,
-                user_id=user.id,
-                total_score=result.total,
-                skills_score=result.dimensions["skills"].score,
-                experience_score=result.dimensions["experience"].score,
-                location_score=result.dimensions["location"].score,
-                employment_type_score=result.dimensions["employment_type"].score,
-                explanation=result.to_explanation_dict(),
-                ai_model=ai_model,
-                scoring_mode=mode,
-                near_miss_keywords=result.near_miss_keywords if result.near_miss_keywords else None,
-                user_decision="pending_review" if is_near else None,
-            )
-            db.add(score)
+            existing = existing_scores.get(opp.id)
+            if existing:
+                # Update in-place — preserve user_decision unless category changed
+                existing.total_score = result.total
+                existing.skills_score = result.dimensions["skills"].score
+                existing.experience_score = result.dimensions["experience"].score
+                existing.location_score = result.dimensions["location"].score
+                existing.employment_type_score = result.dimensions["employment_type"].score
+                existing.explanation = result.to_explanation_dict()
+                existing.near_miss_keywords = near_miss_kw
+                existing.scoring_mode = mode
+                if ai_model:
+                    existing.ai_model = ai_model
+                # Reset decision only when category changes
+                if is_near and existing.user_decision is None:
+                    existing.user_decision = "pending_review"
+                elif not is_near and existing.user_decision == "pending_review":
+                    existing.user_decision = None
+            else:
+                score = Score(
+                    opportunity_id=opp.id,
+                    profile_id=profile.id,
+                    user_id=user.id,
+                    total_score=result.total,
+                    skills_score=result.dimensions["skills"].score,
+                    experience_score=result.dimensions["experience"].score,
+                    location_score=result.dimensions["location"].score,
+                    employment_type_score=result.dimensions["employment_type"].score,
+                    explanation=result.to_explanation_dict(),
+                    ai_model=ai_model,
+                    scoring_mode=mode,
+                    near_miss_keywords=near_miss_kw,
+                    user_decision="pending_review" if is_near else None,
+                )
+                db.add(score)
 
             if is_good:
                 good += 1
@@ -155,12 +192,11 @@ async def decide_near_miss(
     score.user_decision = action
 
     if action == "keep_with_keywords" and keywords_to_add:
-        existing = set(s.lower() for s in (profile.skills or []))
-        new_skills = [kw for kw in keywords_to_add if kw.lower() not in existing]
+        existing_set = {s.lower() for s in (profile.skills or [])}
+        new_skills = [kw for kw in keywords_to_add if kw.lower() not in existing_set]
         if new_skills:
             profile.skills = list(profile.skills or []) + new_skills
 
-        # Re-score immediately with the updated profile
         resume = await _get_resume(user, db)
         opp = await db.get(Opportunity, score.opportunity_id)
         if opp:
@@ -173,7 +209,6 @@ async def decide_near_miss(
                 score.employment_type_score = result.dimensions["employment_type"].score
                 score.explanation = result.to_explanation_dict()
                 score.near_miss_keywords = result.near_miss_keywords if result.near_miss_keywords else None
-                # Crossed the threshold → move it to Good Matches by clearing the decision
                 if result.total >= profile.good_threshold:
                     score.user_decision = None
             except Exception as exc:
