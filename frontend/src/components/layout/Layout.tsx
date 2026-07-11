@@ -9,6 +9,19 @@ import {
 } from '../../api/notifications'
 
 const PUBLIC_PATHS = ['/', '/login', '/register']
+const MOBILE_BREAKPOINT = 768
+const SIDEBAR_W_MOBILE = 260
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BREAKPOINT)
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
 
 function Logo() {
   return (
@@ -27,39 +40,44 @@ function Logo() {
 }
 
 const IconDashboard = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
     <rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
   </svg>
 )
 const IconSearch = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 )
 const IconStar = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 )
 const IconBriefcase = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
   </svg>
 )
 const IconFile = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
   </svg>
 )
 const IconBell = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 )
 const IconLogout = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+)
+const IconX = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
 
@@ -73,7 +91,7 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
-function NotificationPanel() {
+function NotificationPanel({ isMobile }: { isMobile: boolean }) {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
@@ -115,21 +133,52 @@ function NotificationPanel() {
     setUnread(prev => Math.max(0, prev - 1))
   }
 
+  // On mobile: popup floats above button inside sidebar (absolute)
+  // On desktop: popup floats to the right of sidebar (fixed)
+  const popupStyle: React.CSSProperties = isMobile
+    ? {
+        position: 'absolute',
+        bottom: '100%',
+        left: 0,
+        right: 0,
+        marginBottom: '0.5rem',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        zIndex: 100,
+        overflow: 'hidden',
+      }
+    : {
+        position: 'fixed',
+        left: 'var(--sidebar-w)',
+        bottom: '3rem',
+        width: '320px',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        zIndex: 100,
+        overflow: 'hidden',
+      }
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(v => !v)}
+        aria-label="Notifications"
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
           width: '100%',
-          padding: '0.5rem 0.75rem',
+          padding: '0.625rem 0.75rem',
+          minHeight: '44px',
           background: 'transparent',
           border: 'none',
           borderRadius: 'var(--radius-xs)',
           color: 'var(--text-2)',
-          fontSize: '0.8rem',
+          fontSize: '0.85rem',
           cursor: 'pointer',
           transition: 'background 0.15s, color 0.15s',
         }}
@@ -146,18 +195,7 @@ function NotificationPanel() {
       </button>
 
       {open && (
-        <div style={{
-          position: 'fixed',
-          left: 'var(--sidebar-w)',
-          bottom: '3rem',
-          width: '320px',
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--radius)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-          zIndex: 100,
-          overflow: 'hidden',
-        }}>
+        <div style={popupStyle}>
           <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Notifications</span>
             {unread > 0 && (
@@ -199,7 +237,7 @@ const navItems = [
   { to: '/resume', label: 'Resume', icon: <IconFile /> },
 ]
 
-function Sidebar() {
+function Sidebar({ isMobile, open, onClose }: { isMobile: boolean; open: boolean; onClose: () => void }) {
   const { user, logout } = useAuth()
 
   return (
@@ -207,15 +245,18 @@ function Sidebar() {
       position: 'fixed',
       top: 0,
       left: 0,
-      width: 'var(--sidebar-w)',
+      width: isMobile ? `${SIDEBAR_W_MOBILE}px` : 'var(--sidebar-w)',
       height: '100vh',
       background: 'var(--bg-sidebar)',
       borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
-      zIndex: 50,
+      zIndex: 60,
+      transform: isMobile && !open ? 'translateX(-100%)' : 'translateX(0)',
+      transition: 'transform 0.25s ease',
     }}>
-      <div style={{ padding: '1.25rem 1rem 1rem', borderBottom: '1px solid var(--border)' }}>
+      {/* Header: logo + close button on mobile */}
+      <div style={{ padding: '1.125rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <Logo />
           <div>
@@ -223,20 +264,32 @@ function Sidebar() {
             <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.4 }}>Applaut</p>
           </div>
         </div>
+        {isMobile && (
+          <button
+            onClick={onClose}
+            aria-label="Close navigation"
+            style={{ background: 'none', border: 'none', color: 'var(--text-2)', cursor: 'pointer', padding: '0.25rem', borderRadius: '4px', display: 'flex', alignItems: 'center', minWidth: '44px', minHeight: '44px', justifyContent: 'center' }}
+          >
+            <IconX />
+          </button>
+        )}
       </div>
 
+      {/* Nav links */}
       <nav style={{ flex: 1, padding: '0.625rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.125rem', overflowY: 'auto' }}>
         {navItems.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={isMobile ? onClose : undefined}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
               gap: '0.625rem',
-              padding: '0.5rem 0.75rem',
+              padding: '0.625rem 0.75rem',
+              minHeight: '44px',
               borderRadius: 'var(--radius-xs)',
-              fontSize: '0.85rem',
+              fontSize: '0.9rem',
               fontWeight: isActive ? 600 : 400,
               color: isActive ? 'var(--accent)' : 'var(--text-2)',
               background: isActive ? 'var(--accent-glow)' : 'transparent',
@@ -250,9 +303,10 @@ function Sidebar() {
         ))}
       </nav>
 
+      {/* Footer: notifications + user */}
       <div style={{ padding: '0.5rem', borderTop: '1px solid var(--border)' }}>
-        <NotificationPanel />
-        <div style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.125rem' }}>
+        <NotificationPanel isMobile={isMobile} />
+        <div style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.125rem', minHeight: '44px' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <p style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-1)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
             <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
@@ -260,7 +314,8 @@ function Sidebar() {
           <button
             onClick={logout}
             title="Log out"
-            style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: '0.25rem', borderRadius: '4px', display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: '0.5rem', transition: 'color 0.15s' }}
+            aria-label="Log out"
+            style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: '0.25rem', borderRadius: '4px', display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: '0.5rem', minWidth: '44px', minHeight: '44px', justifyContent: 'center', transition: 'color 0.15s' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--danger)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
           >
@@ -269,6 +324,54 @@ function Sidebar() {
         </div>
       </div>
     </aside>
+  )
+}
+
+function TopBar({ onOpen }: { onOpen: () => void }) {
+  return (
+    <header style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '54px',
+      background: 'var(--bg-sidebar)',
+      borderBottom: '1px solid var(--border)',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 1rem',
+      gap: '0.75rem',
+      zIndex: 50,
+    }}>
+      <button
+        onClick={onOpen}
+        aria-label="Open navigation"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '5px',
+          padding: '0.625rem',
+          minWidth: '44px',
+          minHeight: '44px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text-2)',
+          borderRadius: 'var(--radius-xs)',
+        }}
+      >
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{ display: 'block', width: '18px', height: '2px', background: 'currentColor', borderRadius: '1px' }} />
+        ))}
+      </button>
+      <Logo />
+      <div>
+        <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase', lineHeight: 1 }}>LVAMO</p>
+        <p style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.3 }}>Applaut</p>
+      </div>
+    </header>
   )
 }
 
@@ -287,13 +390,49 @@ function PublicLayout() {
 export default function Layout() {
   const { pathname } = useLocation()
   const isPublic = PUBLIC_PATHS.includes(pathname)
+  const isMobile = useIsMobile()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Close sidebar on navigation
+  useEffect(() => setSidebarOpen(false), [pathname])
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = isMobile && sidebarOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isMobile, sidebarOpen])
 
   if (isPublic) return <PublicLayout />
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1, padding: '2rem 2.5rem', minHeight: '100vh', maxWidth: 'calc(100vw - var(--sidebar-w))' }}>
+      {/* Backdrop — mobile only */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            zIndex: 55,
+          }}
+        />
+      )}
+
+      <Sidebar isMobile={isMobile} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile top bar */}
+      {isMobile && <TopBar onOpen={() => setSidebarOpen(true)} />}
+
+      <main style={{
+        marginLeft: isMobile ? 0 : 'var(--sidebar-w)',
+        flex: 1,
+        padding: isMobile ? '4.5rem 1rem 2rem' : '2rem 2.5rem',
+        minHeight: '100vh',
+        maxWidth: isMobile ? '100vw' : 'calc(100vw - var(--sidebar-w))',
+        width: '100%',
+      }}>
         <Outlet />
       </main>
     </div>

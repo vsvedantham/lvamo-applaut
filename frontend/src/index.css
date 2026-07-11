@@ -50,6 +50,7 @@ body {
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 input, select, textarea {
