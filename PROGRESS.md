@@ -18,6 +18,7 @@
 **VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.65.131`
 **App dir on VM:** `/home/ubuntu/lvamo-applaut/`
 **Deploy backend:** `sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build backend`
+**Or just run `bash deploy.sh`** on the VM — pulls, rebuilds, migrates, restarts, prunes. (Was broken by an unquoted `echo` edit that turned `>` into a stray redirect; fixed and back in sync with the committed version.)
 
 ---
 
@@ -47,12 +48,14 @@
   - Skills score uses JD keyword count as denominator (% of what job requires)
   - Re-scores ALL active opportunities on every run (upsert — no stale results)
   - Preserves user decisions across re-scoring runs
+  - **Runs automatically after every discovery run** (`trigger_discovery` in `backend/app/services/opportunity.py` chains into `run_scoring`) — no separate "Run scoring" step needed
 - **AI scorer** (`backend/app/scoring/ai_scorer.py`):
   - Uses `gpt-4o-mini` via `AsyncOpenAI`
   - Only scores previously-unscored opps (cost control)
   - Returns per-dimension explanations + near-miss keywords
+  - **Gated in the UI** — "Scoring" dropdown on Opportunities page shows AI as disabled/greyed ("premium — coming soon"); wired up for a future subscription model, not user-selectable yet
 - Near-miss gap analysis: keywords the user lacks, suitability assessment
-- User decisions on near-misses: keep / dismiss / keep_with_keywords
+- User decisions on near-misses: keep / dismiss / keep_with_keywords — actionable inline from the Opportunities page (see UI section)
 
 ### Document Generation
 - Tailored resume + cover letter generation via OpenAI
@@ -66,6 +69,7 @@
 ### Notifications
 - In-app notification system with unread badge
 - Auto-notified on discovery results
+- Fixed: bell was calling `/notifications` instead of `/api/v1/notifications` (404 on every page) — all four endpoints in `frontend/src/api/notifications.ts` now correctly prefixed
 
 ### Audit Log
 - Every major action logged to `audit_logs` table
@@ -76,7 +80,8 @@
 - Inter font via Google Fonts
 - Custom SVG favicon (geometric "A" mark)
 - **Mobile-responsive**: slide-in sidebar with backdrop on ≤768px, fixed top bar with hamburger
-- Pages: Landing, Login, Register, Onboarding, Dashboard, Opportunities, Scores, Applications, Resume, AuditLog, OpportunityDetail, DocumentDetail
+- **Opportunities + Scores merged into one page** (`frontend/src/pages/Opportunities.tsx`) — the standalone Scores page is gone. Running discovery auto-scores; each card shows its score badge, per-dimension chips (hover for explanation), and near-miss gap keywords + keep/dismiss actions inline, or good-match actions (generate documents / start application) inline. Filters: Match (all/good/near-miss/below/unscored), Source, Country, Scoring mode (Rule-based; AI shown disabled). `/scores` route redirects to `/opportunities`; `?match=` query param supported for deep links from Dashboard
+- Pages: Landing, Login, Register, Onboarding, Dashboard, Opportunities, Applications, Resume, AuditLog, OpportunityDetail, DocumentDetail
 
 ---
 
@@ -99,7 +104,7 @@
 ## Known Issues / Deferred Work
 
 - **Individual page mobile polish** — Layout is now responsive, but page-level content (cards, grids, tables) may still need padding/sizing tweaks on small screens. Not yet reviewed page-by-page.
-- **AI scoring** — fixed (async client), but not yet tested end-to-end in production with real data.
+- **AI scoring** — implemented but intentionally gated off in the UI (disabled dropdown option) pending the subscription/premium model. Not user-reachable right now.
 - **Workday, LinkedIn, StepStone, Indeed, Xing adapters** — not yet built (V1 sources are Greenhouse, Lever, Ashby, Personio).
 - **Auto-apply mode** — not built. Current mode is review-only (user approves before submission).
 - **Multiple profiles per user** — schema supports it, UI does not yet expose it.
@@ -134,7 +139,7 @@
 
 ## What's Next (Suggested)
 
-- Page-by-page mobile polish (Scores, Opportunities, Resume pages most likely to need it)
-- End-to-end test of AI scoring in production
+- Page-by-page mobile polish (Opportunities, Resume pages most likely to need it)
+- Subscription/premium model to unlock AI scoring in the UI
 - Playwright-based application assist (prefill ATS forms)
 - Open registration when ready for beta users
