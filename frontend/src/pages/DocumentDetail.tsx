@@ -111,8 +111,8 @@ export default function DocumentDetail() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       {/* Back link */}
-      <Link to="/scores" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none' }}>
-        ← Back to scores
+      <Link to="/opportunities" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none' }}>
+        ← Back to opportunities
       </Link>
 
       {/* Header */}

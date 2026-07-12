@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
 import Landing from './pages/Landing'
@@ -9,7 +9,6 @@ import Onboarding from './pages/Onboarding'
 import ResumePage from './pages/Resume'
 import Opportunities from './pages/Opportunities'
 import OpportunityDetail from './pages/OpportunityDetail'
-import Scores from './pages/Scores'
 import DocumentDetail from './pages/DocumentDetail'
 import Applications from './pages/Applications'
 import AuditLog from './pages/AuditLog'
@@ -65,14 +64,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="scores"
-              element={
-                <ProtectedRoute>
-                  <Scores />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="scores" element={<Navigate to="/opportunities" replace />} />
             <Route
               path="documents/:opportunityId"
               element={

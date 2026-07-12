@@ -1,5 +1,27 @@
 import client from './client'
 
+export interface ScoreDimension {
+  score: number
+  max: number
+  explanation: string
+}
+
+export interface NearMissKeyword {
+  keyword: string
+  suitable: boolean | null
+  reason: string
+}
+
+export interface OpportunityScore {
+  id: string
+  total_score: number
+  explanation: Record<string, ScoreDimension>
+  scoring_mode: string
+  near_miss_keywords: NearMissKeyword[] | null
+  user_decision: string | null
+  created_at: string
+}
+
 export interface Opportunity {
   id: string
   source: string
@@ -13,6 +35,7 @@ export interface Opportunity {
   posted_at: string | null
   is_active: boolean
   created_at: string
+  score: OpportunityScore | null
 }
 
 export interface OpportunityDetail extends Opportunity {
@@ -23,15 +46,22 @@ export interface OpportunityDetail extends Opportunity {
   salary_currency: string | null
 }
 
+export type MatchFilter = 'all' | 'good' | 'near_miss' | 'below' | 'unscored'
+
 export interface OpportunityList {
   items: Opportunity[]
   total: number
   page: number
   page_size: number
+  good_threshold: number
+  near_miss_threshold: number
 }
 
 export interface DiscoveryRunResponse {
   new_jobs_found: number
+  scored: number
+  good_matches: number
+  near_misses: number
   message: string
 }
 
@@ -45,6 +75,7 @@ export async function listOpportunities(params?: {
   page_size?: number
   country_code?: string
   source?: string
+  match?: MatchFilter
 }): Promise<OpportunityList> {
   const { data } = await client.get<OpportunityList>('/api/v1/opportunities', { params })
   return data

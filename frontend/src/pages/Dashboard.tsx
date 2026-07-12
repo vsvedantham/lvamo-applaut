@@ -189,8 +189,8 @@ export default function Dashboard() {
           {stats && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <StatCard label="Jobs found" value={stats.opportunities_found} href="/opportunities" />
-              <StatCard label="Good matches" value={stats.good_matches} href="/scores" color="var(--success)" />
-              <StatCard label="Near misses" value={stats.near_misses} href="/scores" color="var(--warn)" />
+              <StatCard label="Good matches" value={stats.good_matches} href="/opportunities?match=good" color="var(--success)" />
+              <StatCard label="Near misses" value={stats.near_misses} href="/opportunities?match=near_miss" color="var(--warn)" />
               <StatCard label="Documents" value={stats.documents_generated} sub="resumes + letters" />
               <StatCard
                 label="Applications"
@@ -246,9 +246,8 @@ export default function Dashboard() {
 
             {profile && resume && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <SetupCard title="Find jobs" description="Browse and run discovery across job boards." href="/opportunities" cta="View opportunities" />
-                <SetupCard title="Score & review" description="Rank jobs and act on near misses." href="/scores" cta="View scores" />
-                <SetupCard title="Documents" description="Generate tailored resumes and cover letters." href="/scores" cta="Go to scores" />
+                <SetupCard title="Find & score jobs" description="Run discovery, see match scores, and act on near misses — all in one place." href="/opportunities" cta="View opportunities" />
+                <SetupCard title="Documents" description="Generate tailored resumes and cover letters from your good matches." href="/opportunities?match=good" cta="View good matches" />
                 <SetupCard title="Applications" description="Track your pipeline from review to offer." href="/applications" cta="View applications" />
               </div>
             )}

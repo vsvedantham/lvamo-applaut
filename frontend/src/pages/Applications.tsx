@@ -161,7 +161,7 @@ export default function Applications() {
           {!loading && <p style={{ color: 'var(--text-2)', fontSize: '0.825rem', marginTop: '0.2rem' }}>{apps.length} total</p>}
         </div>
         <Link
-          to="/scores"
+          to="/opportunities?match=good"
           style={{ padding: '0.5rem 1.25rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem', fontWeight: 500 }}
         >
           Find good matches →
@@ -174,10 +174,10 @@ export default function Applications() {
         <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--border-strong)', borderRadius: 'var(--radius)' }}>
           <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-1)' }}>No applications yet</p>
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-            Start an application from any good match on the Scores page.
+            Start an application from any good match on the Opportunities page.
           </p>
-          <Link to="/scores" style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem' }}>
-            View scores →
+          <Link to="/opportunities?match=good" style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem' }}>
+            View good matches →
           </Link>
         </div>
       ) : (

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -30,13 +30,34 @@ class OpportunityDetailResponse(OpportunityResponse):
     salary_currency: Optional[str]
 
 
+class OpportunityScoreInfo(BaseModel):
+    id: uuid.UUID
+    total_score: int
+    explanation: Any
+    scoring_mode: str
+    near_miss_keywords: Optional[Any]
+    user_decision: Optional[str]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class OpportunityWithScoreResponse(OpportunityResponse):
+    score: Optional[OpportunityScoreInfo] = None
+
+
 class DiscoveryRunResponse(BaseModel):
     new_jobs_found: int
+    scored: int
+    good_matches: int
+    near_misses: int
     message: str
 
 
 class OpportunityListResponse(BaseModel):
-    items: list[OpportunityResponse]
+    items: list[OpportunityWithScoreResponse]
     total: int
     page: int
     page_size: int
+    good_threshold: int
+    near_miss_threshold: int
