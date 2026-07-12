@@ -1,0 +1,802 @@
+N26
+Trade Republic
+Personio
+Celonis
+GetYourGuide
+FlixBus
+Delivery Hero
+Zalando
+HelloFresh
+Wefox
+Gorillas
+Contentful
+Sennder
+Grover
+Tier Mobility
+Infarm
+Isar Aerospace
+Solarisbank
+Raisin
+Scalable Capital
+Vantage Point
+Idealo
+Freeletics
+DeepL
+Clark
+Volocopter
+Auto1 Group
+Home24
+Mister Spex
+Smava
+Babbel
+Blinkist
+Soundcloud
+Delivery Circle
+Choco
+Enpal
+GoStudent
+Bitpanda
+Refurbed
+Runtastic
+TourRadar
+Storyblok
+Adverity
+Anyline
+Tricentis
+Dynatrace
+Bitmovin
+Adyen
+Booking.com
+Mollie
+MessageBird
+Bynder
+Framer
+Backbase
+Elastic
+WeTransfer
+Voys
+Channable
+Coolblue
+Otrium
+Picnic
+Deliveroo Netherlands
+Swapfiets
+Framer BV
+Miro
+Wise
+Revolut
+Monzo
+Starling Bank
+GoCardless
+Deliveroo
+Cazoo
+Depop
+Typeform
+Cabify
+Glovo
+Wallbox
+Jobandtalent
+Factorial
+Travelperk
+Fever
+Red Points
+Wallapop
+Job Today
+Spotahome
+Devo
+Signaturit
+Cobee
+Voicemod
+Criteo
+Doctolib
+Alan
+Qonto
+BackMarket
+ManoMano
+PayFit
+Shift Technology
+Contentsquare
+Algolia
+Mirakl
+Aircall
+Swile
+Spendesk
+Ledger
+Sorare
+Ankorstore
+Dashlane
+OVHcloud
+Ivalua
+Klarna
+Spotify
+Northvolt
+Voi Technology
+Kry
+Einride
+Karma
+Instabox
+Truecaller
+Bambora
+iZettle
+Tink
+Trustly
+Storytel
+Epidemic Sound
+Mentimeter
+Budbee
+Fishbrain
+Sinch
+Nrep
+Vipps
+Cognite
+Otovo
+Remarkable
+Kahoot
+Gelato
+Boost AI
+Zwipe
+Auka
+Xeneta
+No Isolation
+Airthings
+Fjong
+Too Good To Go
+Trustpilot
+Pleo
+Templafy
+Vivino
+Lunar
+Corti
+Firi
+Unity
+Meltwater
+Bakken Bay
+Lampoon
+Wolt
+Supermetrics
+Smartly.io
+Aiven
+Relex Solutions
+Vincit
+Swappie
+Enfuce
+MaaS Global
+Nightingale Health
+Basemark
+Iceye
+Silo AI
+Verse
+Housfy
+Fintonic
+Idoven
+Jeff App
+Kantox
+Devoteam
+Bime Analytics
+Typeform SL
+Genially
+Multiverse Computing
+Freepik
+Colvin
+Flywire
+Talkdesk
+Feedzai
+Unbabel
+Sword Health
+Codacy
+Uniplaces
+Landing.jobs
+Coverflex
+Utrust
+Remote
+Deel
+Lokalise
+Printful
+Nordigen
+Vinted
+Baltic Amadeus
+TransferGo
+Yellow Tail Tech
+Milkywire
+Toqio
+Mews
+Productboard
+Rossum
+Kentico
+GoodData
+Livesport
+Bloomreach
+Ataccama
+Datacamp
+Fresha
+Aircash
+Infobip
+Photomath
+Rimac Automobili
+Include
+Nanobit
+Farmeron
+NextGen HR
+Superbet
+UiPath
+Bitdefender
+2Performant
+FintechOS
+Druid
+DRUID AI
+Frontify
+On Running
+Numbrs
+Beekeeper
+Nezasa
+Bexio
+Anybotics
+Beamery
+Yokoy
+Loopring
+Scandit
+Squirro
+Neustar
+Contorion
+Homeday
+Simplesurance
+Volume
+Trade.io
+Klim
+Windeln.de
+Nucleus Energy
+Circus
+Konux
+Motius
+Volkswagen We
+Personio GmbH
+Forto
+Circula
+Coachhub
+Employes
+Cluno
+Doctify
+DeepDetect
+Iodine Software
+Neura Robotics
+Marqeta
+Camunda
+Hive Streaming
+Peakon
+Pipedrive
+Weekday
+Levercast
+Superside
+Zendesk EU
+Automattic
+Ada Health
+Klook
+Sapient Industries
+Voiceflow
+Personio SE
+GetYourGuide Deutschland
+Trivago
+Check24
+Immobilienscout24
+Otto Group
+Zalando SE
+Delivery Hero SE
+About You
+Flaschenpost
+Freeletics GmbH
+Depict
+Cargonexx
+Chrono24
+Contorion GmbH
+Simscale
+Volocopter GmbH
+Lilium
+Isar Aerospace SE
+Rivian Automotive
+Northvolt AB
+Klarna Bank
+Trade Republic Bank
+Vivid Money
+Kontist
+Penta
+Fyrst
+Moss
+Pliant
+Billie
+Mondu
+Ratepay
+Deposit Solutions
+Deutsche Fintech Solutions
+Finn Auto
+Sixt
+Getaround
+Turo
+Share Now
+Miles Mobility
+Emmy
+Tier Mobility SE
+Bolt
+Voi Technology AB
+Superpedestrian
+Cluno GmbH
+Vay
+Volkswagen Financial Services
+Mercedes-Benz Mobility
+Cariad
+Here Technologies
+Sennder GmbH
+Forto GmbH
+Everstox
+Instafreight
+Cargoclix
+Saloodo
+Freighthub
+Xpate
+Payhawk
+Yolt
+Bunq
+Adyen NV
+Mollie BV
+Paynt
+Viva Wallet
+SumUp
+Judopay
+Curve
+Zopa
+Tide
+Atom Bank
+ClearBank
+OakNorth
+Thought Machine
+10x Banking
+Mambu
+Solaris SE
+Vivid
+Raisin GmbH
+Trade Ledger
+Divido
+Lendable
+Zilch
+Butter
+GoCardless Ltd
+TrueLayer
+Yapily
+Plaid Europe
+Modulr
+Currencycloud
+Airwallex
+Wise plc
+Remitly
+WorldRemit
+Azimo
+TransferWise
+Xe.com
+OFX
+Ebury
+Kantox Ltd
+iBanFirst
+Silverflow
+Marqeta Europe
+Weavr
+Paidy
+Klar
+Nubank Europe
+Uala
+Konfio
+Rapyd
+Checkout.com
+Adyen Germany
+Stripe Europe
+Braintree
+Worldpay
+Nexi
+SIA
+Bottomline Technologies
+Form3
+Vocalink
+Icon Solutions
+10Web
+Elementor
+Wix Engineering
+Squarespace Europe
+Shopify Europe
+BigCommerce
+Vend
+Lightspeed Commerce
+Recharge
+Bold Commerce
+Rebuy
+Gorgias
+Front App
+Aircall SAS
+Intercom Europe
+Zendesk Europe
+Freshworks Europe
+Crisp
+Chatwoot
+Tidio
+Drift Europe
+Userpilot
+Appcues
+Amplitude Europe
+Mixpanel Europe
+Heap Analytics
+Segment Europe
+mParticle
+Fullstory
+Hotjar
+Smartlook
+LogRocket
+Sentry Europe
+Datadog Europe
+New Relic Europe
+Honeycomb
+Grafana Labs
+Prometheus Squad
+Elastic NV
+Confluent Europe
+Redpanda
+Ably
+PubNub
+Fauna
+PlanetScale
+Neon
+Supabase
+Xata
+EdgeDB
+CockroachDB Europe
+TimescaleDB
+InfluxData Europe
+QuestDB
+ClickHouse
+Materialize
+Rockset
+Starburst Data
+Dremio
+Databricks Europe
+Snowflake Europe
+Fivetran Europe
+Airbyte
+Meltano
+dbt Labs Europe
+Census
+Hightouch
+RudderStack
+Segment
+mParticle Europe
+Amplitude
+Metabase
+Looker Europe
+Sisense
+ThoughtSpot Europe
+Preset
+Superset Cloud
+Mode Analytics
+Hex Technologies
+Deepnote
+Count
+Explo
+Tellius
+Y42
+Keboola
+Matillion
+Talend Europe
+Informatica Europe
+Alteryx Europe
+Trifacta
+Ataccama ONE
+Great Expectations
+Monte Carlo Data
+Bigeye
+Soda Data
+Datafold
+Anomalo
+Sifflet
+Metaplane
+Validio
+Gable
+Secoda
+Atlan
+Select Star
+Castor Data
+Amundsen
+DataHub Project
+OpenMetadata
+Stemma
+Alation Europe
+Collibra
+Ataccama Corp
+Erwin Data
+Denodo
+TIBCO Europe
+K2View
+Ab Initio
+Syncsort
+Precisely
+Boomi
+MuleSoft Europe
+Workato
+Tray.io
+Zapier Europe
+Make (Integromat)
+n8n
+Pipedream
+Merge API
+Nango
+Paragon
+Prismatic
+Cyclr
+Kong Inc Europe
+Apigee Europe
+Postman Europe
+Insomnia
+Hoppscotch
+Stoplight
+Redocly
+Speakeasy
+Fern API
+Liblab
+Rovio
+Supercell
+King Digital
+Wooga
+Goodgame Studios
+InnoGames
+Bigpoint
+Gameloft Europe
+Ubisoft Europe
+CD Projekt
+Techland
+11 Bit Studios
+People Can Fly
+Bloober Team
+Ten Square Games
+Huuuge Games
+Playtika Europe
+Zynga Europe
+Miniclip
+Jagex
+Sumo Digital
+Codemasters
+Sports Interactive
+Frontier Developments
+Rebellion
+Creative Assembly
+Splash Damage
+Media Molecule
+Ninja Theory
+Playground Games
+Sega Europe
+Nordeus
+Space Ape Games
+Fingersoft
+Metacore
+Next Games
+Seriously Digital Entertainment
+Small Giant Games
+Kolibri Games
+Bytro Labs
+Traveler's Companion
+Flaregames
+Trendyol
+Getir
+Hepsiburada
+Insider
+Param
+Papara
+Iyzico
+Segmentify
+Picus Security
+Logo Yazılım
+Peak Games
+Dream Games
+Spyke Games
+Masomo Gaming
+Delivery Hero Turkey
+Yemeksepeti
+Naspers
+Prosus
+Takealot
+Media24
+OLX Group
+Avito
+Ozon
+Yandex Europe
+Wildberries
+Rocket Internet
+HelloFresh SE
+Global Fashion Group
+Lazada
+Zilingo
+Carousell
+Grab
+Gojek
+Traveloka
+Tokopedia
+Bukalapak
+Xendit
+Flip
+Kredivo
+Akulaku
+Coda Payments
+Moladin
+OY! Indonesia
+Payfazz
+Julo
+Investree
+Modalku
+Amartha
+Aturduit
+Pintu
+Ajaib
+Bibit
+StockBit
+Ovo Indonesia
+Dana Indonesia
+LinkAja
+Gopay
+ShopeePay
+Sea Limited
+Garena
+Shopee
+Lazada Group
+PropertyGuru
+99.co
+Carsome
+Fave
+Airpaz
+Traveloka Europe
+Klook Europe
+Agoda
+Trip.com Europe
+Skyscanner
+Kayak Europe
+Momondo
+Cheapflights
+GetGoing
+Musement
+Civitatis
+GetYourGuide Barcelona
+Withlocals
+Tiqets
+Headout
+Klook Global
+Viator
+Tripadvisor Europe
+Holiday Extras
+LoveHolidays
+On the Beach
+Secret Escapes
+Voyage Prive
+HomeToGo
+Wimdu
+9flats
+Spotahome Europe
+Uniplaces Europe
+Housing Anywhere
+Flatio
+Blueground
+Nestpick
+Erasmus Life
+Studapart
+Student.com
+Amber Student
+Uhomes
+CampusKey
+Gradabode
+CIEE
+Erasmus Play
+InterNations
+Expatica
+Remote Year
+Nomad List
+Flexjobs Europe
+Weworkremotely
+Remoteok
+Jobspresso
+Working Nomads
+Himalayas App
+Remotive
+Landing Jobs
+Otta
+Welcome to the Jungle
+JobLeads
+StepStone Group
+Indeed Europe
+Glassdoor Europe
+Xing SE
+LinkedIn Europe
+Naukri Europe
+Monster Europe
+CareerBuilder Europe
+Reed.co.uk
+Totaljobs
+CV-Library
+Adzuna
+Jooble
+Neuvoo
+Talent.com
+Jobrapido
+SimplyHired Europe
+Trovit
+Careerjet
+Jobsora
+Jora
+Jobted
+Kimeta
+Meinestadt Jobs
+Yourfirm
+Softgarden
+Recruiterbox
+Greenhouse Europe
+Lever Europe
+Beamery Europe
+SmartRecruiters Europe
+iCIMS Europe
+JazzHR
+BambooHR Europe
+Breezy HR
+Recruitee BV
+Teamtailor
+Personio Recruiting
+Factorial HR
+HiBob
+Deel HR
+Remote.com
+Oyster HR
+Papaya Global
+Multiplier
+Rippling Europe
+Justworks Europe
+Gusto Europe
+Sequoia HR
+Ontop
+Native Teams
+Boundless
+Omnipresent
+Playroll
+Atlas HXM
+Globalization Partners
+Safeguard Global
+Skuad
+Velocity Global
+Horizons
+Innago
+Yolo Group
+Casumo
+LeoVegas
+Betsson
+Kindred Group
+Evolution Gaming
+Catena Media
+XLMedia
+GAN Integrity
+NetEnt
+Play'n GO
+Yggdrasil Gaming
+Relax Gaming
+Push Gaming
+Nolimit City
+Hacksaw Gaming
+Big Time Gaming
+Red Tiger Gaming
+Pragmatic Play
+Microgaming
+IGT Europe
+Scientific Games Europe
+Light & Wonder
+Aristocrat Europe
+Games Global
+Blueprint Gaming
+Inspired Entertainment
+Gaming Realms
+1X2 Network
+Booongo
+Spinomenal
+Wazdan
+Gamomat
+Fantasma Games
+ELK Studios
+Thunderkick
+Quickspin
+Yggdrasil Gaming Europe

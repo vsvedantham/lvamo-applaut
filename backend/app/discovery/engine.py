@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -10,6 +11,12 @@ from app.models.opportunity import Opportunity
 from app.models.profile import Profile
 
 logger = logging.getLogger(__name__)
+
+# Caps how many company-board fetches run concurrently. Several adapters
+# share one host across every company on that platform (e.g. all Greenhouse
+# boards hit boards-api.greenhouse.io), so an unbounded gather over a large
+# COMPANY_BOARDS list risks looking like a burst/abuse pattern to that host.
+DISCOVERY_CONCURRENCY = int(os.environ.get("DISCOVERY_CONCURRENCY", "20"))
 
 
 async def run_discovery_for_profile(profile: Profile, db: AsyncSession) -> int:
@@ -24,11 +31,15 @@ async def run_discovery_for_profile(profile: Profile, db: AsyncSession) -> int:
     if not target_countries or not target_roles:
         return 0
 
-    # Fetch from all boards concurrently
-    tasks = [
-        adapter.fetch_jobs(slug, target_countries, target_roles)
-        for adapter, slug in COMPANY_BOARDS
-    ]
+    # Fetch from all boards concurrently, capped so we don't hammer any
+    # single ATS host when COMPANY_BOARDS is large.
+    semaphore = asyncio.Semaphore(DISCOVERY_CONCURRENCY)
+
+    async def _fetch(adapter, slug):
+        async with semaphore:
+            return await adapter.fetch_jobs(slug, target_countries, target_roles)
+
+    tasks = [_fetch(adapter, slug) for adapter, slug in COMPANY_BOARDS]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     listings = []

@@ -1,3 +1,5 @@
+from app.core.role_synonyms import expand_role
+
 COUNTRY_KEYWORDS: dict[str, list[str]] = {
     "DE": ["germany", "deutschland", "berlin", "munich", "münchen", "hamburg", "frankfurt",
            "cologne", "köln", "düsseldorf", "stuttgart", "leipzig", "dortmund", "essen",
@@ -67,4 +69,9 @@ def matches_countries(country_code: str | None, target_countries: list[str]) -> 
 
 def matches_roles(title: str, target_roles: list[str]) -> bool:
     title_lower = title.lower()
-    return any(role.lower() in title_lower for role in target_roles)
+    for role in target_roles:
+        if role.lower() in title_lower:
+            return True
+        if any(syn in title_lower for syn in expand_role(role)):
+            return True
+    return False

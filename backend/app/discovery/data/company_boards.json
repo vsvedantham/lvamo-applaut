@@ -1,0 +1,857 @@
+[
+  {
+    "adapter": "greenhouse",
+    "slug": "hellofresh",
+    "name": "HelloFresh"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "getyourguide",
+    "name": "GetYourGuide"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "personio",
+    "name": "Personio"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "celonis",
+    "name": "Celonis"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "n26",
+    "name": "N26"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "traderepublic",
+    "name": "Trade Republic"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "DeliveryHero",
+    "name": "Delivery Hero"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "verse",
+    "name": "Verse"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "gostudent",
+    "name": "GoStudent"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "doctolib",
+    "name": "Doctolib"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "trustpilot",
+    "name": "Trustpilot"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "bitpanda",
+    "name": "Bitpanda"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "contentful",
+    "name": "Contentful"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "truecaller",
+    "name": "Truecaller"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "konux",
+    "name": "Konux"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "refurbed",
+    "name": "Refurbed"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "grover",
+    "name": "Grover"
+  },
+  {
+    "adapter": "workable",
+    "slug": "idoven",
+    "name": "Idoven"
+  },
+  {
+    "adapter": "lever",
+    "slug": "qonto",
+    "name": "Qonto"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Devoteam",
+    "name": "Devoteam"
+  },
+  {
+    "adapter": "workable",
+    "slug": "kantox",
+    "name": "Kantox"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "monzo",
+    "name": "Monzo"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Wise",
+    "name": "Wise"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "storyblok",
+    "name": "Storyblok"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "transfergo",
+    "name": "TransferGo"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "gocardless",
+    "name": "GoCardless"
+  },
+  {
+    "adapter": "lever",
+    "slug": "frontify",
+    "name": "Frontify"
+  },
+  {
+    "adapter": "lever",
+    "slug": "trustly",
+    "name": "Trustly"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "circula",
+    "name": "Circula"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "solarisbank",
+    "name": "Solarisbank"
+  },
+  {
+    "adapter": "lever",
+    "slug": "contentsquare",
+    "name": "Contentsquare"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "raisin",
+    "name": "Raisin"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "algolia",
+    "name": "Algolia"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "mentimeter",
+    "name": "Mentimeter"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "mirakl",
+    "name": "Mirakl"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "meltwater",
+    "name": "Meltwater"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "adyen",
+    "name": "Adyen"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "livesport",
+    "name": "Livesport"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "bitmovin",
+    "name": "Bitmovin"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "typeform",
+    "name": "Typeform"
+  },
+  {
+    "adapter": "lever",
+    "slug": "swile",
+    "name": "Swile"
+  },
+  {
+    "adapter": "lever",
+    "slug": "anybotics",
+    "name": "Anybotics"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "wolt",
+    "name": "Wolt"
+  },
+  {
+    "adapter": "lever",
+    "slug": "aircall",
+    "name": "Aircall"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Beamery",
+    "name": "Beamery"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "cabify",
+    "name": "Cabify"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "bloomreach",
+    "name": "Bloomreach"
+  },
+  {
+    "adapter": "lever",
+    "slug": "ataccama",
+    "name": "Ataccama"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "feedzai",
+    "name": "Feedzai"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "marqeta",
+    "name": "Marqeta"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "smartlyio",
+    "name": "Smartly.io"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "datacamp",
+    "name": "Datacamp"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "scandit",
+    "name": "Scandit"
+  },
+  {
+    "adapter": "lever",
+    "slug": "ledger",
+    "name": "Ledger"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "otovo",
+    "name": "Otovo"
+  },
+  {
+    "adapter": "lever",
+    "slug": "jobandtalent",
+    "name": "Jobandtalent"
+  },
+  {
+    "adapter": "lever",
+    "slug": "fresha",
+    "name": "Fresha"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "cognite",
+    "name": "Cognite"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Home24",
+    "name": "Home24"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "dashlane",
+    "name": "Dashlane"
+  },
+  {
+    "adapter": "lever",
+    "slug": "pipedrive",
+    "name": "Pipedrive"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "weekday",
+    "name": "Weekday"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "wallapop",
+    "name": "Wallapop"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "ivalua",
+    "name": "Ivalua"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "elastic",
+    "name": "Elastic"
+  },
+  {
+    "adapter": "lever",
+    "slug": "superside",
+    "name": "Superside"
+  },
+  {
+    "adapter": "lever",
+    "slug": "spotify",
+    "name": "Spotify"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Coolblue",
+    "name": "Coolblue"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "channable",
+    "name": "Channable"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Picnic",
+    "name": "Picnic"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "remote",
+    "name": "Remote"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "lokalise",
+    "name": "Lokalise"
+  },
+  {
+    "adapter": "lever",
+    "slug": "swordhealth",
+    "name": "Sword Health"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "shifttechnology",
+    "name": "Shift Technology"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "isaraerospace",
+    "name": "Isar Aerospace"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "toogoodtogo",
+    "name": "Too Good To Go"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "onrunning",
+    "name": "On Running"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "BoostAi",
+    "name": "Boost AI"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "userpilot",
+    "name": "Userpilot"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Sia",
+    "name": "SIA"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "prismatic",
+    "name": "Prismatic"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "sumup",
+    "name": "SumUp"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "form3",
+    "name": "Form3"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "simscale",
+    "name": "Simscale"
+  },
+  {
+    "adapter": "lever",
+    "slug": "zopa",
+    "name": "Zopa"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "clickhouse",
+    "name": "ClickHouse"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "tide",
+    "name": "Tide"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "tellius",
+    "name": "Tellius"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "vay",
+    "name": "Vay"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "collibra",
+    "name": "Collibra"
+  },
+  {
+    "adapter": "lever",
+    "slug": "keboola",
+    "name": "Keboola"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "ebury",
+    "name": "Ebury"
+  },
+  {
+    "adapter": "lever",
+    "slug": "logrocket",
+    "name": "LogRocket"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "dremio",
+    "name": "Dremio"
+  },
+  {
+    "adapter": "lever",
+    "slug": "matillion",
+    "name": "Matillion"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Bigcommerce",
+    "name": "BigCommerce"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "ibanfirst",
+    "name": "iBanFirst"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "ibanfirst",
+    "name": "iBanFirst"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Speakeasy",
+    "name": "Speakeasy"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "honeycomb",
+    "name": "Honeycomb"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "rebuy",
+    "name": "Rebuy"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "trivago",
+    "name": "Trivago"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "hightouch",
+    "name": "Hightouch"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Check24",
+    "name": "Check24"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "workato",
+    "name": "Workato"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Workato",
+    "name": "Workato"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "pubnub",
+    "name": "PubNub"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Pubnub",
+    "name": "PubNub"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "amplitude",
+    "name": "Amplitude"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "truelayer",
+    "name": "TrueLayer"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "planetscale",
+    "name": "PlanetScale"
+  },
+  {
+    "adapter": "lever",
+    "slug": "metabase",
+    "name": "Metabase"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "bunq",
+    "name": "Bunq"
+  },
+  {
+    "adapter": "lever",
+    "slug": "neon",
+    "name": "Neon"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Sixt",
+    "name": "Sixt"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "sisense",
+    "name": "Sisense"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "bottomlinetechnologies",
+    "name": "Bottomline Technologies"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "hextechnologies",
+    "name": "Hex Technologies"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "grafanalabs",
+    "name": "Grafana Labs"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "traderepublicbank",
+    "name": "Trade Republic Bank"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "studapart",
+    "name": "Studapart"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Stockbit",
+    "name": "StockBit"
+  },
+  {
+    "adapter": "lever",
+    "slug": "trendyol",
+    "name": "Trendyol"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Totaljobs",
+    "name": "Totaljobs"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Internations",
+    "name": "InterNations"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "insider",
+    "name": "Insider"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "betsson",
+    "name": "Betsson"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "adzuna",
+    "name": "Adzuna"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Hibob",
+    "name": "HiBob"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "CarousellGroup",
+    "name": "Carousell"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Neuvoo",
+    "name": "Neuvoo"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Grab",
+    "name": "Grab"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "remotecom",
+    "name": "Remote.com"
+  },
+  {
+    "adapter": "lever",
+    "slug": "iyzico",
+    "name": "Iyzico"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Careerjet",
+    "name": "Careerjet"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "xendit",
+    "name": "Xendit"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "flip",
+    "name": "Flip"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Remotive",
+    "name": "Remotive"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "wooga",
+    "name": "Wooga"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "nordeus",
+    "name": "Nordeus"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "agoda",
+    "name": "Agoda"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Julo",
+    "name": "Julo"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "skyscanner",
+    "name": "Skyscanner"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "housinganywhere",
+    "name": "Housing Anywhere"
+  },
+  {
+    "adapter": "lever",
+    "slug": "kolibrigames",
+    "name": "Kolibri Games"
+  },
+  {
+    "adapter": "lever",
+    "slug": "spyke-games",
+    "name": "Spyke Games"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "AmberStudent",
+    "name": "Amber Student"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "11bitstudios",
+    "name": "11 Bit Studios"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "PeopleCanFly",
+    "name": "People Can Fly"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "tensquaregames",
+    "name": "Ten Square Games"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "blooberteam",
+    "name": "Bloober Team"
+  },
+  {
+    "adapter": "lever",
+    "slug": "peakgames",
+    "name": "Peak Games"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "RocketInternet",
+    "name": "Rocket Internet"
+  },
+  {
+    "adapter": "lever",
+    "slug": "dreamgames",
+    "name": "Dream Games"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "StepstoneGroup",
+    "name": "StepStone Group"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "staffbase",
+    "name": "Staffbase"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "parloa",
+    "name": "Parloa"
+  },
+  {
+    "adapter": "lever",
+    "slug": "finn",
+    "name": "Finn"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "ecoworks",
+    "name": "ecoworks"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "constellr",
+    "name": "constellr"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "helsing",
+    "name": "Helsing"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "synera",
+    "name": "Synera"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "navvis",
+    "name": "NavVis"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "eleqtron",
+    "name": "eleQtron"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "moonfare",
+    "name": "Moonfare"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "commercetools",
+    "name": "commercetools"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "gropyus",
+    "name": "Gropyus"
+  },
+  {
+    "adapter": "lever",
+    "slug": "vestiairecollective",
+    "name": "Vestiaire Collective"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "marvelfusion",
+    "name": "Marvel Fusion"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "blackforestlabs",
+    "name": "Black Forest Labs"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "KaiaHealth",
+    "name": "Kaia Health"
+  }
+]

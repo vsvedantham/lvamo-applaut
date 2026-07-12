@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from app.core.role_synonyms import expand_role
 from app.models.opportunity import Opportunity
 from app.models.profile import Profile
 from app.models.resume import Resume
@@ -8,25 +9,6 @@ from app.scoring.keywords import (
     detect_seniority,
     extract_tech_keywords_from_jd,
 )
-
-# Role synonyms — expand target role matching beyond exact title
-ROLE_SYNONYMS: dict[str, list[str]] = {
-    "data engineer": ["data engineer", "analytics engineer", "etl developer", "pipeline engineer",
-                      "big data engineer", "data platform engineer", "data infrastructure"],
-    "data scientist": ["data scientist", "ml engineer", "machine learning engineer",
-                       "ai engineer", "research scientist", "applied scientist"],
-    "data analyst": ["data analyst", "business analyst", "analytics analyst",
-                     "reporting analyst", "bi analyst", "business intelligence analyst"],
-    "software engineer": ["software engineer", "software developer", "backend engineer",
-                          "backend developer", "full stack", "fullstack", "application developer"],
-    "frontend engineer": ["frontend engineer", "frontend developer", "ui engineer",
-                          "web developer", "react developer", "javascript developer"],
-    "devops engineer": ["devops engineer", "site reliability", "sre", "platform engineer",
-                        "infrastructure engineer", "cloud engineer", "devsecops"],
-    "product manager": ["product manager", "product owner", "program manager", "technical pm"],
-    "data architect": ["data architect", "solution architect", "enterprise architect",
-                       "cloud architect", "database architect"],
-}
 
 
 @dataclass
@@ -49,15 +31,6 @@ class ScoreResult:
         }
 
 
-def _expand_role(role: str) -> list[str]:
-    """Return all synonyms for a role including the role itself."""
-    role_lower = role.lower()
-    for canonical, synonyms in ROLE_SYNONYMS.items():
-        if role_lower in synonyms or canonical in role_lower or role_lower in canonical:
-            return synonyms
-    return [role_lower]
-
-
 def _score_role(title: str, target_roles: list[str]) -> DimensionResult:
     title_lower = title.lower()
 
@@ -68,7 +41,7 @@ def _score_role(title: str, target_roles: list[str]) -> DimensionResult:
 
     # Synonym expansion
     for role in target_roles:
-        for syn in _expand_role(role):
+        for syn in expand_role(role):
             if syn in title_lower:
                 return DimensionResult(30, 35, f"Title matches synonym of '{role}': '{syn}'")
 
