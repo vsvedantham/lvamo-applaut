@@ -2183,5 +2183,125 @@
     "adapter": "personio",
     "slug": "okapiorbits",
     "name": "OKAPI Orbits"
+  },
+  {
+    "adapter": "personio",
+    "slug": "oskar",
+    "name": "Oskar"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Videdressing",
+    "name": "videdressing"
+  },
+  {
+    "adapter": "lever",
+    "slug": "inkitt",
+    "name": "Inkitt"
+  },
+  {
+    "adapter": "personio",
+    "slug": "anybill",
+    "name": "Anybill"
+  },
+  {
+    "adapter": "personio",
+    "slug": "lumoview",
+    "name": "Lumoview AG"
+  },
+  {
+    "adapter": "personio",
+    "slug": "koppla",
+    "name": "Koppla"
+  },
+  {
+    "adapter": "personio",
+    "slug": "sessions",
+    "name": "Sessions"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "ncodin",
+    "name": "NcodiN"
+  },
+  {
+    "adapter": "personio",
+    "slug": "merantix",
+    "name": "Merantix"
+  },
+  {
+    "adapter": "personio",
+    "slug": "holy",
+    "name": "HOLY"
+  },
+  {
+    "adapter": "personio",
+    "slug": "matchory",
+    "name": "Matchory"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "PactGroup",
+    "name": "PACT"
+  },
+  {
+    "adapter": "personio",
+    "slug": "terralayr",
+    "name": "Terralayr"
+  },
+  {
+    "adapter": "personio",
+    "slug": "nfon",
+    "name": "NFON"
+  },
+  {
+    "adapter": "personio",
+    "slug": "edyoucated",
+    "name": "Edyoucated"
+  },
+  {
+    "adapter": "personio",
+    "slug": "sanoptis",
+    "name": "Sanoptis"
+  },
+  {
+    "adapter": "personio",
+    "slug": "hades",
+    "name": "Hades"
+  },
+  {
+    "adapter": "personio",
+    "slug": "collimatehealth",
+    "name": "Collimate Health"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "NandaTechnologies",
+    "name": "Nanda Technologies"
+  },
+  {
+    "adapter": "personio",
+    "slug": "next-kraftwerke",
+    "name": "Next Kraftwerke"
+  },
+  {
+    "adapter": "personio",
+    "slug": "talpasolutions",
+    "name": "Talpa Solutions"
+  },
+  {
+    "adapter": "personio",
+    "slug": "traders-place",
+    "name": "Traders Place"
+  },
+  {
+    "adapter": "personio",
+    "slug": "merantix-momentum",
+    "name": "Merantix Momentum"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "ethonai",
+    "name": "Ethon AI"
   }
 ]
