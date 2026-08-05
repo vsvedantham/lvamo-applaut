@@ -2303,5 +2303,75 @@
     "adapter": "recruitee",
     "slug": "ethonai",
     "name": "Ethon AI"
+  },
+  {
+    "adapter": "personio",
+    "slug": "igaming",
+    "name": "iGaming"
+  },
+  {
+    "adapter": "lever",
+    "slug": "researchgate",
+    "name": "ResearchGate"
+  },
+  {
+    "adapter": "personio",
+    "slug": "adorsys",
+    "name": "adorsys"
+  },
+  {
+    "adapter": "lever",
+    "slug": "trustyou",
+    "name": "TrustYou"
+  },
+  {
+    "adapter": "lever",
+    "slug": "kpler",
+    "name": "Kpler"
+  },
+  {
+    "adapter": "lever",
+    "slug": "jobgether",
+    "name": "Jobgether"
+  },
+  {
+    "adapter": "personio",
+    "slug": "reprisk",
+    "name": "RepRisk"
+  },
+  {
+    "adapter": "personio",
+    "slug": "adsquare",
+    "name": "adsquare"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "awin",
+    "name": "Awin"
+  },
+  {
+    "adapter": "personio",
+    "slug": "audibene",
+    "name": "audibene"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "hearcom",
+    "name": "hear.com"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "moia",
+    "name": "MOIA"
+  },
+  {
+    "adapter": "personio",
+    "slug": "adragos-pharma",
+    "name": "Adragos Pharma"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "celebratecompany",
+    "name": "celebrate company"
   }
 ]
