@@ -2373,5 +2373,100 @@
     "adapter": "recruitee",
     "slug": "celebratecompany",
     "name": "celebrate company"
+  },
+  {
+    "adapter": "lever",
+    "slug": "netlight",
+    "name": "Netlight"
+  },
+  {
+    "adapter": "lever",
+    "slug": "innocraft",
+    "name": "InnoCraft"
+  },
+  {
+    "adapter": "personio",
+    "slug": "talentsconnect",
+    "name": "TalentsConnect"
+  },
+  {
+    "adapter": "personio",
+    "slug": "workerhero",
+    "name": "Workerhero"
+  },
+  {
+    "adapter": "personio",
+    "slug": "codecentric",
+    "name": "codecentric"
+  },
+  {
+    "adapter": "lever",
+    "slug": "mendix",
+    "name": "Mendix"
+  },
+  {
+    "adapter": "personio",
+    "slug": "maibornwolff",
+    "name": "MaibornWolff"
+  },
+  {
+    "adapter": "personio",
+    "slug": "smartbroker",
+    "name": "Smartbroker"
+  },
+  {
+    "adapter": "lever",
+    "slug": "saviynt",
+    "name": "Saviynt"
+  },
+  {
+    "adapter": "personio",
+    "slug": "reeeliance",
+    "name": "reeeliance"
+  },
+  {
+    "adapter": "personio",
+    "slug": "workidentity",
+    "name": "workidentity"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "dept",
+    "name": "DEPT"
+  },
+  {
+    "adapter": "personio",
+    "slug": "westwing",
+    "name": "Westwing"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "worldquant",
+    "name": "WorldQuant"
+  },
+  {
+    "adapter": "personio",
+    "slug": "statworx",
+    "name": "statworx"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "valtech",
+    "name": "Valtech"
+  },
+  {
+    "adapter": "personio",
+    "slug": "eraneos",
+    "name": "Eraneos"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "eraneos",
+    "name": "Eraneos"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "torcrobotics",
+    "name": "Torc Robotics"
   }
 ]
