@@ -2468,5 +2468,35 @@
     "adapter": "greenhouse",
     "slug": "torcrobotics",
     "name": "Torc Robotics"
+  },
+  {
+    "adapter": "personio",
+    "slug": "senec",
+    "name": "SENEC"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Talan",
+    "name": "Talan"
+  },
+  {
+    "adapter": "personio",
+    "slug": "steadforce",
+    "name": "Steadforce"
+  },
+  {
+    "adapter": "personio",
+    "slug": "dymatrix",
+    "name": "DYMATRIX"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "DeutscheTelekomItSolutions",
+    "name": "Deutsche Telekom IT Solutions"
+  },
+  {
+    "adapter": "lever",
+    "slug": "agile-defense",
+    "name": "Agile Defense"
   }
 ]
