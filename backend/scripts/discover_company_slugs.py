@@ -129,16 +129,15 @@ async def probe_ashby(client: httpx.AsyncClient, slug: str) -> bool:
 
 
 async def probe_personio(client: httpx.AsyncClient, slug: str) -> bool:
+    # Personio retired its /api/v1/jobs JSON endpoint (now 404s, replaced by a
+    # client-rendered SPA); the legacy /xml feed (their "workzag-jobs" format,
+    # from the Workzag product Personio's recruiting board was built on) is
+    # still live and is the only public no-auth job-listing source left.
     try:
-        resp = await client.get(
-            f"https://{slug}.jobs.personio.de/api/v1/jobs",
-            headers={"Accept": "application/json"},
-        )
+        resp = await client.get(f"https://{slug}.jobs.personio.de/xml")
         if resp.status_code != 200:
             return False
-        data = resp.json()
-        jobs = data.get("data", data.get("jobs", [])) if isinstance(data, dict) else data
-        return bool(jobs)
+        return "<position>" in resp.text
     except Exception:
         return False
 
@@ -195,9 +194,10 @@ async def probe_company(
     semaphores: dict[str, asyncio.Semaphore],
     client: httpx.AsyncClient,
     company_name: str,
+    adapters: list[tuple],
 ) -> list[dict]:
     hits = []
-    for adapter_key, probe_fn, variant_fn in ADAPTERS:
+    for adapter_key, probe_fn, variant_fn in adapters:
         for slug in variant_fn(company_name):
             async with semaphores[adapter_key]:
                 await _sleep_jitter()
@@ -208,13 +208,13 @@ async def probe_company(
     return hits
 
 
-async def run(seed_names: list[str], concurrency: int) -> list[dict]:
-    semaphores = {key: asyncio.Semaphore(concurrency) for key, _, _ in ADAPTERS}
+async def run(seed_names: list[str], concurrency: int, adapters: list[tuple]) -> list[dict]:
+    semaphores = {key: asyncio.Semaphore(concurrency) for key, _, _ in adapters}
     headers = {"User-Agent": USER_AGENT}
     all_hits: list[dict] = []
 
     async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=headers) as client:
-        tasks = [probe_company(semaphores, client, name) for name in seed_names]
+        tasks = [probe_company(semaphores, client, name, adapters) for name in seed_names]
         for i, task in enumerate(asyncio.as_completed(tasks), 1):
             hits = await task
             all_hits.extend(hits)
@@ -233,15 +233,26 @@ def main():
     parser.add_argument("--mode", choices=["append", "regenerate"], default="append")
     parser.add_argument("--concurrency", type=int, default=DEFAULT_CONCURRENCY)
     parser.add_argument("--limit", type=int, default=None, help="only probe the first N seed names")
+    parser.add_argument(
+        "--adapters",
+        default=None,
+        help="comma-separated subset of adapter keys to probe (default: all). "
+        f"Choices: {', '.join(key for key, _, _ in ADAPTERS)}",
+    )
     args = parser.parse_args()
+
+    adapters = ADAPTERS
+    if args.adapters:
+        wanted = {a.strip() for a in args.adapters.split(",")}
+        adapters = [a for a in ADAPTERS if a[0] in wanted]
 
     seed_path = Path(args.seed)
     names = [line.strip() for line in seed_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     if args.limit:
         names = names[: args.limit]
 
-    print(f"Probing {len(names)} seed companies across {len(ADAPTERS)} adapters...")
-    hits = asyncio.run(run(names, args.concurrency))
+    print(f"Probing {len(names)} seed companies across {len(adapters)} adapter(s): {', '.join(a[0] for a in adapters)}")
+    hits = asyncio.run(run(names, args.concurrency, adapters))
 
     output_path = Path(args.output)
     existing: list[dict] = []

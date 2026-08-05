@@ -853,5 +853,1335 @@
     "adapter": "smartrecruiters",
     "slug": "KaiaHealth",
     "name": "Kaia Health"
+  },
+  {
+    "adapter": "lever",
+    "slug": "vivenu",
+    "name": "vivenu"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "charles",
+    "name": "Charles"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Trigo",
+    "name": "Trigo"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "think-cell",
+    "name": "Think-cell"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "hive",
+    "name": "Hive"
+  },
+  {
+    "adapter": "lever",
+    "slug": "hive",
+    "name": "Hive"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Jobpal",
+    "name": "JobPal"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Arago",
+    "name": "Arago"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "instagrid",
+    "name": "Instagrid"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "speexx",
+    "name": "Speexx"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "anydesk",
+    "name": "AnyDesk"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "sparetech",
+    "name": "SPARETECH"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "idnow",
+    "name": "IDnow"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "companisto",
+    "name": "Companisto"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "ginmon",
+    "name": "Ginmon"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "gyde",
+    "name": "gyde"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Payever",
+    "name": "Payever"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "WittensteinGroup",
+    "name": "Wittenstein"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Bundesdruckerei",
+    "name": "Bundesdruckerei"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "aedifion",
+    "name": "Aedifion"
+  },
+  {
+    "adapter": "workable",
+    "slug": "alcemy",
+    "name": "alcemy"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "inovex",
+    "name": "inovex"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "formic",
+    "name": "Formic"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "HaufeGroup",
+    "name": "Haufe"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Brainlab",
+    "name": "Brainlab"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "sofatutor",
+    "name": "Sofatutor"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "WalterGroup",
+    "name": "Walter AG"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "wunderflats",
+    "name": "Wunderflats"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "propstack",
+    "name": "Propstack"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Omio",
+    "name": "Omio"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "immoscout24",
+    "name": "ImmoScout24"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "roboyo",
+    "name": "Roboyo"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Continental",
+    "name": "Continental"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Gerresheimer",
+    "name": "Gerresheimer"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "blacklane",
+    "name": "Blacklane"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Filancore",
+    "name": "filancore"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "spryker",
+    "name": "Spryker"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "emnify",
+    "name": "emnify"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "talonone",
+    "name": "Talon.One"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "adjust",
+    "name": "Adjust"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Devexperts",
+    "name": "Devexperts"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "jungheinrich",
+    "name": "Jungheinrich AG"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "kinexon",
+    "name": "KINEXON"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "Claimsforce",
+    "name": "Claimsforce"
+  },
+  {
+    "adapter": "lever",
+    "slug": "vida",
+    "name": "VIDA"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "nexus",
+    "name": "Nexus AG"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "appinio",
+    "name": "Appinio"
+  },
+  {
+    "adapter": "lever",
+    "slug": "vtg",
+    "name": "VTG"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "buynomics",
+    "name": "Buynomics"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "scout24",
+    "name": "Scout24"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "gridscale",
+    "name": "gridscale"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "speekly",
+    "name": "Speekly"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "imc",
+    "name": "IMC"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "tomorrow",
+    "name": "Tomorrow GmbH"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "phoenixcontact",
+    "name": "Phoenix Contact"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "urbansportsclub",
+    "name": "Urban Sports Club"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "avimedical",
+    "name": "Avi Medical"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "airup",
+    "name": "Air Up"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "alpineeagle",
+    "name": "Alpine Eagle"
+  },
+  {
+    "adapter": "greenhouse",
+    "slug": "freenow",
+    "name": "FREE NOW"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "NetzschGroup",
+    "name": "Netzsch Group"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "kompassgroup",
+    "name": "Kompass Group"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "RedcarePharmacy",
+    "name": "Redcare Pharmacy"
+  },
+  {
+    "adapter": "recruitee",
+    "slug": "siemensenergy",
+    "name": "Siemens Energy"
+  },
+  {
+    "adapter": "smartrecruiters",
+    "slug": "SpringerNature",
+    "name": "Springer Nature"
+  },
+  {
+    "adapter": "personio",
+    "slug": "feldwerke",
+    "name": "Feldwerke"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kraftblock",
+    "name": "Kraftblock"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kraftling",
+    "name": "Kraftling"
+  },
+  {
+    "adapter": "personio",
+    "slug": "fever",
+    "name": "Fever"
+  },
+  {
+    "adapter": "personio",
+    "slug": "timify",
+    "name": "TIMIFY"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kraftwerk",
+    "name": "kraftwerk"
+  },
+  {
+    "adapter": "personio",
+    "slug": "finanzguru",
+    "name": "Finanzguru"
+  },
+  {
+    "adapter": "personio",
+    "slug": "bounti",
+    "name": "Bounti"
+  },
+  {
+    "adapter": "personio",
+    "slug": "payhawk",
+    "name": "Payhawk"
+  },
+  {
+    "adapter": "personio",
+    "slug": "lytra",
+    "name": "lytra"
+  },
+  {
+    "adapter": "personio",
+    "slug": "finlex",
+    "name": "Finlex"
+  },
+  {
+    "adapter": "personio",
+    "slug": "twaice",
+    "name": "TWAICE"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tado",
+    "name": "Tado"
+  },
+  {
+    "adapter": "personio",
+    "slug": "brighter-ai",
+    "name": "Brighter AI"
+  },
+  {
+    "adapter": "personio",
+    "slug": "finoa",
+    "name": "Finoa"
+  },
+  {
+    "adapter": "personio",
+    "slug": "mogenius",
+    "name": "mogenius"
+  },
+  {
+    "adapter": "personio",
+    "slug": "peeriot",
+    "name": "Peeriot"
+  },
+  {
+    "adapter": "personio",
+    "slug": "penta",
+    "name": "Penta"
+  },
+  {
+    "adapter": "personio",
+    "slug": "lanch",
+    "name": "Lanch"
+  },
+  {
+    "adapter": "personio",
+    "slug": "buena",
+    "name": "Buena"
+  },
+  {
+    "adapter": "personio",
+    "slug": "perfood",
+    "name": "Perfood"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tandem",
+    "name": "Tandem"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tangany",
+    "name": "Tangany"
+  },
+  {
+    "adapter": "personio",
+    "slug": "personio",
+    "name": "Personio"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tanso",
+    "name": "Tanso"
+  },
+  {
+    "adapter": "personio",
+    "slug": "bullfinch",
+    "name": "Bullfinch"
+  },
+  {
+    "adapter": "personio",
+    "slug": "bunch",
+    "name": "Bunch"
+  },
+  {
+    "adapter": "personio",
+    "slug": "burnhard",
+    "name": "Burnhard"
+  },
+  {
+    "adapter": "personio",
+    "slug": "portagon",
+    "name": "portagon"
+  },
+  {
+    "adapter": "personio",
+    "slug": "temedica",
+    "name": "Temedica"
+  },
+  {
+    "adapter": "personio",
+    "slug": "phrase",
+    "name": "Phrase"
+  },
+  {
+    "adapter": "personio",
+    "slug": "recup",
+    "name": "reCup"
+  },
+  {
+    "adapter": "personio",
+    "slug": "retorio",
+    "name": "retorio"
+  },
+  {
+    "adapter": "personio",
+    "slug": "revel8",
+    "name": "revel8"
+  },
+  {
+    "adapter": "personio",
+    "slug": "flowfox",
+    "name": "Flowfox"
+  },
+  {
+    "adapter": "personio",
+    "slug": "floy",
+    "name": "Floy"
+  },
+  {
+    "adapter": "personio",
+    "slug": "simpleclub",
+    "name": "simpleclub"
+  },
+  {
+    "adapter": "personio",
+    "slug": "planted",
+    "name": "Planted"
+  },
+  {
+    "adapter": "personio",
+    "slug": "thermondo",
+    "name": "thermondo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tonies",
+    "name": "tonies"
+  },
+  {
+    "adapter": "personio",
+    "slug": "topi",
+    "name": "topi"
+  },
+  {
+    "adapter": "personio",
+    "slug": "tozero",
+    "name": "tozero"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cabify",
+    "name": "Cabify"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cambrium",
+    "name": "Cambrium"
+  },
+  {
+    "adapter": "personio",
+    "slug": "framer",
+    "name": "Framer"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wealthpilot",
+    "name": "wealthpilot"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cargonexx",
+    "name": "Cargonexx"
+  },
+  {
+    "adapter": "personio",
+    "slug": "proglove",
+    "name": "ProGlove"
+  },
+  {
+    "adapter": "personio",
+    "slug": "zvoove",
+    "name": "zvoove"
+  },
+  {
+    "adapter": "personio",
+    "slug": "freshflow",
+    "name": "Freshflow"
+  },
+  {
+    "adapter": "personio",
+    "slug": "casavi",
+    "name": "Casavi"
+  },
+  {
+    "adapter": "personio",
+    "slug": "friendsurance",
+    "name": "Friendsurance"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cashlink",
+    "name": "Cashlink"
+  },
+  {
+    "adapter": "personio",
+    "slug": "project-eaden",
+    "name": "Project Eaden"
+  },
+  {
+    "adapter": "personio",
+    "slug": "catalym",
+    "name": "CatalYm"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cello",
+    "name": "Cello"
+  },
+  {
+    "adapter": "personio",
+    "slug": "celus",
+    "name": "Celus"
+  },
+  {
+    "adapter": "personio",
+    "slug": "certivity",
+    "name": "Certivity"
+  },
+  {
+    "adapter": "personio",
+    "slug": "channable",
+    "name": "Channable"
+  },
+  {
+    "adapter": "personio",
+    "slug": "qualifyze",
+    "name": "Qualifyze"
+  },
+  {
+    "adapter": "personio",
+    "slug": "quantica",
+    "name": "Quantica"
+  },
+  {
+    "adapter": "personio",
+    "slug": "metycle",
+    "name": "METYCLE"
+  },
+  {
+    "adapter": "personio",
+    "slug": "chrono24",
+    "name": "Chrono24"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cinemo",
+    "name": "Cinemo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "circus",
+    "name": "Circus"
+  },
+  {
+    "adapter": "personio",
+    "slug": "magazino",
+    "name": "Magazino"
+  },
+  {
+    "adapter": "personio",
+    "slug": "clark",
+    "name": "Clark"
+  },
+  {
+    "adapter": "personio",
+    "slug": "rail-flow",
+    "name": "Rail-Flow"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ucaneo",
+    "name": "Ucaneo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ratepay",
+    "name": "Ratepay"
+  },
+  {
+    "adapter": "personio",
+    "slug": "getquin",
+    "name": "Getquin"
+  },
+  {
+    "adapter": "personio",
+    "slug": "unosecur",
+    "name": "Unosecur"
+  },
+  {
+    "adapter": "personio",
+    "slug": "glassdollar",
+    "name": "Glassdollar"
+  },
+  {
+    "adapter": "personio",
+    "slug": "userlane",
+    "name": "Userlane"
+  },
+  {
+    "adapter": "personio",
+    "slug": "communardo",
+    "name": "Communardo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "remira",
+    "name": "Remira"
+  },
+  {
+    "adapter": "personio",
+    "slug": "vytal",
+    "name": "VYTAL"
+  },
+  {
+    "adapter": "personio",
+    "slug": "mentimeter",
+    "name": "Mentimeter"
+  },
+  {
+    "adapter": "personio",
+    "slug": "contabo",
+    "name": "Contabo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "rencore",
+    "name": "Rencore"
+  },
+  {
+    "adapter": "personio",
+    "slug": "mercanis",
+    "name": "Mercanis"
+  },
+  {
+    "adapter": "personio",
+    "slug": "metalshub",
+    "name": "Metalshub"
+  },
+  {
+    "adapter": "personio",
+    "slug": "reverion",
+    "name": "Reverion"
+  },
+  {
+    "adapter": "personio",
+    "slug": "metergrid",
+    "name": "Metergrid"
+  },
+  {
+    "adapter": "personio",
+    "slug": "verivox",
+    "name": "Verivox"
+  },
+  {
+    "adapter": "personio",
+    "slug": "miles-mobility",
+    "name": "Miles Mobility"
+  },
+  {
+    "adapter": "personio",
+    "slug": "visiolab",
+    "name": "VisioLab"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cyclize",
+    "name": "Cyclize"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cyclr",
+    "name": "Cyclr"
+  },
+  {
+    "adapter": "personio",
+    "slug": "vivid",
+    "name": "Vivid"
+  },
+  {
+    "adapter": "personio",
+    "slug": "vivira",
+    "name": "Vivira"
+  },
+  {
+    "adapter": "personio",
+    "slug": "didit",
+    "name": "DIDIT"
+  },
+  {
+    "adapter": "personio",
+    "slug": "voize",
+    "name": "Voize"
+  },
+  {
+    "adapter": "personio",
+    "slug": "advastore",
+    "name": "Advastore"
+  },
+  {
+    "adapter": "personio",
+    "slug": "starface",
+    "name": "STARFACE"
+  },
+  {
+    "adapter": "personio",
+    "slug": "adverity",
+    "name": "Adverity"
+  },
+  {
+    "adapter": "personio",
+    "slug": "voltstorage",
+    "name": "VoltStorage"
+  },
+  {
+    "adapter": "personio",
+    "slug": "stark",
+    "name": "STARK"
+  },
+  {
+    "adapter": "personio",
+    "slug": "voltfang",
+    "name": "Voltfang"
+  },
+  {
+    "adapter": "personio",
+    "slug": "daedalus",
+    "name": "Daedalus"
+  },
+  {
+    "adapter": "personio",
+    "slug": "1nce",
+    "name": "1NCE"
+  },
+  {
+    "adapter": "personio",
+    "slug": "hepster",
+    "name": "Hepster"
+  },
+  {
+    "adapter": "personio",
+    "slug": "21x",
+    "name": "21X"
+  },
+  {
+    "adapter": "personio",
+    "slug": "samson",
+    "name": "Samson AG"
+  },
+  {
+    "adapter": "personio",
+    "slug": "4screen",
+    "name": "4screen"
+  },
+  {
+    "adapter": "personio",
+    "slug": "7learnings",
+    "name": "7Learnings"
+  },
+  {
+    "adapter": "personio",
+    "slug": "schaeffler",
+    "name": "Schaeffler AG"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wandelbots",
+    "name": "Wandelbots"
+  },
+  {
+    "adapter": "personio",
+    "slug": "airmo",
+    "name": "AIRMO"
+  },
+  {
+    "adapter": "personio",
+    "slug": "holidu",
+    "name": "Holidu"
+  },
+  {
+    "adapter": "personio",
+    "slug": "amsilk",
+    "name": "AMSilk"
+  },
+  {
+    "adapter": "personio",
+    "slug": "artada",
+    "name": "ARTADA"
+  },
+  {
+    "adapter": "personio",
+    "slug": "webasto",
+    "name": "Webasto"
+  },
+  {
+    "adapter": "personio",
+    "slug": "alasco",
+    "name": "Alasco"
+  },
+  {
+    "adapter": "personio",
+    "slug": "aware7",
+    "name": "AWARE7"
+  },
+  {
+    "adapter": "personio",
+    "slug": "hornetsecurity",
+    "name": "Hornetsecurity"
+  },
+  {
+    "adapter": "personio",
+    "slug": "dermanostic",
+    "name": "Dermanostic"
+  },
+  {
+    "adapter": "personio",
+    "slug": "securepoint",
+    "name": "Securepoint"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wieland-group",
+    "name": "Wieland Group"
+  },
+  {
+    "adapter": "personio",
+    "slug": "hypofriend",
+    "name": "Hypofriend"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wingcopter",
+    "name": "Wingcopter"
+  },
+  {
+    "adapter": "personio",
+    "slug": "semron",
+    "name": "Semron"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wolt",
+    "name": "Wolt"
+  },
+  {
+    "adapter": "personio",
+    "slug": "mynaric",
+    "name": "Mynaric"
+  },
+  {
+    "adapter": "personio",
+    "slug": "apheris",
+    "name": "Apheris"
+  },
+  {
+    "adapter": "personio",
+    "slug": "doctorly",
+    "name": "Doctorly"
+  },
+  {
+    "adapter": "personio",
+    "slug": "docuware",
+    "name": "DocuWare"
+  },
+  {
+    "adapter": "personio",
+    "slug": "doinstruct",
+    "name": "Doinstruct"
+  },
+  {
+    "adapter": "personio",
+    "slug": "wunderflats",
+    "name": "Wunderflats"
+  },
+  {
+    "adapter": "personio",
+    "slug": "architrave",
+    "name": "Architrave"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ariadne",
+    "name": "Ariadne"
+  },
+  {
+    "adapter": "personio",
+    "slug": "shyftplan",
+    "name": "Shyftplan"
+  },
+  {
+    "adapter": "personio",
+    "slug": "assemblio",
+    "name": "Assemblio"
+  },
+  {
+    "adapter": "personio",
+    "slug": "xpate",
+    "name": "Xpate"
+  },
+  {
+    "adapter": "personio",
+    "slug": "neon",
+    "name": "Neon"
+  },
+  {
+    "adapter": "personio",
+    "slug": "simpleshow",
+    "name": "Simpleshow"
+  },
+  {
+    "adapter": "personio",
+    "slug": "silverflow",
+    "name": "Silverflow"
+  },
+  {
+    "adapter": "personio",
+    "slug": "neura-robotics",
+    "name": "Neura Robotics"
+  },
+  {
+    "adapter": "personio",
+    "slug": "instaffo",
+    "name": "Instaffo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "egym",
+    "name": "EGYM"
+  },
+  {
+    "adapter": "personio",
+    "slug": "skoove",
+    "name": "Skoove"
+  },
+  {
+    "adapter": "personio",
+    "slug": "instagrid",
+    "name": "Instagrid"
+  },
+  {
+    "adapter": "personio",
+    "slug": "smava",
+    "name": "Smava"
+  },
+  {
+    "adapter": "personio",
+    "slug": "evanium-healthcare",
+    "name": "EVANIUM Healthcare"
+  },
+  {
+    "adapter": "personio",
+    "slug": "itemis",
+    "name": "Itemis"
+  },
+  {
+    "adapter": "personio",
+    "slug": "nitrado",
+    "name": "Nitrado"
+  },
+  {
+    "adapter": "personio",
+    "slug": "jumingo",
+    "name": "JUMiNGO"
+  },
+  {
+    "adapter": "personio",
+    "slug": "solactive",
+    "name": "Solactive"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ecog",
+    "name": "EcoG"
+  },
+  {
+    "adapter": "personio",
+    "slug": "nordantech",
+    "name": "Nordantech"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ecosia",
+    "name": "Ecosia"
+  },
+  {
+    "adapter": "personio",
+    "slug": "jedox",
+    "name": "Jedox"
+  },
+  {
+    "adapter": "personio",
+    "slug": "edgeless-systems",
+    "name": "Edgeless Systems"
+  },
+  {
+    "adapter": "personio",
+    "slug": "edurino",
+    "name": "Edurino"
+  },
+  {
+    "adapter": "personio",
+    "slug": "jobleads",
+    "name": "JobLeads"
+  },
+  {
+    "adapter": "personio",
+    "slug": "banxware",
+    "name": "Banxware"
+  },
+  {
+    "adapter": "personio",
+    "slug": "speexx",
+    "name": "Speexx"
+  },
+  {
+    "adapter": "personio",
+    "slug": "elephant-company",
+    "name": "Elephant Company"
+  },
+  {
+    "adapter": "personio",
+    "slug": "anvajo",
+    "name": "anvajo"
+  },
+  {
+    "adapter": "personio",
+    "slug": "spinncloud",
+    "name": "SpiNNcloud"
+  },
+  {
+    "adapter": "personio",
+    "slug": "spotahome",
+    "name": "Spotahome"
+  },
+  {
+    "adapter": "personio",
+    "slug": "oniq",
+    "name": "ONIQ"
+  },
+  {
+    "adapter": "personio",
+    "slug": "bettermarks",
+    "name": "bettermarks"
+  },
+  {
+    "adapter": "personio",
+    "slug": "knime",
+    "name": "KNIME"
+  },
+  {
+    "adapter": "personio",
+    "slug": "cerascreen",
+    "name": "cerascreen"
+  },
+  {
+    "adapter": "personio",
+    "slug": "entrix",
+    "name": "Entrix"
+  },
+  {
+    "adapter": "personio",
+    "slug": "entyre",
+    "name": "Entyre"
+  },
+  {
+    "adapter": "personio",
+    "slug": "comforte",
+    "name": "comforte"
+  },
+  {
+    "adapter": "personio",
+    "slug": "berlin-brands-group",
+    "name": "Berlin Brands Group"
+  },
+  {
+    "adapter": "personio",
+    "slug": "one-data",
+    "name": "One Data"
+  },
+  {
+    "adapter": "personio",
+    "slug": "constellr",
+    "name": "constellr"
+  },
+  {
+    "adapter": "personio",
+    "slug": "driveblocks",
+    "name": "driveblocks"
+  },
+  {
+    "adapter": "personio",
+    "slug": "orderbird",
+    "name": "Orderbird"
+  },
+  {
+    "adapter": "personio",
+    "slug": "everstox",
+    "name": "Everstox"
+  },
+  {
+    "adapter": "personio",
+    "slug": "storytel",
+    "name": "Storytel"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ororatech",
+    "name": "OroraTech"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kertos",
+    "name": "Kertos"
+  },
+  {
+    "adapter": "personio",
+    "slug": "bigpoint",
+    "name": "Bigpoint"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kipu-quantum",
+    "name": "Kipu Quantum"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ottonova",
+    "name": "Ottonova"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kiutra",
+    "name": "Kiutra"
+  },
+  {
+    "adapter": "personio",
+    "slug": "foodforecast",
+    "name": "foodforecast"
+  },
+  {
+    "adapter": "personio",
+    "slug": "kiwigrid",
+    "name": "Kiwigrid"
+  },
+  {
+    "adapter": "personio",
+    "slug": "gridx",
+    "name": "gridX"
+  },
+  {
+    "adapter": "personio",
+    "slug": "superlist",
+    "name": "Superlist"
+  },
+  {
+    "adapter": "personio",
+    "slug": "blickfeld",
+    "name": "Blickfeld"
+  },
+  {
+    "adapter": "personio",
+    "slug": "fact-finder",
+    "name": "Fact Finder"
+  },
+  {
+    "adapter": "personio",
+    "slug": "blockbrain",
+    "name": "Blockbrain"
+  },
+  {
+    "adapter": "personio",
+    "slug": "pactos",
+    "name": "Pactos"
+  },
+  {
+    "adapter": "personio",
+    "slug": "fashion-cloud",
+    "name": "Fashion Cloud"
+  },
+  {
+    "adapter": "personio",
+    "slug": "feather",
+    "name": "Feather"
+  },
+  {
+    "adapter": "personio",
+    "slug": "legalhero",
+    "name": "Legal Hero"
+  },
+  {
+    "adapter": "personio",
+    "slug": "planetafoods",
+    "name": "Planet A Foods"
+  },
+  {
+    "adapter": "personio",
+    "slug": "urbansportsclub",
+    "name": "Urban Sports Club"
+  },
+  {
+    "adapter": "personio",
+    "slug": "customeralliance",
+    "name": "Customer Alliance"
+  },
+  {
+    "adapter": "personio",
+    "slug": "scalablecapital",
+    "name": "Scalable Capital"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ailylabs",
+    "name": "Aily Labs"
+  },
+  {
+    "adapter": "personio",
+    "slug": "xolife",
+    "name": "XO Life"
+  },
+  {
+    "adapter": "personio",
+    "slug": "avimedical",
+    "name": "Avi Medical"
+  },
+  {
+    "adapter": "personio",
+    "slug": "ochairsystems",
+    "name": "O.C. Hairsystems"
+  },
+  {
+    "adapter": "personio",
+    "slug": "okapiorbits",
+    "name": "OKAPI Orbits"
   }
 ]

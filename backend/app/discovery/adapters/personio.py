@@ -1,9 +1,17 @@
+import xml.etree.ElementTree as ET
+
 import httpx
 
 from app.discovery.base import JobListing, JobSourceAdapter
 from app.discovery.location import matches_countries, matches_roles, resolve_country, resolve_remote_option
 
-BASE_URL = "https://api.personio.de/v1/recruiting/positions"
+EMPLOYMENT_TYPE_MAP = {
+    "permanent": "full_time",
+    "temporary": "contract",
+    "intern": "internship",
+    "trainee": "internship",
+    "freelance": "freelance",
+}
 
 
 class PersonioAdapter(JobSourceAdapter):
@@ -15,39 +23,46 @@ class PersonioAdapter(JobSourceAdapter):
         target_countries: list[str],
         target_roles: list[str],
     ) -> list[JobListing]:
-        # Personio public job widget API uses company subdomain
-        url = f"https://{company_slug}.jobs.personio.de/api/v1/jobs"
+        # Personio retired its /api/v1/jobs JSON endpoint (now 404s, replaced by
+        # a client-rendered SPA); the legacy /xml feed (their "workzag-jobs"
+        # format, from the Workzag product the recruiting board was built on)
+        # is still live and is the only public no-auth source left.
+        url = f"https://{company_slug}.jobs.personio.de/xml"
         try:
             async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.get(url, headers={"Accept": "application/json"})
+                resp = await client.get(url)
                 if resp.status_code != 200:
                     return []
-                jobs = resp.json()
+                root = ET.fromstring(resp.text)
         except Exception:
             return []
 
-        if isinstance(jobs, dict):
-            jobs = jobs.get("data", jobs.get("jobs", []))
-
         results = []
-        for job in jobs:
-            title = job.get("name", "") or job.get("title", "")
+        for position in root.findall("position"):
+            title = (position.findtext("name") or "").strip()
             if not matches_roles(title, target_roles):
                 continue
 
-            location_raw = (
-                job.get("office")
-                or job.get("location")
-                or job.get("department")
-            )
-            if isinstance(location_raw, dict):
-                location_raw = location_raw.get("name") or location_raw.get("office")
+            location_raw = (position.findtext("office") or "").strip() or None
+            country_code = resolve_country(location_raw)
+            remote_option = resolve_remote_option(location_raw)
 
-            country_code = resolve_country(str(location_raw) if location_raw else None)
             if not matches_countries(country_code, target_countries):
-                continue
+                if remote_option != "remote":
+                    continue
+                if country_code and not matches_countries(country_code, target_countries):
+                    continue
 
-            job_id = str(job.get("id", ""))
+            description = "\n\n".join(
+                f"{(jd.findtext('name') or '').strip()}\n{(jd.findtext('value') or '').strip()}"
+                for jd in position.findall("jobDescriptions/jobDescription")
+            ).strip() or None
+
+            employment_type = EMPLOYMENT_TYPE_MAP.get((position.findtext("employmentType") or "").strip())
+            if employment_type == "full_time" and (position.findtext("schedule") or "").strip() == "part-time":
+                employment_type = "part_time"
+
+            job_id = (position.findtext("id") or "").strip()
             results.append(
                 JobListing(
                     source=self.source_name,
@@ -55,11 +70,12 @@ class PersonioAdapter(JobSourceAdapter):
                     title=title,
                     company_name=company_slug,
                     application_url=f"https://{company_slug}.jobs.personio.de/job/{job_id}",
-                    location_raw=str(location_raw) if location_raw else None,
+                    location_raw=location_raw,
                     country_code=country_code,
-                    description=job.get("description"),
-                    remote_option=resolve_remote_option(str(location_raw) if location_raw else None),
-                    raw_data=job,
+                    description=description,
+                    employment_type=employment_type,
+                    remote_option=remote_option,
+                    raw_data={child.tag: child.text for child in position if child.tag != "jobDescriptions"},
                 )
             )
         return results
