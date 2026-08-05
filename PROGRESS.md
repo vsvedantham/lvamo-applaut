@@ -8,34 +8,37 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Keep scaling `backend/app/discovery/data/company_boards.json` — now at 437 companies, single-country density still below target.**
+**Keep scaling `backend/app/discovery/data/company_boards.json` — now at 461 companies, single-country density still below target.**
 
-A prior session found and fixed a dead Personio adapter (its JSON endpoint
-had been retired; switched to their legacy XML feed), which unlocked 201 new
-companies for free and took the board from 171 → 437. Verified via a clean
-Germany-only test: raw job count went 18 → 34, no errors — real progress,
-but the growth is **sub-linear** (companies grew 2.4x, jobs grew only 1.9x).
-Re-extrapolating from three data points now (169→14, 185→18, 437→34) suggests
-hitting the 100-200 raw-result target needs closer to **~1,800-2,000
-companies**, not the 800-1,500 estimated earlier from a smaller sample. See
-**"Discovery Scaling — Phase 1"** below for full history.
+**Important finding from this session: quantity alone stopped moving the
+needle.** A prior session's Personio adapter fix unlocked 266 companies for
+free (171→437) and drove Germany raw jobs 18→34 — a real win, because that
+batch happened to include large engineering-heavy German corporates. This
+session's follow-up batch added 26 more companies (437→461) sourced from VC
+portfolio pages, but Germany raw jobs stayed **flat at 33-34**, because that
+batch skewed toward small/early-stage startups with few or no open data-
+engineering reqs. **The lesson: prioritize company selection by "likely to
+have active data-engineering hiring" (scale-ups past Series B, data-heavy
+sectors — fintech, e-commerce, logistics, adtech/martech, mobility — and
+large corporates with real data/engineering orgs) over sheer volume of
+startup names.** See **"Discovery Scaling — Phase 1"** below for full
+history and the honest-numbers table.
 
 Quick start for next session:
 1. `cd C:\Projects\lvamo-applaut && docker compose up -d postgres backend` (rebuild if images were pruned)
-2. Source more real company names — prefer web search against startup
-   directories / "companies using Greenhouse/Lever" style lists over
-   guessing from memory (memory-guessed batches hit ~29%; a properly sourced
-   German-startup-directory batch still only hit ~14% because many funded
-   startups are too early-stage to have a public ATS board — expect to need
-   to source many more candidate names than the final company count).
+2. Source companies from data-heavy sectors specifically, not just any funded
+   startup — e.g. German scale-ups in fintech/e-commerce/logistics/adtech,
+   and large corporates' tech/data subsidiaries. Web search / VC portfolio
+   pages > guessing from memory (memory was largely exhausted this session —
+   790 memory-guessed candidates yielded only 144 not already tried).
 3. `docker compose exec backend python scripts/discover_company_slugs.py --seed <new_seed_file>`
-   — use `--adapters personio` to cheaply re-probe old/other seed lists against
-   Personio now that its adapter works; it was silently finding 0 hits before.
 4. **`docker compose restart backend`** after any `company_boards.json` change — uvicorn's
    `--reload` only watches `.py` files, not the JSON data file, so the running
    server keeps a stale in-memory company list until restarted. Bit us twice
    this session — don't skip it before re-verifying counts.
-5. Re-verify with a clean single-country test (see "How to verify" below).
+5. Re-verify with a clean single-country test (see "How to verify" below) —
+   and pay attention to whether raw job count actually moves, not just
+   company count.
 
 ---
 
@@ -69,7 +72,7 @@ Quick start for next session:
 
 ### Discovery Engine
 - Adapter pattern — **7 adapters implemented: Greenhouse, Lever, Ashby, Personio, Workable, SmartRecruiters, Recruitee** (all public/no-auth JSON APIs — no browser scraping). Personio's endpoint had gone dead (retired JSON API) and was fixed this session — see "Discovery Scaling" below.
-- Company list: `backend/app/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/discovery/data/company_boards.json` (currently **437 companies total**, up from 18 at the start of the scaling effort — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
+- Company list: `backend/app/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/discovery/data/company_boards.json` (currently **461 companies total**, up from 18 at the start of the scaling effort — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
 - Offline company-slug discovery script: `backend/scripts/discover_company_slugs.py` — probes a seed list of company names against all 7 adapters' raw endpoints, keeps only slugs that resolve to a real non-empty job board, appends to `company_boards.json`. Seed files: `backend/scripts/seed_companies.txt` (general EU batch) and `backend/scripts/seed_companies_de.txt` (sourced from real German startup directories).
 - Role matching (`app/discovery/location.py`'s `matches_roles`) now uses the same synonym expansion as scoring (shared table: `backend/app/core/role_synonyms.py`) — a title like "Analytics Engineer" is now fetched for a "Data Engineer" search, not silently dropped before scoring ever sees it.
 - Concurrency-capped: `DISCOVERY_CONCURRENCY` (default 20, env-configurable) semaphore in `engine.py` so a large `COMPANY_BOARDS` doesn't burst-hammer any single ATS host.
@@ -177,6 +180,39 @@ scoring just under threshold. Small sample; not a red flag on its own.
 this as a rough guide, not a hard target — re-extrapolate again after the
 next batch.
 
+### Session update — VC-portfolio batch (committed `90eb89b`) + a strategic finding
+
+Kept sourcing toward the ~2,000 target, Germany-only per user request.
+Memory-guessing hit a wall fast: generated ~790 candidate names from
+memory across fintech/insurtech/healthtech/climate/mobility categories,
+deduped against all prior seed files (2,290 already-tried names) — only
+**144 were genuinely new**. Most of what's memorable from training data was
+already sourced last session.
+
+Switched to fetching real VC portfolio pages (Earlybird, HTGF, HV Capital,
+Project A) via WebFetch — a different, less memory-biased source. Combined
+batch: 280 deduped candidates → **26 new companies** (9.3% hit rate).
+Board: 437 → **461**.
+
+**Re-verified — and this is the important part:** Germany-only raw jobs came
+back essentially flat: **33 raw / 2 good / 20 near-miss**, vs. 34/2/20
+before this batch. Adding 24 companies (+5.5%) moved raw jobs by 0.
+
+**Strategic takeaway:** company *count* alone is not what's driving raw job
+volume — company *type* is. The VC-portfolio batch skewed toward
+early/seed-stage startups, which typically have 0-1 open reqs at any given
+time and often none in data engineering specifically. The Personio batch
+(prior session update, +266 companies, 18→34 raw) worked because it happened
+to include large, engineering-heavy German corporates (BASF, Bosch, Siemens,
+Continental, Deutsche Bank, etc.) with sustained hiring pipelines — not
+because it was large. **Going forward, prioritize company selection by
+"likely to have active data-engineering hiring" (scale-ups past Series B,
+data-heavy sectors — fintech, e-commerce, logistics, adtech/martech, mobility
+— and large corporates with real data/engineering orgs) over sheer volume of
+startup names.** The ~1,800-2,000 extrapolation above assumes company mix
+stays constant; it likely overstates what's needed if sourcing gets more
+targeted, and understates it if sourcing stays skewed toward small startups.
+
 ### What was built (all verified against live data via local docker-compose)
 1. Closed a gap where `matches_roles` (discovery-time filter) only did literal
    substring matching while the scorer already had synonym expansion — jobs
@@ -254,7 +290,7 @@ mid-session).
 
 ## Known Issues / Deferred Work
 
-- **Discovery company density** — see "Discovery Scaling — Phase 1" above. Single-country searches now look like they need ~1,800-2,000 companies to hit the 100-200 raw-results target; currently at 437.
+- **Discovery company density** — see "Discovery Scaling — Phase 1" above. Raw job count has plateaued at ~33-34 despite company count growing 437→461; company *type* (data-engineering-heavy sectors, scale-ups vs. early-stage) matters more than raw count now. Currently at 461 companies.
 - **Individual page mobile polish** — Layout is now responsive, but page-level content (cards, grids, tables) may still need padding/sizing tweaks on small screens. Not yet reviewed page-by-page.
 - **AI scoring** — implemented but intentionally gated off in the UI (disabled dropdown option) pending the subscription/premium model. Not user-reachable right now.
 - **Workday, LinkedIn, StepStone, Indeed, Xing, Teamtailor** — not yet built. Teamtailor investigated and rejected for the current adapter pattern (requires a per-company API key, doesn't fit the public-JSON model). Workday investigated and deferred ("Phase 1.5") — real endpoint exists but needs a heavier per-company probing strategy (subdomain + datacenter number + tenant/site, not a single guessable slug).
@@ -291,7 +327,7 @@ mid-session).
 
 ## What's Next (Suggested)
 
-- **Keep scaling company_boards.json toward ~1,800-2,000 companies** (see banner at top — primary task for next session)
+- **Keep scaling company_boards.json, targeting data-engineering-heavy sectors specifically** — not just any company (see banner at top — primary task for next session)
 - Page-by-page mobile polish (Opportunities, Resume pages most likely to need it)
 - Subscription/premium model to unlock AI scoring in the UI
 - Playwright-based application assist (prefill ATS forms)
