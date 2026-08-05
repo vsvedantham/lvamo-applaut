@@ -8,12 +8,17 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Scale `backend/app/discovery/data/company_boards.json` from ~185 companies to 800-1,500+ companies.**
+**Keep scaling `backend/app/discovery/data/company_boards.json` — now at 437 companies, single-country density still below target.**
 
-Everything needed to do this already exists and is proven working — this is a
-data-sourcing/curation task, not an engineering task. See **"Discovery Scaling
-— Phase 1"** below for full context, the exact numbers that justify this
-target, and how to run the tooling.
+A prior session found and fixed a dead Personio adapter (its JSON endpoint
+had been retired; switched to their legacy XML feed), which unlocked 201 new
+companies for free and took the board from 171 → 437. Verified via a clean
+Germany-only test: raw job count went 18 → 34, no errors — real progress,
+but the growth is **sub-linear** (companies grew 2.4x, jobs grew only 1.9x).
+Re-extrapolating from three data points now (169→14, 185→18, 437→34) suggests
+hitting the 100-200 raw-result target needs closer to **~1,800-2,000
+companies**, not the 800-1,500 estimated earlier from a smaller sample. See
+**"Discovery Scaling — Phase 1"** below for full history.
 
 Quick start for next session:
 1. `cd C:\Projects\lvamo-applaut && docker compose up -d postgres backend` (rebuild if images were pruned)
@@ -24,6 +29,8 @@ Quick start for next session:
    startups are too early-stage to have a public ATS board — expect to need
    to source many more candidate names than the final company count).
 3. `docker compose exec backend python scripts/discover_company_slugs.py --seed <new_seed_file>`
+   — use `--adapters personio` to cheaply re-probe old/other seed lists against
+   Personio now that its adapter works; it was silently finding 0 hits before.
 4. **`docker compose restart backend`** after any `company_boards.json` change — uvicorn's
    `--reload` only watches `.py` files, not the JSON data file, so the running
    server keeps a stale in-memory company list until restarted. Bit us twice
@@ -61,8 +68,8 @@ Quick start for next session:
 - Near-miss threshold = `good_threshold - 15`
 
 ### Discovery Engine
-- Adapter pattern — **7 adapters implemented: Greenhouse, Lever, Ashby, Personio, Workable, SmartRecruiters, Recruitee** (all public/no-auth JSON APIs — no browser scraping). Each verified against real live company data this session.
-- Company list: `backend/app/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/discovery/data/company_boards.json` (currently **185 companies total**, up from 18 at the start of this session — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
+- Adapter pattern — **7 adapters implemented: Greenhouse, Lever, Ashby, Personio, Workable, SmartRecruiters, Recruitee** (all public/no-auth JSON APIs — no browser scraping). Personio's endpoint had gone dead (retired JSON API) and was fixed this session — see "Discovery Scaling" below.
+- Company list: `backend/app/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/discovery/data/company_boards.json` (currently **437 companies total**, up from 18 at the start of the scaling effort — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
 - Offline company-slug discovery script: `backend/scripts/discover_company_slugs.py` — probes a seed list of company names against all 7 adapters' raw endpoints, keeps only slugs that resolve to a real non-empty job board, appends to `company_boards.json`. Seed files: `backend/scripts/seed_companies.txt` (general EU batch) and `backend/scripts/seed_companies_de.txt` (sourced from real German startup directories).
 - Role matching (`app/discovery/location.py`'s `matches_roles`) now uses the same synonym expansion as scoring (shared table: `backend/app/core/role_synonyms.py`) — a title like "Analytics Engineer" is now fetched for a "Data Engineer" search, not silently dropped before scoring ever sees it.
 - Concurrency-capped: `DISCOVERY_CONCURRENCY` (default 20, env-configurable) semaphore in `engine.py` so a large `COMPANY_BOARDS` doesn't burst-hammer any single ATS host.
@@ -130,17 +137,45 @@ Quick start for next session:
 
 ---
 
-## Discovery Scaling — Phase 1 (In Progress, Not Committed)
+## Discovery Scaling — Phase 1 (In Progress, Committed)
 
 **Goal (user-stated):** a single discovery run should return 100-200 raw job
 listings with 50+ scoring as "good matches," for a realistic profile (multiple
 target roles matching one tech stack, at least 1 target country).
 
-**Status: code complete and verified working; company density insufficient
-for single-country searches.** All code changes are uncommitted in the
-working tree (`git status` shows modified/untracked files) — nothing was
-pushed or deployed this session, unlike prior sessions. Confirm with the user
-before committing/deploying.
+**Status: code complete and verified working; company density still
+insufficient for single-country searches, but meaningfully better.**
+
+### Session update — Personio adapter fix (committed `efe3a95`)
+Personio had quietly retired its `/api/v1/jobs` JSON endpoint (now 404s,
+replaced by a client-rendered SPA). The adapter and the probing script were
+both silently finding 0 Personio hits as a result. Fixed by switching to
+Personio's legacy `/xml` feed (their "workzag-jobs" format), which is still
+public and no-auth. This alone unlocked **201 new companies** — many of them
+large German corporates (BASF, Bosch, Siemens, Continental, Deutsche Bank,
+etc.) — sourced via a new seed list, `backend/scripts/seed_companies_de2.txt`
+(1,397 candidate names: funded German startups + Mittelstand/industrial
+companies + DAX/MDAX corporates + cybersecurity/software companies).
+Board went **171 → 437 companies**.
+
+`discover_company_slugs.py` gained a `--adapters` flag so old seed lists can
+be cheaply re-probed against just Personio now that it works, instead of
+re-running the full 7-adapter sweep.
+
+**Re-verified with the clean Germany-only test** (see "How to verify"
+below): raw job count **18 → 34**, no errors. Real progress — but the growth
+is **sub-linear**: companies grew 2.4x (185→437) while jobs grew only 1.9x
+(18→34), worse than the earlier "better-than-linear" trend that had been
+extrapolated from a smaller sample (169→185 companies, +9%, drove 14→18 jobs,
++28%). Good-match count actually dipped slightly (3→2 @ threshold 85) while
+near-misses jumped to 20 — more relevant-ish jobs are surfacing, just
+scoring just under threshold. Small sample; not a red flag on its own.
+
+**Revised extrapolation:** using all three data points (169→14, 185→18,
+437→34), hitting the 100-200 raw-result target now looks like it needs
+**~1,800-2,000 companies**, not the 800-1,500 estimated last session. Treat
+this as a rough guide, not a hard target — re-extrapolate again after the
+next batch.
 
 ### What was built (all verified against live data via local docker-compose)
 1. Closed a gap where `matches_roles` (discovery-time filter) only did literal
@@ -168,16 +203,18 @@ before committing/deploying.
 |---|---|---|---|---|---|
 | User's exact scenario (Data Engineer + 6 tech-stack-adjacent roles) | 185 | Germany only | 7 | **18** | 3 (@ threshold 85) |
 | Broader realistic profile | 185 | 8 EU countries | 5 | **575** | 13 (@85) / 230 (@70) |
+| User's exact scenario, after Personio fix | 437 | Germany only | 7 | **34** | 2 (@85), 20 near-misses |
 
 **Conclusion:** the 100-200/50+ target is easily hit for multi-country
 searches today. It is **not yet hit for single-country searches** — Germany
-alone only surfaces 18 raw postings even with 185 companies in the pool,
-because most of the current company pool is Dutch/pan-EU-remote rather than
-Germany-specific. Growing 169→185 companies (+9%) grew raw Germany results
-14→18 (+28%), a better-than-linear trend — but extrapolating it suggests
-**~800-1,500 companies** are needed for single-country search to reliably hit
-the target on its own. This is the next session's primary task (see banner
-at top of this file).
+raw results roughly doubled (18→34) after the Personio adapter fix added 266
+companies (171→437), but the growth is **sub-linear**: companies grew 2.4x
+while jobs grew only 1.9x — worse than the earlier 169→185 data point
+suggested. Re-extrapolating from all three data points now suggests
+**~1,800-2,000 companies** are needed for single-country search to reliably
+hit the target on its own (revised up from the earlier 800-1,500 estimate,
+which was based on a smaller, noisier sample). This is still the next
+session's primary task (see banner at top of this file).
 
 **Sourcing note:** memory-guessed company batches hit ~29% (script finds a
 working slug). A batch sourced from real German-startup-directory web pages
@@ -206,16 +243,18 @@ If testing country/role breadth, `PATCH /api/v1/profiles/me` with new
 from prior tests, not just the current profile's matches (this tripped us up
 mid-session).
 
-### Also fixed this session
+### Also fixed
 - Notification bell — see UI/Notifications section above (already committed).
 - `deploy.sh` on the VM had an uncommitted quoting bug — see Deployment
   section above (already committed and deployed).
+- Personio adapter (dead JSON endpoint → live XML feed) — see session update
+  above (committed `efe3a95`, deployed).
 
 ---
 
 ## Known Issues / Deferred Work
 
-- **Discovery company density** — see "Discovery Scaling — Phase 1" above. Single-country searches need ~800-1,500 companies to hit the 100-200 raw-results target; currently at 185.
+- **Discovery company density** — see "Discovery Scaling — Phase 1" above. Single-country searches now look like they need ~1,800-2,000 companies to hit the 100-200 raw-results target; currently at 437.
 - **Individual page mobile polish** — Layout is now responsive, but page-level content (cards, grids, tables) may still need padding/sizing tweaks on small screens. Not yet reviewed page-by-page.
 - **AI scoring** — implemented but intentionally gated off in the UI (disabled dropdown option) pending the subscription/premium model. Not user-reachable right now.
 - **Workday, LinkedIn, StepStone, Indeed, Xing, Teamtailor** — not yet built. Teamtailor investigated and rejected for the current adapter pattern (requires a per-company API key, doesn't fit the public-JSON model). Workday investigated and deferred ("Phase 1.5") — real endpoint exists but needs a heavier per-company probing strategy (subdomain + datacenter number + tenant/site, not a single guessable slug).
@@ -252,8 +291,7 @@ mid-session).
 
 ## What's Next (Suggested)
 
-- **Scale company_boards.json to 800-1,500 companies** (see banner at top — primary task for next session)
-- Commit + deploy this session's discovery-scaling work once company density is closer to target (or sooner, if the user wants incremental deploys)
+- **Keep scaling company_boards.json toward ~1,800-2,000 companies** (see banner at top — primary task for next session)
 - Page-by-page mobile polish (Opportunities, Resume pages most likely to need it)
 - Subscription/premium model to unlock AI scoring in the UI
 - Playwright-based application assist (prefill ATS forms)
