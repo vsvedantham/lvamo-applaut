@@ -44,8 +44,8 @@ Quick start for next session:
 
 | Layer | Status | URL / Location |
 |---|---|---|
-| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut`, Jobref placeholder at `/jobref`), not Applaut directly |
-| Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM, Docker) |
+| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`), not Applaut directly. All of Applaut's pages (login, dashboard, opportunities, etc.) live under `/applaut/*` now, not at the frontend root. |
+| Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM, Docker) — all endpoints now mounted under `/api/v1/applaut/*` (was `/api/v1/*`), so a future Jobref backend can get its own `/api/v1/jobref/*` namespace + independent auth without colliding |
 | Database | Live | PostgreSQL 16 in Docker on VM, accessible via SSH tunnel for DBeaver |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
 
@@ -117,7 +117,7 @@ Quick start for next session:
 - Inter font via Google Fonts
 - Custom SVG favicon (geometric "A" mark)
 - **Mobile-responsive**: slide-in sidebar with backdrop on ≤768px, fixed top bar with hamburger
-- **Opportunities + Scores merged into one page** (`frontend/src/pages/Opportunities.tsx`) — the standalone Scores page is gone. Running discovery auto-scores; each card shows its score badge, per-dimension chips (hover for explanation), and near-miss gap keywords + keep/dismiss actions inline, or good-match actions (generate documents / start application) inline. Filters: Match (all/good/near-miss/below/unscored), Source, Country, Scoring mode (Rule-based; AI shown disabled). `/scores` route redirects to `/opportunities`; `?match=` query param supported for deep links from Dashboard
+- **Opportunities + Scores merged into one page** (`frontend/src/pages/Opportunities.tsx`) — the standalone Scores page is gone. Running discovery auto-scores; each card shows its score badge, per-dimension chips (hover for explanation), and near-miss gap keywords + keep/dismiss actions inline, or good-match actions (generate documents / start application) inline. Filters: Match (all/good/near-miss/below/unscored), Source, Country, Scoring mode (Rule-based; AI shown disabled). `/applaut/scores` route redirects to `/applaut/opportunities`; `?match=` query param supported for deep links from Dashboard
 - Pages: Landing, Login, Register, Onboarding, Dashboard, Opportunities, Applications, Resume, AuditLog, OpportunityDetail, DocumentDetail
 
 ---
@@ -135,6 +135,53 @@ Quick start for next session:
 **Key DB notes:**
 - Scoring thresholds currently set to **GOOD=50, NEAR_MISS=35** in the DB for testing
 - Revert to GOOD=85, NEAR_MISS=70 before go-live (update `good_threshold` in `profiles` table)
+
+---
+
+## Multi-Vertical URL Namespacing (Committed)
+
+LVAMO is now explicitly a multi-vertical platform: Applaut (live) and Jobref
+(placeholder, see UI section above). This session namespaced every
+Applaut-owned URL — frontend pages and backend API — under `applaut`, so a
+future Jobref backend/login can get its own namespace without colliding.
+
+- **Frontend**: all of Applaut's pages (`login`, `register`, `onboarding`,
+  `dashboard`, `opportunities`, `resume`, `applications`, `audit`,
+  `documents/:id`) moved from the root to `/applaut/*`. `Jobref` was pulled
+  out from under Applaut's `Layout` entirely — it now uses a small shared
+  `frontend/src/components/BrandedPage.tsx` shell instead, so it has zero
+  dependency on Applaut's routing/sidebar/auth code.
+- **Backend**: `app.main` mounts the v1 router at `/api/v1/applaut` (was
+  `/api/v1`) — single-line change in `backend/app/main.py`. Every endpoint
+  path is otherwise unchanged, just prefixed.
+- **localStorage token key** renamed `access_token` → `applaut_access_token`
+  (in `frontend/src/api/client.ts`) so a future Jobref session can't collide
+  with Applaut's.
+- **Hostnames unchanged** — `www.lvamo.com` and `api.applaut.lvamo.com` stay
+  as-is; only URL *paths* changed. Renaming the API subdomain (e.g. to
+  `api.lvamo.com/applaut/*`) is a deliberately deferred DNS/TLS decision, not
+  done here.
+
+**Bug found + fixed along the way**: while tracing every API call site for
+this rename, found that `frontend/src/api/applications.ts`, `audit.ts`,
+`scheduler.ts`, and `stats.ts` were calling bare paths with no `/api/v1`
+prefix at all — no rewriting interceptor and no path-rewriting nginx rule
+compensating, so **Applications, Audit Log, Dashboard stats, and the
+discovery scheduler toggle were silently 404ing in production** before this
+session. Fixed as part of centralizing the API base URL (see below) — all
+four now confirmed working end-to-end via Playwright against real data
+(48 jobs / 2 good / 32 near-miss, 34 audit events) both locally and against
+the live production API after deploy.
+
+`frontend/src/api/client.ts` now bakes `/api/v1/applaut` into the axios
+`baseURL` instead of repeating it per call site (root cause of the above
+inconsistency) — every `src/api/*.ts` module calls resource-relative paths
+now (e.g. `/opportunities`, not `/api/v1/opportunities`).
+
+Deployed to production same session: backend rebuilt/restarted on the Oracle
+VM via `deploy.sh` (backend first, then frontend push, to minimize the gap
+where a live frontend could hit a since-moved backend), frontend
+auto-deployed via Cloudflare Pages push. Both verified live post-deploy.
 
 ---
 
@@ -320,14 +367,16 @@ the "Data Engineer + 6 tech-stack roles" scenario. To re-run cleanly:
 # wipe accumulated opportunities so results reflect only the current company pool
 docker compose exec -T postgres psql -U applaut -d applaut -c "TRUNCATE opportunities, scores CASCADE;"
 # log in, get a fresh token (prior token may have expired)
-curl -s -X POST http://localhost:8000/api/v1/auth/login -H "Content-Type: application/json" \
+curl -s -X POST http://localhost:8000/api/v1/applaut/auth/login -H "Content-Type: application/json" \
   -d '{"email":"verify2@test.com","password":"TestPass123!"}'
 # run discovery — new_jobs_found IS the clean raw-result count right after a truncate
-curl -s -X POST http://localhost:8000/api/v1/discovery/run -H "Authorization: Bearer <token>"
+curl -s -X POST http://localhost:8000/api/v1/applaut/discovery/run -H "Authorization: Bearer <token>"
 # breakdown by match category
-curl -s "http://localhost:8000/api/v1/opportunities?match=good&page_size=1" -H "Authorization: Bearer <token>"
+curl -s "http://localhost:8000/api/v1/applaut/opportunities?match=good&page_size=1" -H "Authorization: Bearer <token>"
 ```
-If testing country/role breadth, `PATCH /api/v1/profiles/me` with new
+(All API paths now live under `/api/v1/applaut/*`, not `/api/v1/*` — see
+"URL namespacing" below.) If testing country/role breadth, `PATCH
+/api/v1/applaut/profiles/me` with new
 `target_roles` / `target_countries` first — but re-truncate between tests, or
 `scored` in the discovery response will reflect the whole accumulated pool
 from prior tests, not just the current profile's matches (this tripped us up
