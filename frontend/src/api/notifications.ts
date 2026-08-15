@@ -16,20 +16,20 @@ export interface NotificationListResponse {
 }
 
 export async function getNotifications(): Promise<NotificationListResponse> {
-  const res = await client.get('/api/v1/notifications')
+  const res = await client.get('/notifications')
   return res.data
 }
 
 export async function getUnreadCount(): Promise<number> {
-  const res = await client.get('/api/v1/notifications/unread-count')
+  const res = await client.get('/notifications/unread-count')
   return res.data.unread_count
 }
 
 export async function markRead(id: string): Promise<AppNotification> {
-  const res = await client.post(`/api/v1/notifications/${id}/read`)
+  const res = await client.post(`/notifications/${id}/read`)
   return res.data
 }
 
 export async function markAllRead(): Promise<void> {
-  await client.post('/api/v1/notifications/read-all')
+  await client.post('/notifications/read-all')
 }

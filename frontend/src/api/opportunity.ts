@@ -66,7 +66,7 @@ export interface DiscoveryRunResponse {
 }
 
 export async function runDiscovery(): Promise<DiscoveryRunResponse> {
-  const { data } = await client.post<DiscoveryRunResponse>('/api/v1/discovery/run')
+  const { data } = await client.post<DiscoveryRunResponse>('/discovery/run')
   return data
 }
 
@@ -77,11 +77,11 @@ export async function listOpportunities(params?: {
   source?: string
   match?: MatchFilter
 }): Promise<OpportunityList> {
-  const { data } = await client.get<OpportunityList>('/api/v1/opportunities', { params })
+  const { data } = await client.get<OpportunityList>('/opportunities', { params })
   return data
 }
 
 export async function getOpportunity(id: string): Promise<OpportunityDetail> {
-  const { data } = await client.get<OpportunityDetail>(`/api/v1/opportunities/${id}`)
+  const { data } = await client.get<OpportunityDetail>(`/opportunities/${id}`)
   return data
 }

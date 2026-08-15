@@ -17,7 +17,7 @@ export async function decideNearMiss(
   action: 'keep' | 'dismiss' | 'keep_with_keywords',
   keywordsToAdd: string[] = [],
 ): Promise<ScoreDecision> {
-  const { data } = await client.post<ScoreDecision>(`/api/v1/scores/${scoreId}/decide`, {
+  const { data } = await client.post<ScoreDecision>(`/scores/${scoreId}/decide`, {
     action,
     keywords_to_add: keywordsToAdd,
   })

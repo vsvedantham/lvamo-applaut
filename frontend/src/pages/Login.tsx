@@ -19,7 +19,7 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/dashboard')
+      navigate('/applaut/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail ?? 'Invalid email or password.')
     } finally {
@@ -62,7 +62,7 @@ export default function Login() {
 
       <p style={{ marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
         No account?{' '}
-        <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 500 }}>Create one</Link>
+        <Link to="/applaut/register" style={{ color: 'var(--accent)', fontWeight: 500 }}>Create one</Link>
       </p>
     </div>
   )

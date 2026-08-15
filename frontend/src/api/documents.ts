@@ -30,7 +30,7 @@ export async function generateDocuments(
   mode: GenerationMode = 'template',
 ): Promise<GenerateDocumentsResult> {
   const { data } = await client.post<GenerateDocumentsResult>(
-    `/api/v1/opportunities/${opportunityId}/documents?mode=${mode}`,
+    `/opportunities/${opportunityId}/documents?mode=${mode}`,
   )
   return data
 }
@@ -39,12 +39,12 @@ export async function getOpportunityDocuments(
   opportunityId: string,
 ): Promise<OpportunityDocuments> {
   const { data } = await client.get<OpportunityDocuments>(
-    `/api/v1/opportunities/${opportunityId}/documents`,
+    `/opportunities/${opportunityId}/documents`,
   )
   return data
 }
 
 export async function getDocument(documentId: string): Promise<DocumentItem> {
-  const { data } = await client.get<DocumentItem>(`/api/v1/documents/${documentId}`)
+  const { data } = await client.get<DocumentItem>(`/documents/${documentId}`)
   return data
 }

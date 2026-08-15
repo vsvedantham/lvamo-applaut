@@ -19,7 +19,7 @@ export async function register(
   email: string,
   password: string,
 ): Promise<TokenResponse> {
-  const { data } = await client.post<TokenResponse>('/api/v1/auth/register', {
+  const { data } = await client.post<TokenResponse>('/auth/register', {
     name,
     email,
     password,
@@ -31,7 +31,7 @@ export async function login(
   email: string,
   password: string,
 ): Promise<TokenResponse> {
-  const { data } = await client.post<TokenResponse>('/api/v1/auth/login', {
+  const { data } = await client.post<TokenResponse>('/auth/login', {
     email,
     password,
   })
@@ -39,6 +39,6 @@ export async function login(
 }
 
 export async function getMe(): Promise<User> {
-  const { data } = await client.get<User>('/api/v1/auth/me')
+  const { data } = await client.get<User>('/auth/me')
   return data
 }

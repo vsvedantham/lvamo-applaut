@@ -94,7 +94,7 @@ export default function DocumentDetail() {
       setAppStarted(true)
     } catch (err: any) {
       if (err.response?.status === 409) {
-        navigate('/applications')
+        navigate('/applaut/applications')
       }
     } finally {
       setStartingApp(false)
@@ -111,7 +111,7 @@ export default function DocumentDetail() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       {/* Back link */}
-      <Link to="/opportunities" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none' }}>
+      <Link to="/applaut/opportunities" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none' }}>
         ← Back to opportunities
       </Link>
 
@@ -152,7 +152,7 @@ export default function DocumentDetail() {
         )}
         {appStarted ? (
           <Link
-            to="/applications"
+            to="/applaut/applications"
             style={{ padding: '0.4rem 1rem', background: '#059669', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.875rem' }}
           >
             Application started ✓

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { TOKEN_KEY } from '../api/client'
 import {
   getMe,
   login as apiLogin,
@@ -21,33 +22,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem(TOKEN_KEY)
     if (!token) {
       setLoading(false)
       return
     }
     getMe()
       .then(setUser)
-      .catch(() => localStorage.removeItem('access_token'))
+      .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setLoading(false))
   }, [])
 
   const login = async (email: string, password: string) => {
     const { access_token } = await apiLogin(email, password)
-    localStorage.setItem('access_token', access_token)
+    localStorage.setItem(TOKEN_KEY, access_token)
     const me = await getMe()
     setUser(me)
   }
 
   const register = async (name: string, email: string, password: string) => {
     const { access_token } = await apiRegister(name, email, password)
-    localStorage.setItem('access_token', access_token)
+    localStorage.setItem(TOKEN_KEY, access_token)
     const me = await getMe()
     setUser(me)
   }
 
   const logout = () => {
-    localStorage.removeItem('access_token')
+    localStorage.removeItem(TOKEN_KEY)
     setUser(null)
   }
 

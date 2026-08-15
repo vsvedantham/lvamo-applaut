@@ -166,7 +166,7 @@ export default function Onboarding() {
         discovery_frequency_hours: discoveryFrequency,
         good_threshold: goodThreshold,
       })
-      navigate('/resume')
+      navigate('/applaut/resume')
     } catch (err: any) {
       setError(err.response?.data?.detail ?? 'Failed to create profile. Please try again.')
     } finally {

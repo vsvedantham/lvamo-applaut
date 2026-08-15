@@ -33,18 +33,18 @@ export interface CreateProfilePayload {
 }
 
 export async function createProfile(data: CreateProfilePayload): Promise<Profile> {
-  const { data: res } = await client.post<Profile>('/api/v1/profiles', data)
+  const { data: res } = await client.post<Profile>('/profiles', data)
   return res
 }
 
 export async function getMyProfile(): Promise<Profile> {
-  const { data } = await client.get<Profile>('/api/v1/profiles/me')
+  const { data } = await client.get<Profile>('/profiles/me')
   return data
 }
 
 export async function updateMyProfile(
   data: Partial<CreateProfilePayload>,
 ): Promise<Profile> {
-  const { data: res } = await client.patch<Profile>('/api/v1/profiles/me', data)
+  const { data: res } = await client.patch<Profile>('/profiles/me', data)
   return res
 }

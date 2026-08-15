@@ -45,20 +45,20 @@ export interface Resume {
 export async function uploadResume(file: File): Promise<Resume> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await client.post<Resume>('/api/v1/resumes', form, {
+  const { data } = await client.post<Resume>('/resumes', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return data
 }
 
 export async function getMyResume(): Promise<Resume> {
-  const { data } = await client.get<Resume>('/api/v1/resumes/me')
+  const { data } = await client.get<Resume>('/resumes/me')
   return data
 }
 
 export async function updateExtractedContent(
   payload: Partial<ExtractedContent>,
 ): Promise<Resume> {
-  const { data } = await client.patch<Resume>('/api/v1/resumes/me', payload)
+  const { data } = await client.patch<Resume>('/resumes/me', payload)
   return data
 }

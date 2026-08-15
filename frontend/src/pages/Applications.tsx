@@ -98,7 +98,7 @@ function ApplicationCard({ app, onUpdate, onDelete }: { app: Application; onUpda
               Job ↗
             </a>
           )}
-          <Link to={`/documents/${app.opportunity_id}`} style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>
+          <Link to={`/applaut/documents/${app.opportunity_id}`} style={{ fontSize: '0.72rem', color: 'var(--text-2)' }}>
             Docs
           </Link>
           <button onClick={remove} disabled={deleting} style={{ fontSize: '0.72rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -161,7 +161,7 @@ export default function Applications() {
           {!loading && <p style={{ color: 'var(--text-2)', fontSize: '0.825rem', marginTop: '0.2rem' }}>{apps.length} total</p>}
         </div>
         <Link
-          to="/opportunities?match=good"
+          to="/applaut/opportunities?match=good"
           style={{ padding: '0.5rem 1.25rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem', fontWeight: 500 }}
         >
           Find good matches →
@@ -176,7 +176,7 @@ export default function Applications() {
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem' }}>
             Start an application from any good match on the Opportunities page.
           </p>
-          <Link to="/opportunities?match=good" style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem' }}>
+          <Link to="/applaut/opportunities?match=good" style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius-xs)', fontSize: '0.875rem' }}>
             View good matches →
           </Link>
         </div>

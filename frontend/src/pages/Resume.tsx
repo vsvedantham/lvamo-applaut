@@ -198,7 +198,7 @@ export default function ResumePage() {
     setError('')
     try {
       await updateExtractedContent({ skills, languages, experience, education, certifications })
-      navigate('/dashboard')
+      navigate('/applaut/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail ?? 'Save failed. Please try again.')
     } finally {
@@ -268,7 +268,7 @@ export default function ResumePage() {
 
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/applaut/dashboard')}
               style={{ flex: 1, padding: '0.625rem', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-1)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.9rem' }}
             >
               Cancel

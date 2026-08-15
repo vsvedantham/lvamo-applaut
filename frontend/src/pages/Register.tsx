@@ -18,7 +18,7 @@ export default function Register() {
 
   useEffect(() => {
     client
-      .get('/api/v1/settings/allow_new_registrations')
+      .get('/settings/allow_new_registrations')
       .then(res => setRegistrationOpen(res.data.value === '1'))
       .catch(() => setRegistrationOpen(false))
   }, [])
@@ -30,7 +30,7 @@ export default function Register() {
     setLoading(true)
     try {
       await register(name, email, password)
-      navigate('/onboarding')
+      navigate('/applaut/onboarding')
     } catch (err: any) {
       setError(err.response?.data?.detail ?? 'Registration failed. Please try again.')
     } finally {
@@ -102,7 +102,7 @@ export default function Register() {
 
       <p style={{ marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
         Already have an account?{' '}
-        <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 500 }}>Sign in</Link>
+        <Link to="/applaut/login" style={{ color: 'var(--accent)', fontWeight: 500 }}>Sign in</Link>
       </p>
     </div>
   )

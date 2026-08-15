@@ -190,7 +190,7 @@ function GoodMatchActions({ opp }: { opp: Opportunity }) {
       const app = await createApplication(opp.id, opp.score.id)
       setApplicationId(app.id)
     } catch (err: any) {
-      if (err.response?.status === 409) navigate('/applications')
+      if (err.response?.status === 409) navigate('/applaut/applications')
     } finally {
       setStarting(false)
     }
@@ -199,13 +199,13 @@ function GoodMatchActions({ opp }: { opp: Opportunity }) {
   return (
     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
       <button
-        onClick={() => navigate(`/documents/${opp.id}`)}
+        onClick={() => navigate(`/applaut/documents/${opp.id}`)}
         style={{ padding: '0.35rem 0.875rem', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-1)', borderRadius: 'var(--radius-xs)', cursor: 'pointer', fontSize: '0.8rem' }}
       >
         Generate documents →
       </button>
       {applicationId ? (
-        <Link to="/applications" style={{ padding: '0.35rem 0.875rem', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)', borderRadius: 'var(--radius-xs)', fontSize: '0.8rem', textDecoration: 'none' }}>
+        <Link to="/applaut/applications" style={{ padding: '0.35rem 0.875rem', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)', borderRadius: 'var(--radius-xs)', fontSize: '0.8rem', textDecoration: 'none' }}>
           Application started ✓
         </Link>
       ) : (
@@ -255,7 +255,7 @@ function OpportunityCard({ opp, goodThreshold, nearMissThreshold, onUpdate }: {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.625rem' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <Link
-            to={`/opportunities/${opp.id}`}
+            to={`/applaut/opportunities/${opp.id}`}
             style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)', textDecoration: 'none', display: 'block', marginBottom: '0.2rem' }}
           >
             {opp.title}

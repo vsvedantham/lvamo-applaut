@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Logo from '../Logo'
+import BrandedPage from '../BrandedPage'
 import {
   getNotifications,
   markAllRead,
@@ -9,7 +10,7 @@ import {
   type AppNotification,
 } from '../../api/notifications'
 
-const PUBLIC_PATHS = ['/applaut', '/jobref', '/login', '/register']
+const PUBLIC_PATHS = ['/applaut', '/applaut/login', '/applaut/register']
 const MOBILE_BREAKPOINT = 768
 const SIDEBAR_W_MOBILE = 260
 
@@ -210,10 +211,10 @@ function NotificationPanel({ isMobile }: { isMobile: boolean }) {
 }
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: <IconDashboard /> },
-  { to: '/opportunities', label: 'Opportunities', icon: <IconSearch /> },
-  { to: '/applications', label: 'Applications', icon: <IconBriefcase /> },
-  { to: '/resume', label: 'Resume', icon: <IconFile /> },
+  { to: '/applaut/dashboard', label: 'Dashboard', icon: <IconDashboard /> },
+  { to: '/applaut/opportunities', label: 'Opportunities', icon: <IconSearch /> },
+  { to: '/applaut/applications', label: 'Applications', icon: <IconBriefcase /> },
+  { to: '/applaut/resume', label: 'Resume', icon: <IconFile /> },
 ]
 
 function Sidebar({ isMobile, open, onClose }: { isMobile: boolean; open: boolean; onClose: () => void }) {
@@ -358,13 +359,9 @@ function TopBar({ onOpen }: { onOpen: () => void }) {
 
 function PublicLayout() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative' }}>
-      <Link to="/" title="Back to LVAMO" style={{ position: 'absolute', top: '1.5rem', left: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Logo />
-        <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase' }}>LVAMO</span>
-      </Link>
+    <BrandedPage>
       <Outlet />
-    </div>
+    </BrandedPage>
   )
 }
 

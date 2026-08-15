@@ -21,7 +21,7 @@ export default function OpportunityDetailPage() {
 
   return (
     <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-      <Link to="/opportunities" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none', display: 'inline-block', marginBottom: '1.25rem' }}>← Back to opportunities</Link>
+      <Link to="/applaut/opportunities" style={{ fontSize: '0.875rem', color: '#6b7280', textDecoration: 'none', display: 'inline-block', marginBottom: '1.25rem' }}>← Back to opportunities</Link>
 
       <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>{opp.title}</h1>
       <p style={{ color: '#6b7280', marginBottom: '1rem' }}>{opp.company_name}</p>

@@ -188,14 +188,14 @@ export default function Dashboard() {
 
           {stats && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <StatCard label="Jobs found" value={stats.opportunities_found} href="/opportunities" />
-              <StatCard label="Good matches" value={stats.good_matches} href="/opportunities?match=good" color="var(--success)" />
-              <StatCard label="Near misses" value={stats.near_misses} href="/opportunities?match=near_miss" color="var(--warn)" />
+              <StatCard label="Jobs found" value={stats.opportunities_found} href="/applaut/opportunities" />
+              <StatCard label="Good matches" value={stats.good_matches} href="/applaut/opportunities?match=good" color="var(--success)" />
+              <StatCard label="Near misses" value={stats.near_misses} href="/applaut/opportunities?match=near_miss" color="var(--warn)" />
               <StatCard label="Documents" value={stats.documents_generated} sub="resumes + letters" />
               <StatCard
                 label="Applications"
                 value={stats.applications.total}
-                href="/applications"
+                href="/applaut/applications"
                 color={stats.applications.offered ? 'var(--purple)' : undefined}
                 sub={
                   stats.applications.interviewing ? `${stats.applications.interviewing} interviewing` :
@@ -210,7 +210,7 @@ export default function Dashboard() {
               <SetupCard
                 title="Set up your profile"
                 description="Tell us your target roles, locations, and preferences so we can find the right jobs for you."
-                href="/onboarding"
+                href="/applaut/onboarding"
                 cta="Set up profile"
               />
             ) : (
@@ -219,7 +219,7 @@ export default function Dashboard() {
                 <InfoRow label="Countries" value={profile.target_countries.join(', ')} />
                 <InfoRow label="Remote" value={profile.remote_preference} />
                 <InfoRow label="Discovery" value={`every ${profile.discovery_frequency_hours}h`} />
-                <Link to="/onboarding" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', marginTop: '0.25rem' }}>Edit profile →</Link>
+                <Link to="/applaut/onboarding" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', marginTop: '0.25rem' }}>Edit profile →</Link>
               </InfoCard>
             )}
 
@@ -227,7 +227,7 @@ export default function Dashboard() {
               <SetupCard
                 title="Upload your resume"
                 description="Upload your master resume and AI will extract your skills, experience, and education."
-                href="/resume"
+                href="/applaut/resume"
                 cta="Upload resume"
               />
             ) : (
@@ -240,15 +240,15 @@ export default function Dashboard() {
                     value={resume.content_extracted.skills.slice(0, 5).join(', ') + (resume.content_extracted.skills.length > 5 ? ` +${resume.content_extracted.skills.length - 5} more` : '')}
                   />
                 )}
-                <Link to="/resume" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', marginTop: '0.25rem' }}>View / replace →</Link>
+                <Link to="/applaut/resume" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', marginTop: '0.25rem' }}>View / replace →</Link>
               </InfoCard>
             )}
 
             {profile && resume && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <SetupCard title="Find & score jobs" description="Run discovery, see match scores, and act on near misses — all in one place." href="/opportunities" cta="View opportunities" />
-                <SetupCard title="Documents" description="Generate tailored resumes and cover letters from your good matches." href="/opportunities?match=good" cta="View good matches" />
-                <SetupCard title="Applications" description="Track your pipeline from review to offer." href="/applications" cta="View applications" />
+                <SetupCard title="Find & score jobs" description="Run discovery, see match scores, and act on near misses — all in one place." href="/applaut/opportunities" cta="View opportunities" />
+                <SetupCard title="Documents" description="Generate tailored resumes and cover letters from your good matches." href="/applaut/opportunities?match=good" cta="View good matches" />
+                <SetupCard title="Applications" description="Track your pipeline from review to offer." href="/applaut/applications" cta="View applications" />
               </div>
             )}
           </div>

@@ -39,7 +39,7 @@ export default function Landing() {
 
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
         <Link
-          to="/register"
+          to="/applaut/register"
           style={{
             padding: '0.7rem 1.75rem',
             background: 'var(--accent)',
@@ -56,7 +56,7 @@ export default function Landing() {
           Get started
         </Link>
         <Link
-          to="/login"
+          to="/applaut/login"
           style={{
             padding: '0.7rem 1.75rem',
             background: 'transparent',

@@ -23,9 +23,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Hub />} />
-          <Route element={<Layout />}>
-            <Route path="applaut" element={<Landing />} />
-            <Route path="jobref" element={<Jobref />} />
+          <Route path="jobref" element={<Jobref />} />
+          <Route path="applaut" element={<Layout />}>
+            <Route index element={<Landing />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route
@@ -68,7 +68,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="scores" element={<Navigate to="/opportunities" replace />} />
+            <Route path="scores" element={<Navigate to="/applaut/opportunities" replace />} />
             <Route
               path="documents/:opportunityId"
               element={
@@ -95,6 +95,7 @@ export default function App() {
             />
             <Route path="*" element={<NotFound />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
