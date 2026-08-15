@@ -138,18 +138,35 @@ known, accepted trade-off, not an accident.
 4. ✅ Old instance **terminated** (`preserve_boot_volume=False` — no
    orphaned boot volume left eating into the shared 200GB free block
    storage allowance).
-5. 🔄 **Blocked on Oracle capacity**: `launch_instance` for the new
-   `VM.Standard.A1.Flex` (2 OCPU/12GB) instance is failing with `500 Out of
-   host capacity` across all 3 ADs in `eu-frankfurt-1`
-   (`RWGt:EU-FRANKFURT-1-AD-1/2/3`) — this is a well-known, common
-   situation with Oracle's free Ampere pool being oversubscribed. A
-   background retry loop is/was running (every 5 min per full cycle, 15s
-   stagger between ADs — an earlier tighter loop hit a `429 Too many
-   requests` and was replaced with this slower one). **Check if it's still
-   running or already succeeded before starting a new one** — if a session
-   ended while it was running, it may have died with it; just resubmit the
-   same `launch_instance` call (spec is documented below) either as a
-   background retry loop or one-off attempts.
+5. 🔄 **Still blocked on Oracle capacity** (as of this update). Tried
+   multiple angles, all hit the same wall:
+   - API `launch_instance` for `VM.Standard.A1.Flex` (2 OCPU/12GB) fails
+     `500 Out of host capacity` across all 3 ADs in `eu-frankfurt-1`
+     (`RWGt:EU-FRANKFURT-1-AD-1/2/3`).
+   - User also tried creating it **manually via the OCI Console** — same
+     result, same capacity wall (confirms it's real infra capacity, not a
+     bug in the API calls).
+   - Investigated whether another OCI **region** might have capacity: **not
+     an option for staying free** — Always Free compute is only provisionable
+     in the tenancy's home region, which is locked to `eu-frankfurt-1` and
+     can't be changed after signup ([Oracle docs](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)).
+     Confirmed via `list_region_subscriptions` — this tenancy is subscribed
+     to `eu-frankfurt-1` only. A brand-new account in a different region
+     (e.g. Singapore, anecdotally easier per community reports) was
+     considered but the user opted not to pursue it — flagged risk: Oracle
+     generally allows one Always Free account per identity/card, and a
+     second account created to route around this would risk suspension.
+     **Decision: stick with this tenancy, keep retrying Frankfurt.**
+   - Background retry loop running (every 5 min per full cycle, 15s stagger
+     between the 3 ADs — an earlier tighter loop hit `429 Too many
+     requests` and was replaced with this slower pacing, which hasn't
+     triggered further rate-limiting). Script is saved at
+     `/tmp/retry_launch.py` on this machine (Windows, not the VM) — just
+     rerun `python /tmp/retry_launch.py` (`run_in_background: true`) to
+     restart it if it's not running. **Check if it's still running or
+     already succeeded before starting a new one** — if a session ended
+     while it was running, it may have died with it. On success it writes
+     the new instance OCID to `/tmp/lvamo_backend_instance_id.txt`.
 
 ### Launch spec for the new instance (once capacity is available)
 - Name: `lvamo-backend`
