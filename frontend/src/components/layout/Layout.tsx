@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Logo from '../Logo'
 import {
   getNotifications,
   markAllRead,
@@ -8,7 +9,7 @@ import {
   type AppNotification,
 } from '../../api/notifications'
 
-const PUBLIC_PATHS = ['/', '/login', '/register']
+const PUBLIC_PATHS = ['/applaut', '/jobref', '/login', '/register']
 const MOBILE_BREAKPOINT = 768
 const SIDEBAR_W_MOBILE = 260
 
@@ -21,22 +22,6 @@ function useIsMobile() {
     return () => mq.removeEventListener('change', handler)
   }, [])
   return isMobile
-}
-
-function Logo() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="logo-g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a5b4fc" />
-          <stop offset="100%" stopColor="#6d28d9" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill="rgba(129,140,248,0.12)" />
-      <path d="M8 25L16 7l8 18" fill="none" stroke="url(#logo-g)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10.4 19.5h11.2" stroke="url(#logo-g)" strokeWidth="2.4" strokeLinecap="round" />
-    </svg>
-  )
 }
 
 const IconDashboard = () => (
@@ -251,13 +236,13 @@ function Sidebar({ isMobile, open, onClose }: { isMobile: boolean; open: boolean
     }}>
       {/* Header: logo + close button on mobile */}
       <div style={{ padding: '1.125rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <Link to="/" title="Back to LVAMO" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <Logo />
           <div>
             <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase', lineHeight: 1 }}>LVAMO</p>
             <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.4 }}>Applaut</p>
           </div>
-        </div>
+        </Link>
         {isMobile && (
           <button
             onClick={onClose}
@@ -360,11 +345,13 @@ function TopBar({ onOpen }: { onOpen: () => void }) {
           <span key={i} style={{ display: 'block', width: '18px', height: '2px', background: 'currentColor', borderRadius: '1px' }} />
         ))}
       </button>
-      <Logo />
-      <div>
-        <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase', lineHeight: 1 }}>LVAMO</p>
-        <p style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.3 }}>Applaut</p>
-      </div>
+      <Link to="/" title="Back to LVAMO" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <Logo />
+        <div>
+          <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase', lineHeight: 1 }}>LVAMO</p>
+          <p style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-1)', lineHeight: 1.3 }}>Applaut</p>
+        </div>
+      </Link>
     </header>
   )
 }
@@ -372,10 +359,10 @@ function TopBar({ onOpen }: { onOpen: () => void }) {
 function PublicLayout() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '1.5rem', left: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <Link to="/" title="Back to LVAMO" style={{ position: 'absolute', top: '1.5rem', left: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <Logo />
         <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', textTransform: 'uppercase' }}>LVAMO</span>
-      </div>
+      </Link>
       <Outlet />
     </div>
   )

@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
+import Hub from './pages/Hub'
 import Landing from './pages/Landing'
+import Jobref from './pages/Jobref'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -20,8 +22,10 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Landing />} />
+          <Route path="/" element={<Hub />} />
+          <Route element={<Layout />}>
+            <Route path="applaut" element={<Landing />} />
+            <Route path="jobref" element={<Jobref />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route
