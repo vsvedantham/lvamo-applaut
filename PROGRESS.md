@@ -6,7 +6,18 @@
 
 ---
 
-## 🎯 NEXT SESSION PRIMARY TASK
+## 🚨 BACKEND IS CURRENTLY DOWN — read this first
+
+**`api.applaut.lvamo.com` will not respond right now.** Mid-migration from
+the old Oracle VM to a new one, old VM is already deleted, new one hasn't
+launched yet — see "Oracle Backend Migration (IN PROGRESS)" below for full
+context, exact resume steps, and where the DB backup lives. **Do not treat
+the "scaling company_boards.json" task below as the priority until this is
+resolved** — it was the priority before this session's infra work started.
+
+---
+
+## 🎯 NEXT SESSION PRIMARY TASK (paused — see banner above)
 
 **Keep scaling `backend/app/discovery/data/company_boards.json` — now at 500 companies, single-country density still below target. A proven sourcing method exists — use it.**
 
@@ -45,14 +56,141 @@ Quick start for next session:
 | Layer | Status | URL / Location |
 |---|---|---|
 | Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`), not Applaut directly. All of Applaut's pages (login, dashboard, opportunities, etc.) live under `/applaut/*` now, not at the frontend root. |
-| Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM, Docker) — all endpoints now mounted under `/api/v1/applaut/*` (was `/api/v1/*`), so a future Jobref backend can get its own `/api/v1/jobref/*` namespace + independent auth without colliding |
-| Database | Live | PostgreSQL 16 in Docker on VM, accessible via SSH tunnel for DBeaver |
-| Storage | Configured | Cloudflare R2 (resumes, documents) |
+| Backend API | 🚨 **DOWN** | `api.applaut.lvamo.com` — mid-migration to a new VM, see "Oracle Backend Migration (IN PROGRESS)" below. The old VM (`130.61.65.131`, IP below is now dead) is **deleted**; DB is safely backed up locally, waiting on Oracle Ampere free-tier capacity to launch the replacement. |
+| Database | 🚨 Down with backend | Was PostgreSQL 16 in Docker on the old VM. **Full dump backed up locally** at `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` (verified: all 11 tables present) — needs restoring onto the new VM once it exists. |
+| Storage | Configured | Cloudflare R2 (resumes, documents) — unaffected by the backend migration |
 
-**VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.65.131`
-**App dir on VM:** `/home/ubuntu/lvamo-applaut/`
+**Old VM access (dead, instance terminated):** ~~`ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.65.131`~~ — do not use, instance no longer exists.
+**App dir (once new VM exists):** `/home/ubuntu/lvamo-applaut/`
 **Deploy backend:** `sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build backend`
-**Or just run `bash deploy.sh`** on the VM — pulls, rebuilds, migrates, restarts, prunes. (Was broken by an unquoted `echo` edit that turned `>` into a stray redirect; fixed and back in sync with the committed version.)
+**Or just run `bash deploy.sh`** on the VM — pulls, rebuilds, migrates, restarts, prunes.
+**OCI API access is now set up** (see migration section below) — instance creation/deletion no longer requires manual Console clicks.
+
+---
+
+## Oracle Backend Migration (IN PROGRESS — backend is down)
+
+**Why:** the old VM (OCI display name `applaut-backend`, `130.61.65.131`) was
+a **fixed** `VM.Standard.E2.1.Micro` shape — 1 OCPU / 1GB RAM, not resizable,
+already down to ~250MB free RAM with just Applaut running (no room for
+Jobref later). Moving to Oracle's Ampere A1.Flex Always-Free tier instead —
+**2 OCPU / 12GB RAM** (Oracle's free Ampere allotment was reduced from the
+historical 4 OCPU/24GB — noted 2026-08 via an Oracle console banner), still
+$0, shared across Applaut and future verticals. New instance name:
+`lvamo-backend` (generic, not vertical-specific, per this session's
+URL-namespacing theme).
+
+**Sequencing note:** the user explicitly chose to delete the old instance
+*before* creating the new one (not a side-by-side blue-green migration) —
+so there is no rollback safety net, only the backup below. This was a
+known, accepted trade-off, not an accident.
+
+### What's done
+1. ✅ **Backed up** from the old VM before deletion, verified good:
+   - `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` — full
+     `pg_dump -Fc` of the `applaut` database (70,875 bytes). Verified via
+     `pg_restore --list` — all 11 tables present (`users`, `profiles`,
+     `resumes`, `opportunities`, `scores`, `applications`,
+     `generated_documents`, `notifications`, `audit_logs`,
+     `application_settings`, `alembic_version`).
+   - `C:\Projects\lvamo-applaut\.deploy-backup\.env.production` — exact
+     byte-for-byte copy of the old VM's secrets/config (791 bytes).
+   - Both gitignored (`.deploy-backup/` added to `.gitignore`), never
+     committed.
+2. ✅ **Audited the old VM's full live config** before deletion (not just
+   what's in git) so the new one can be a faithful rebuild:
+   - Docker installed via **`apt install docker.io docker-compose-plugin
+     docker-buildx-plugin`** (Ubuntu's own repo, NOT Docker's official CE
+     repo/get.docker.com script).
+   - `certbot` + `python3-certbot` via apt (classic, not snap) — ships its
+     own `certbot.timer` systemd unit for auto-renewal, enabled by default
+     on install, don't need to set that up manually.
+   - Cert: standalone HTTP-01 authenticator, standard Let's Encrypt prod
+     server, for `api.applaut.lvamo.com` only.
+   - Host firewall: Oracle's Ubuntu cloud image ships iptables with a
+     default-REJECT policy after allowing established/related/ICMP/SSH —
+     ports 80 and 443 were opened via `iptables -I INPUT <pos> -m state
+     --state NEW -p tcp --dport {80,443} -j ACCEPT`, then persisted via
+     `apt install -y iptables-persistent && netfilter-persistent save`.
+     Must redo this on the new box — a fresh Ubuntu 24.04 image will have
+     the same default-REJECT baseline.
+   - No swap configured (wasn't needed even at 1GB RAM previously; even
+     less needed at 12GB). No custom `/etc/docker/daemon.json`. No crontab
+     entries. Nothing manually added to the repo dir outside git except
+     `.env.production` (confirmed via `git status --ignored`).
+3. ✅ **OCI API access set up** (this is durable, reusable going forward —
+   not just for this migration):
+   - OCI Python SDK installed locally (`pip install --user oci`) — the
+     full `oci-cli` package **fails to install** on this machine (Python
+     3.14 is too new for PyYAML's prebuilt wheels, and there's no MSVC
+     build toolchain to compile it from source) — use the raw SDK via
+     Python scripts instead, not the CLI.
+   - API signing key pair generated at `~/.oci/oci_api_key.pem` (private)
+     / `~/.oci/oci_api_key_public.pem` (public), registered against the
+     user's OCI account (Console → Profile → API Keys). Config at
+     `~/.oci/config`.
+   - **Known gotcha**: right after adding a new API key, the Identity
+     service authenticates instantly, but Compute/Network ("iaas")
+     endpoints can take several minutes to see the new key — expect
+     transient `401 NotAuthenticated` on `ComputeClient` calls for a few
+     minutes after first setup even though `IdentityClient` calls succeed
+     immediately. Not a real problem, just wait and retry.
+4. ✅ Old instance **terminated** (`preserve_boot_volume=False` — no
+   orphaned boot volume left eating into the shared 200GB free block
+   storage allowance).
+5. 🔄 **Blocked on Oracle capacity**: `launch_instance` for the new
+   `VM.Standard.A1.Flex` (2 OCPU/12GB) instance is failing with `500 Out of
+   host capacity` across all 3 ADs in `eu-frankfurt-1`
+   (`RWGt:EU-FRANKFURT-1-AD-1/2/3`) — this is a well-known, common
+   situation with Oracle's free Ampere pool being oversubscribed. A
+   background retry loop is/was running (every 5 min per full cycle, 15s
+   stagger between ADs — an earlier tighter loop hit a `429 Too many
+   requests` and was replaced with this slower one). **Check if it's still
+   running or already succeeded before starting a new one** — if a session
+   ended while it was running, it may have died with it; just resubmit the
+   same `launch_instance` call (spec is documented below) either as a
+   background retry loop or one-off attempts.
+
+### Launch spec for the new instance (once capacity is available)
+- Name: `lvamo-backend`
+- Compartment: tenancy root (same as before)
+- Region: `eu-frankfurt-1`, try all 3 ADs
+- Shape: `VM.Standard.A1.Flex`, **2 OCPU / 12 GB** (current Always-Free
+  Ampere limit — do not request more, it will fail as not-free-tier-eligible
+  or get flagged)
+- Image: Canonical Ubuntu 24.04 aarch64 (latest available build — was
+  `Canonical-Ubuntu-24.04-aarch64-2026.07.17-0` as of this session; re-check
+  for a newer build via `list_images`)
+- Subnet: reuse the same subnet the old instance was on
+  (`ocid1.subnet.oc1.eu-frankfurt-1.aaaaaaaaoct3zxvdiahsqkdscx5wseko2mogydeu6ojvfxvxzr5ps5cv6dca`)
+  — inherits the same VCN-level security list (ports 22/80/443 already
+  open there, that part doesn't need redoing)
+- SSH key: same one as before (`ssh-key-2026-07-10.key` / `.pub` derived via
+  `ssh-keygen -y -f`), so existing local tooling keeps working
+
+### Once the new instance is up — remaining steps
+1. SSH in, confirm OS/ARM64 specs.
+2. Replicate the "audited old VM config" steps above exactly (Docker via
+   `docker.io` + compose/buildx plugins, iptables rules + persistence,
+   certbot via apt).
+3. `git clone` the repo into `~/lvamo-applaut`, `scp` `.env.production` up
+   from the local backup.
+4. Bring up `postgres` via `docker-compose.prod.yml`, restore
+   `applaut_backup.dump` into it (`pg_restore` inside the container).
+5. Bring up `backend` + `nginx`, run Alembic migrations.
+6. Validate directly against the new IP (`curl` with a `Host:
+   api.applaut.lvamo.com` header) **before** touching DNS — health, login,
+   opportunities/applications/audit/resume (the pages whose bug got fixed
+   earlier this session).
+7. **DNS cutover** (manual — no Cloudflare API token configured): update
+   the `api.applaut.lvamo.com` A record in Cloudflare from `130.61.65.131`
+   (dead) to the new IP. It's a DNS-only/grey-cloud record, not proxied.
+8. Once DNS propagates, `certbot certonly --standalone -d
+   api.applaut.lvamo.com` on the new box.
+9. Full verification: health check, real login, Playwright pass against
+   `https://www.lvamo.com` end to end.
+10. Update this file + `.claude/settings.local.json`'s SSH permission rule
+    with the new IP once everything is confirmed live.
 
 ---
 

@@ -15,6 +15,9 @@ build/
 .env.*.local
 .env.production
 
+# Local infra backups (DB dumps, secrets) - never commit
+.deploy-backup/
+
 # Node
 node_modules/
 frontend/dist/
