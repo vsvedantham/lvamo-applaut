@@ -44,7 +44,7 @@ Quick start for next session:
 
 | Layer | Status | URL / Location |
 |---|---|---|
-| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) |
+| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut`, Jobref placeholder at `/jobref`), not Applaut directly |
 | Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM, Docker) |
 | Database | Live | PostgreSQL 16 in Docker on VM, accessible via SSH tunnel for DBeaver |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
