@@ -167,6 +167,16 @@ known, accepted trade-off, not an accident.
      already succeeded before starting a new one** — if a session ended
      while it was running, it may have died with it. On success it writes
      the new instance OCID to `/tmp/lvamo_backend_instance_id.txt`.
+   - **Bug hit and fixed once already**: the loop initially only caught
+     `oci.exceptions.ServiceError`, so a transient network blip (DNS
+     resolution failure, e.g. laptop sleep/wifi drop) raised an uncaught
+     `oci.exceptions.RequestException` and silently killed the whole loop —
+     it then sat dead for a while before anyone noticed, since a crashed
+     background process doesn't retry itself. Current version of
+     `/tmp/retry_launch.py` has a catch-all `except Exception` around the
+     launch call so this can't happen again. **If this script is ever
+     recreated from scratch, keep that catch-all** — it's the difference
+     between "retries for hours unattended" and "dies on the first hiccup."
 
 ### Launch spec for the new instance (once capacity is available)
 - Name: `lvamo-backend`
