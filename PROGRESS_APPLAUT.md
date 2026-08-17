@@ -184,7 +184,7 @@ production API after deploy.
 
 `frontend/src/applaut/api/client.ts` now bakes `/api/v1/applaut` into the axios
 `baseURL` instead of repeating it per call site (root cause of the above
-inconsistency) — every `src/api/*.ts` module calls resource-relative paths
+inconsistency) — every `src/applaut/api/*.ts` module calls resource-relative paths
 now (e.g. `/opportunities`, not `/api/v1/opportunities`).
 
 ---
