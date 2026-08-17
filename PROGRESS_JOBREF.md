@@ -74,10 +74,26 @@ matching, no messaging, no notifications).
 
 ## Next steps
 
-- Deploy: backend migration + redeploy on `lvamo-backend`, frontend
-  redeploy via Cloudflare Pages, then verify both in production (same
-  pattern as every other deploy this session — health check + real
-  register/login against production).
+- **⚠️ Committed locally only, NOT pushed to `origin`** — commit `3d5fd42`
+  on `main`, sitting ahead of the remote. User explicitly chose to hold off
+  on deploying today (asked "should I deploy now?" → "Hold off"). Next
+  session: confirm with the user before pushing/deploying — don't assume
+  yesterday's local commit should go out automatically.
+- Deploy (once approved): `git push`, then backend migration + redeploy on
+  `lvamo-backend` (runs migration `0007`), frontend redeploy via Cloudflare
+  Pages (auto, on push), then verify both in production (same pattern as
+  every other deploy this session — health check + real register/login
+  against production).
 - Beyond auth: the actual referral-matching product logic (how a job
   seeker gets connected to a referring employee at the same company/domain)
   is not yet designed — next major feature after this auth foundation ships.
+
+---
+
+### Session update — auth built, deploy held (committed `3d5fd42`, local only)
+
+Session end state, Aug 2026: full login/registration feature built and
+verified locally (see "What exists today" above for the complete
+breakdown). Committed to local `main` but the user chose not to push/deploy
+today — everything above this line describes code that exists on disk and
+in the local git history, not (yet) in production.
