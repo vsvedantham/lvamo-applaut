@@ -67,6 +67,47 @@ Applaut's namespacing work (the actual migration, file-by-file) is recorded
 in `PROGRESS_APPLAUT.md`, not here — this section is the durable policy, not
 a change-log entry.
 
+### Codebase structure matches the URL structure (Aug 2026)
+
+The URL namespacing above only covers *routes*. Until Aug 2026 the actual
+**file layout** didn't know verticals existed — `backend/app/models/user.py`,
+`frontend/src/pages/Login.tsx` etc. were Applaut-only code sitting in flat,
+unmarked shared folders (a historical artifact: this codebase *was* Applaut
+before Jobref existed as a concept). Restructured both sides so the folder
+structure matches the URL structure, for every vertical going forward — this
+is "package by feature" / a modular-monolith split, not something unusual:
+
+**Backend** (`backend/app/`):
+- `applaut/` — everything Applaut-specific: models (except `base.py`),
+  schemas, services, `api/v1/` routers, `discovery/`, `generation/`,
+  `scoring/`, plus the Applaut-only `core/ai.py` (resume-extraction AI),
+  `core/extract_text.py`, `core/role_synonyms.py`.
+- Shared top-level, **only** things with zero vertical-specific logic:
+  `main.py` (mounts each vertical's router), `config.py` (Settings),
+  `db/session.py` + `db/base.py` (engine, `get_db`, SQLAlchemy `Base`/
+  `TimestampMixin`/`UUIDPrimaryKey`), `core/security.py` (password/JWT
+  helpers), `core/storage.py` (R2 client).
+- A future `jobref/` sibling to `applaut/` follows the identical shape.
+
+**Frontend** (`frontend/src/`):
+- `applaut/{api,components,context,pages}/` — everything Applaut-specific.
+- `jobref/pages/` — Jobref's placeholder page (grows the same shape as it
+  gets built out).
+- Shared top-level: `main.tsx`, `App.tsx`, `index.css`,
+  `components/{Logo,BrandedPage}.tsx`, `hooks/useDocumentTitle.ts`,
+  `pages/Hub.tsx`.
+
+**The rule for what's shared vs. vertical-specific**: only promote something
+to the shared layer once it's *proven* to have zero product-specific logic
+(verified by reading it, not guessed) — sharing too eagerly creates hidden
+coupling between verticals; not sharing genuinely-generic infra just
+duplicates it. When in doubt, keep it in the vertical folder; promote later
+if a second vertical actually needs it.
+
+This was a pure reorganization (verified: byte-identical frontend bundle
+hashes before/after, zero backend behavior change) — see `PROGRESS_APPLAUT.md`
+for the file-by-file move log if ever needed for reference.
+
 ---
 
 ## Oracle Backend Migration (COMPLETE, Aug 2026)

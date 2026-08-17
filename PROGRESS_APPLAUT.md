@@ -7,7 +7,7 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Keep scaling `backend/app/discovery/data/company_boards.json` — now at 500 companies, single-country density still below target. A proven sourcing method exists — use it.**
+**Keep scaling `backend/app/applaut/discovery/data/company_boards.json` — now at 500 companies, single-country density still below target. A proven sourcing method exists — use it.**
 
 **This session found a working method.** Two failed/weak approaches first:
 memory-guessing (790 candidates → 144 new, most already tried) and VC
@@ -54,23 +54,23 @@ Quick start for next session:
 
 ### Discovery Engine
 - Adapter pattern — **7 adapters implemented: Greenhouse, Lever, Ashby, Personio, Workable, SmartRecruiters, Recruitee** (all public/no-auth JSON APIs — no browser scraping). Personio's endpoint had gone dead (retired JSON API) and was fixed — see "Discovery Scaling" below.
-- Company list: `backend/app/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/discovery/data/company_boards.json` (currently **500 companies total**, up from 18 at the start of the scaling effort — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
+- Company list: `backend/app/applaut/discovery/companies.py` — `CURATED_BOARDS` (hand-picked, ~22 entries) + `ADAPTER_REGISTRY` (keyed by `source_name`) + auto-merged entries from `backend/app/applaut/discovery/data/company_boards.json` (currently **500 companies total**, up from 18 at the start of the scaling effort — see "Discovery Scaling — Phase 1" below). Dedupes automatically against curated entries.
 - Offline company-slug discovery script: `backend/scripts/discover_company_slugs.py` — probes a seed list of company names against all 7 adapters' raw endpoints, keeps only slugs that resolve to a real non-empty job board, appends to `company_boards.json`. Seed files: `backend/scripts/seed_companies.txt` (general EU batch) and `backend/scripts/seed_companies_de.txt` (sourced from real German startup directories).
-- Role matching (`app/discovery/location.py`'s `matches_roles`) now uses the same synonym expansion as scoring (shared table: `backend/app/core/role_synonyms.py`) — a title like "Analytics Engineer" is now fetched for a "Data Engineer" search, not silently dropped before scoring ever sees it.
+- Role matching (`app/applaut/discovery/location.py`'s `matches_roles`) now uses the same synonym expansion as scoring (shared table: `backend/app/applaut/core/role_synonyms.py`) — a title like "Analytics Engineer" is now fetched for a "Data Engineer" search, not silently dropped before scoring ever sees it.
 - Concurrency-capped: `DISCOVERY_CONCURRENCY` (default 20, env-configurable) semaphore in `engine.py` so a large `COMPANY_BOARDS` doesn't burst-hammer any single ATS host.
-- Scheduled via APScheduler (`backend/app/discovery/scheduler.py`)
-- Location resolution: city → country code (`backend/app/discovery/location.py`)
+- Scheduled via APScheduler (`backend/app/applaut/discovery/scheduler.py`)
+- Location resolution: city → country code (`backend/app/applaut/discovery/location.py`)
 - Manual trigger available via API — **and now auto-chains into rule-based scoring** (see Scoring section)
 
 ### Scoring
-- **Rule-based scorer** (`backend/app/scoring/rule_based.py`):
+- **Rule-based scorer** (`backend/app/applaut/scoring/rule_based.py`):
   - 5 dimensions: role(35), skills(25), location(20), employment_type(10), experience(10)
   - Role synonym expansion (data engineer, devops, etc.)
   - Skills score uses JD keyword count as denominator (% of what job requires)
   - Re-scores ALL active opportunities on every run (upsert — no stale results)
   - Preserves user decisions across re-scoring runs
-  - **Runs automatically after every discovery run** (`trigger_discovery` in `backend/app/services/opportunity.py` chains into `run_scoring`) — no separate "Run scoring" step needed
-- **AI scorer** (`backend/app/scoring/ai_scorer.py`):
+  - **Runs automatically after every discovery run** (`trigger_discovery` in `backend/app/applaut/services/opportunity.py` chains into `run_scoring`) — no separate "Run scoring" step needed
+- **AI scorer** (`backend/app/applaut/scoring/ai_scorer.py`):
   - Uses `gpt-4o-mini` via `AsyncOpenAI`
   - Only scores previously-unscored opps (cost control)
   - Returns per-dimension explanations + near-miss keywords
@@ -90,7 +90,7 @@ Quick start for next session:
 ### Notifications
 - In-app notification system with unread badge
 - Auto-notified on discovery results
-- Fixed: bell was calling `/notifications` instead of the correctly-prefixed path (404 on every page) — all four endpoints in `frontend/src/api/notifications.ts` now correctly resolve through the shared `api/client.ts` base URL
+- Fixed: bell was calling `/notifications` instead of the correctly-prefixed path (404 on every page) — all four endpoints in `frontend/src/applaut/api/notifications.ts` now correctly resolve through the shared `applaut/api/client.ts` base URL
 
 ### Audit Log
 - Every major action logged to `audit_logs` table
@@ -101,8 +101,33 @@ Quick start for next session:
 - Inter font via Google Fonts
 - Custom SVG favicon (geometric "A" mark)
 - **Mobile-responsive**: slide-in sidebar with backdrop on ≤768px, fixed top bar with hamburger
-- **Opportunities + Scores merged into one page** (`frontend/src/pages/Opportunities.tsx`) — the standalone Scores page is gone. Running discovery auto-scores; each card shows its score badge, per-dimension chips (hover for explanation), and near-miss gap keywords + keep/dismiss actions inline, or good-match actions (generate documents / start application) inline. Filters: Match (all/good/near-miss/below/unscored), Source, Country, Scoring mode (Rule-based; AI shown disabled). `/applaut/scores` route redirects to `/applaut/opportunities`; `?match=` query param supported for deep links from Dashboard
+- **Opportunities + Scores merged into one page** (`frontend/src/applaut/pages/Opportunities.tsx`) — the standalone Scores page is gone. Running discovery auto-scores; each card shows its score badge, per-dimension chips (hover for explanation), and near-miss gap keywords + keep/dismiss actions inline, or good-match actions (generate documents / start application) inline. Filters: Match (all/good/near-miss/below/unscored), Source, Country, Scoring mode (Rule-based; AI shown disabled). `/applaut/scores` route redirects to `/applaut/opportunities`; `?match=` query param supported for deep links from Dashboard
 - Pages: Landing (`/applaut`), Login, Register, Onboarding, Dashboard, Opportunities, Applications, Resume, AuditLog, OpportunityDetail, DocumentDetail — all under `/applaut/*`
+
+---
+
+## Codebase restructuring into `app/applaut/` + `src/applaut/` (Aug 2026, committed)
+
+All of Applaut's backend and frontend code moved from flat, unmarked shared
+folders into `backend/app/applaut/` and `frontend/src/applaut/` — the
+*durable policy* (what's shared vs. vertical-specific, and why) is
+documented in `PROGRESS.md`'s "Codebase structure matches the URL structure"
+section, not here. This entry is just the pointer + what changed file-path-
+wise, since every path referenced elsewhere in this document now includes
+the `applaut/` segment (already updated throughout this file).
+
+Pure reorganization, zero behavior change — verified locally (backend boots
+clean, full smoke test against real data: health, login, opportunities,
+discovery run, audit, stats, `alembic upgrade head`; frontend `tsc` + `vite
+build` clean with byte-identical bundle hashes to before the move) and in
+production (same checks re-run against `api.applaut.lvamo.com` and
+`www.lvamo.com` post-deploy).
+
+One practical consequence: `backend/scripts/discover_company_slugs.py`'s
+default output path is now `app/applaut/discovery/data/company_boards.json`
+(was `app/discovery/data/company_boards.json`) — already updated in the
+script, just noting it here since the "Quick start for next session" recipe
+at the top of this file references running that script.
 
 ---
 
@@ -141,13 +166,13 @@ documented there, not here.
   `/api/v1`) — single-line change in `backend/app/main.py`. Every endpoint
   path is otherwise unchanged, just prefixed.
 - **localStorage token key** renamed `access_token` → `applaut_access_token`
-  (in `frontend/src/api/client.ts`) so a future Jobref session can't collide
+  (in `frontend/src/applaut/api/client.ts`) so a future Jobref session can't collide
   with Applaut's.
 - **Hostnames unchanged** — `www.lvamo.com` and `api.applaut.lvamo.com` stay
   as-is; only URL *paths* changed.
 
 **Bug found + fixed along the way**: while tracing every API call site for
-this rename, found that `frontend/src/api/applications.ts`, `audit.ts`,
+this rename, found that `frontend/src/applaut/api/applications.ts`, `audit.ts`,
 `scheduler.ts`, and `stats.ts` were calling bare paths with no `/api/v1`
 prefix at all — no rewriting interceptor and no path-rewriting nginx rule
 compensating, so **Applications, Audit Log, Dashboard stats, and the
@@ -157,7 +182,7 @@ now confirmed working end-to-end via Playwright against real data (48 jobs /
 2 good / 32 near-miss, 34 audit events) both locally and against the live
 production API after deploy.
 
-`frontend/src/api/client.ts` now bakes `/api/v1/applaut` into the axios
+`frontend/src/applaut/api/client.ts` now bakes `/api/v1/applaut` into the axios
 `baseURL` instead of repeating it per call site (root cause of the above
 inconsistency) — every `src/api/*.ts` module calls resource-relative paths
 now (e.g. `/opportunities`, not `/api/v1/opportunities`).
@@ -302,7 +327,7 @@ names — re-running an old file just wastes requests re-probing misses.
 4. Built `backend/scripts/discover_company_slugs.py` — an offline batch
    script that probes candidate company-name slug variants against all 7
    adapters and keeps only ones that resolve to a real non-empty job board.
-   Output → `backend/app/discovery/data/company_boards.json`, merged into
+   Output → `backend/app/applaut/discovery/data/company_boards.json`, merged into
    `COMPANY_BOARDS` at runtime, deduped against the hand-curated list.
 5. Ran the script across ~660 seed company names in 4 batches (general EU
    guesses, a broader/gaming-and-marketplace batch, and a batch sourced from
