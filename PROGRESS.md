@@ -6,14 +6,16 @@
 
 ---
 
-## 🚨 BACKEND IS CURRENTLY DOWN — read this first
+## 🚧 lvamo-backend is UP, provisioning in progress — DNS not cut over yet
 
-**`api.applaut.lvamo.com` will not respond right now.** Mid-migration from
-the old Oracle VM to a new one, old VM is already deleted, new one hasn't
-launched yet — see "Oracle Backend Migration (IN PROGRESS)" below for full
-context, exact resume steps, and where the DB backup lives. **Do not treat
-the "scaling company_boards.json" task below as the priority until this is
-resolved** — it was the priority before this session's infra work started.
+**The new instance launched** (after ~22.5h of retrying Oracle's Ampere
+capacity) — `lvamo-backend`, `VM.Standard.A1.Flex`, 2 OCPU/12GB, public IP
+**`130.61.106.172`**, SSH confirmed working with the existing key. `api.applaut.lvamo.com`
+**still points at the dead old IP (`130.61.65.131`) and will not respond**
+until DNS is cut over — see "Oracle Backend Migration" below for exactly
+where this stands and the remaining steps (provisioning the box, restoring
+the DB, DNS cutover, cert issuance). **Do not treat the "scaling
+company_boards.json" task below as the priority until this is finished.**
 
 ---
 
@@ -56,12 +58,13 @@ Quick start for next session:
 | Layer | Status | URL / Location |
 |---|---|---|
 | Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`), not Applaut directly. All of Applaut's pages (login, dashboard, opportunities, etc.) live under `/applaut/*` now, not at the frontend root. |
-| Backend API | 🚨 **DOWN** | `api.applaut.lvamo.com` — mid-migration to a new VM, see "Oracle Backend Migration (IN PROGRESS)" below. The old VM (`130.61.65.131`, IP below is now dead) is **deleted**; DB is safely backed up locally, waiting on Oracle Ampere free-tier capacity to launch the replacement. |
-| Database | 🚨 Down with backend | Was PostgreSQL 16 in Docker on the old VM. **Full dump backed up locally** at `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` (verified: all 11 tables present) — needs restoring onto the new VM once it exists. |
+| Backend API | 🚧 New VM up, DNS not cut over | `api.applaut.lvamo.com` still points at the dead old IP and won't respond. New VM `lvamo-backend` is `RUNNING` at `130.61.106.172`, SSH confirmed — provisioning (Docker, iptables, certbot, app stack, DB restore) not yet done. See "Oracle Backend Migration" below. |
+| Database | 🚧 Backup ready, not yet restored | **Full dump backed up locally** at `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` (verified: all 11 tables present) — still needs restoring onto the new VM's Postgres container. |
 | Storage | Configured | Cloudflare R2 (resumes, documents) — unaffected by the backend migration |
 
-**Old VM access (dead, instance terminated):** ~~`ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.65.131`~~ — do not use, instance no longer exists.
-**App dir (once new VM exists):** `/home/ubuntu/lvamo-applaut/`
+**New VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
+**Old VM (dead, instance terminated):** ~~`130.61.65.131`~~ — do not use, instance no longer exists.
+**App dir (once cloned):** `/home/ubuntu/lvamo-applaut/`
 **Deploy backend:** `sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build backend`
 **Or just run `bash deploy.sh`** on the VM — pulls, rebuilds, migrates, restarts, prunes.
 **OCI API access is now set up** (see migration section below) — instance creation/deletion no longer requires manual Console clicks.
@@ -138,8 +141,19 @@ known, accepted trade-off, not an accident.
 4. ✅ Old instance **terminated** (`preserve_boot_volume=False` — no
    orphaned boot volume left eating into the shared 200GB free block
    storage allowance).
-5. 🔄 **Still blocked on Oracle capacity** (as of this update). Tried
-   multiple angles, all hit the same wall:
+5. ✅ **Instance launched** — after ~22.5 hours of retrying (a 5-min cron
+   job checking `attempt_launch_once.py`), succeeded on AD-1:
+   `RWGt:EU-FRANKFURT-1-AD-1`, instance OCID
+   `ocid1.instance.oc1.eu-frankfurt-1.antheljr7fvjruaci7an2vityonovsx6dhyqobw2xf7zmfop3evimbuqrpyq`,
+   public IP **`130.61.106.172`**. Confirmed `RUNNING`, correct shape (2
+   OCPU/12GB Ampere Altra), correct image (Ubuntu 24.04.4 LTS aarch64), SSH
+   working immediately with the existing key — no new credentials needed.
+   **Next: provisioning (see "Once the new instance is up" below), then DNS
+   cutover.** Full retry-attempt history is logged at
+   `C:\Projects\lvamo-applaut\.deploy-backup\launch_attempts.log`.
+
+   Journey to get here, for reference — tried multiple angles, all hit the
+   same wall until it finally cleared:
    - API `launch_instance` for `VM.Standard.A1.Flex` (2 OCPU/12GB) fails
      `500 Out of host capacity` across all 3 ADs in `eu-frankfurt-1`
      (`RWGt:EU-FRANKFURT-1-AD-1/2/3`).
