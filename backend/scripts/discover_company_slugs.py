@@ -4,13 +4,13 @@ Offline company-slug discovery for the job-discovery engine.
 Takes a seed list of company display names (one per line) and probes each
 against every supported ATS's public endpoint under a handful of slug-naming
 conventions, keeping only slugs that resolve to a real, non-empty job board.
-Output feeds app/discovery/companies.py via app/discovery/data/company_boards.json
+Output feeds app/applaut/discovery/companies.py via app/applaut/discovery/data/company_boards.json
 — it does not touch companies.py's hand-curated entries.
 
 This is a standalone offline batch job, not part of the request path. Run by
 hand, not on a schedule.
 
-Usage (paths default to seed_companies.txt / ../app/discovery/data/company_boards.json
+Usage (paths default to seed_companies.txt / ../app/applaut/discovery/data/company_boards.json
 relative to this script, so it works from any cwd — repo root or inside the
 backend container):
     python backend/scripts/discover_company_slugs.py --mode append
@@ -229,7 +229,7 @@ SCRIPT_DIR = Path(__file__).parent
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", default=str(SCRIPT_DIR / "seed_companies.txt"))
-    parser.add_argument("--output", default=str(SCRIPT_DIR.parent / "app" / "discovery" / "data" / "company_boards.json"))
+    parser.add_argument("--output", default=str(SCRIPT_DIR.parent / "app" / "applaut" / "discovery" / "data" / "company_boards.json"))
     parser.add_argument("--mode", choices=["append", "regenerate"], default="append")
     parser.add_argument("--concurrency", type=int, default=DEFAULT_CONCURRENCY)
     parser.add_argument("--limit", type=int, default=None, help="only probe the first N seed names")

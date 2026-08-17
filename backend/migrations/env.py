@@ -13,8 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import Base and all models so their tables are registered with metadata
-from app.models.base import Base  # noqa: E402
-from app.models import (  # noqa: E402, F401
+from app.db.base import Base  # noqa: E402
+from app.applaut.models import (  # noqa: E402, F401
     User, Profile, Resume, Opportunity, Score,
     Application, GeneratedDocument, Notification, AuditLog,
 )
