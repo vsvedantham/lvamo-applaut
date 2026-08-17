@@ -6,16 +6,16 @@
 
 ---
 
-## 🚧 lvamo-backend is UP, provisioning in progress — DNS not cut over yet
+## ✅ Oracle backend migration COMPLETE — `lvamo-backend` is live
 
-**The new instance launched** (after ~22.5h of retrying Oracle's Ampere
-capacity) — `lvamo-backend`, `VM.Standard.A1.Flex`, 2 OCPU/12GB, public IP
-**`130.61.106.172`**, SSH confirmed working with the existing key. `api.applaut.lvamo.com`
-**still points at the dead old IP (`130.61.65.131`) and will not respond**
-until DNS is cut over — see "Oracle Backend Migration" below for exactly
-where this stands and the remaining steps (provisioning the box, restoring
-the DB, DNS cutover, cert issuance). **Do not treat the "scaling
-company_boards.json" task below as the priority until this is finished.**
+Backend fully migrated from the old `applaut-backend` VM (deleted) to the
+new `lvamo-backend` Ampere A1.Flex instance. `api.applaut.lvamo.com` is live
+again, verified end-to-end (frontend login → DNS → TLS → nginx → backend →
+DB, all through the new server). Full write-up, including the ~22.5h
+capacity wait, the PAYG upgrade, the DNS/Cloudflare cutover, and everything
+that had to be replicated on the new box, is under "Oracle Backend
+Migration" below — kept for reference, not because anything is still
+pending. **The "scaling company_boards.json" task is the priority again.**
 
 ---
 
@@ -58,30 +58,35 @@ Quick start for next session:
 | Layer | Status | URL / Location |
 |---|---|---|
 | Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`), not Applaut directly. All of Applaut's pages (login, dashboard, opportunities, etc.) live under `/applaut/*` now, not at the frontend root. |
-| Backend API | 🚧 Provisioned, waiting on DNS cutover | `api.applaut.lvamo.com` still points at the dead old IP and won't respond. New VM `lvamo-backend` (`130.61.106.172`) is fully provisioned: Docker/compose/buildx/certbot installed, iptables 80/443 open + persisted, repo cloned, `.env.production` copied, `postgres`+`backend` containers up, migrations confirmed at head. Backend validated directly (health/auth/authz all correct) — bypassing `nginx`, which is intentionally **stopped** (crash-loops without a TLS cert — expected, cert can't be issued until DNS points here; note a full VM reboot resets Docker's "manually stopped" memory and nginx will crash-loop again until stopped once more — this happened once already after the shape resize below). **Next: DNS cutover, then certbot, then start nginx.**<br><br>**Account upgraded to Pay-As-You-Go after this instance launched** — this is almost certainly why the ~22.5h capacity wait finally succeeded (PAYG gets priority capacity access even for Always-Free-eligible shapes). User resized the instance up to the *full* Always-Free Ampere allotment — **4 OCPU / 24GB** (still $0 — Always Free resource entitlements remain free on PAYG) — and rebooted. Verified clean: instance `RUNNING`, shape confirmed 4 OCPU/24GB at both the OCI API and OS level (`nproc`=4, `free -h`=23Gi), same public IP, Docker daemon active, `backend`+`postgres` survived the reboot and are healthy, iptables rules persisted correctly. Only `nginx` needed re-stopping post-reboot (expected, see above). |
-| Database | ✅ Restored on new VM | Restored from `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` into the new VM's Postgres container — verified row counts match (2 users, 2 profiles, 12 opportunities). |
-| Storage | Configured | Cloudflare R2 (resumes, documents) — unaffected by the backend migration |
+| Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM `lvamo-backend`, `130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) — verified end-to-end post-migration (health, auth, and a real browser login all confirmed working through nginx+TLS). Endpoints still mounted under `/api/v1/applaut/*`. |
+| Database | Live | PostgreSQL 16 in Docker on the new VM — restored from the pre-migration backup, row counts verified to match. |
+| Storage | Configured | Cloudflare R2 (resumes, documents) |
 
-**New VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
-**Old VM (dead, instance terminated):** ~~`130.61.65.131`~~ — do not use, instance no longer exists.
-**App dir (once cloned):** `/home/ubuntu/lvamo-applaut/`
+**VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
+**Old VM (`applaut-backend`, `130.61.65.131`):** deleted as part of the migration — do not use.
+**App dir on VM:** `/home/ubuntu/lvamo-applaut/`
 **Deploy backend:** `sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build backend`
 **Or just run `bash deploy.sh`** on the VM — pulls, rebuilds, migrates, restarts, prunes.
-**OCI API access is now set up** (see migration section below) — instance creation/deletion no longer requires manual Console clicks.
+**OCI API access is set up** (Python SDK + API key at `~/.oci/config` on the dev machine) — instance create/terminate/resize no longer needs manual Console clicks; see migration section below for the one-time setup.
+**Cloudflare API access is set up** too (scoped token, `lvamo.com` zone, DNS edit only, saved at `~/.cloudflare/token` on the dev machine) — DNS record changes for this domain no longer need the dashboard either.
+**⚠️ `nginx` gotcha**: if the VM is ever rebooted, `nginx`'s `restart: always` policy will bring it back even if it was manually `docker stop`ped before — a host reboot resets Docker's memory of that. Not a problem now (cert exists, nginx starts fine), just worth knowing if this ever needs debugging again.
 
 ---
 
-## Oracle Backend Migration (IN PROGRESS — backend is down)
+## Oracle Backend Migration (COMPLETE)
 
 **Why:** the old VM (OCI display name `applaut-backend`, `130.61.65.131`) was
 a **fixed** `VM.Standard.E2.1.Micro` shape — 1 OCPU / 1GB RAM, not resizable,
 already down to ~250MB free RAM with just Applaut running (no room for
-Jobref later). Moving to Oracle's Ampere A1.Flex Always-Free tier instead —
-**2 OCPU / 12GB RAM** (Oracle's free Ampere allotment was reduced from the
-historical 4 OCPU/24GB — noted 2026-08 via an Oracle console banner), still
-$0, shared across Applaut and future verticals. New instance name:
-`lvamo-backend` (generic, not vertical-specific, per this session's
-URL-namespacing theme).
+Jobref later). Moved to Oracle's Ampere A1.Flex tier instead — started the
+launch attempt at 2 OCPU/12GB (Oracle's free Ampere allotment had just been
+reduced from the historical 4 OCPU/24GB — noted 2026-08 via an Oracle
+console banner), ended up at the full **4 OCPU / 24GB** after the account
+was upgraded to Pay-As-You-Go mid-migration (see step 7 — still $0, Always
+Free entitlements stay free on PAYG). New instance name: `lvamo-backend`
+(generic, not vertical-specific, per this session's URL-namespacing theme).
+**Total elapsed time: ~24 hours, almost all of it waiting on Oracle capacity,
+not active work.**
 
 **Sequencing note:** the user explicitly chose to delete the old instance
 *before* creating the new one (not a side-by-side blue-green migration) —
@@ -145,93 +150,106 @@ known, accepted trade-off, not an accident.
    job checking `attempt_launch_once.py`), succeeded on AD-1:
    `RWGt:EU-FRANKFURT-1-AD-1`, instance OCID
    `ocid1.instance.oc1.eu-frankfurt-1.antheljr7fvjruaci7an2vityonovsx6dhyqobw2xf7zmfop3evimbuqrpyq`,
-   public IP **`130.61.106.172`**. Confirmed `RUNNING`, correct shape (2
-   OCPU/12GB Ampere Altra), correct image (Ubuntu 24.04.4 LTS aarch64), SSH
-   working immediately with the existing key — no new credentials needed.
-   **Next: provisioning (see "Once the new instance is up" below), then DNS
-   cutover.** Full retry-attempt history is logged at
+   public IP **`130.61.106.172`**. Confirmed `RUNNING`, correct image
+   (Ubuntu 24.04.4 LTS aarch64), SSH working immediately with the existing
+   key — no new credentials needed. Full retry-attempt history logged at
    `C:\Projects\lvamo-applaut\.deploy-backup\launch_attempts.log`.
 
    Journey to get here, for reference — tried multiple angles, all hit the
    same wall until it finally cleared:
-   - API `launch_instance` for `VM.Standard.A1.Flex` (2 OCPU/12GB) fails
+   - API `launch_instance` for `VM.Standard.A1.Flex` (2 OCPU/12GB) failed
      `500 Out of host capacity` across all 3 ADs in `eu-frankfurt-1`
-     (`RWGt:EU-FRANKFURT-1-AD-1/2/3`).
+     (`RWGt:EU-FRANKFURT-1-AD-1/2/3`), repeatedly, for hours.
    - User also tried creating it **manually via the OCI Console** — same
-     result, same capacity wall (confirms it's real infra capacity, not a
+     result, same capacity wall (confirmed it was real infra capacity, not a
      bug in the API calls).
    - Investigated whether another OCI **region** might have capacity: **not
      an option for staying free** — Always Free compute is only provisionable
      in the tenancy's home region, which is locked to `eu-frankfurt-1` and
      can't be changed after signup ([Oracle docs](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)).
-     Confirmed via `list_region_subscriptions` — this tenancy is subscribed
-     to `eu-frankfurt-1` only. A brand-new account in a different region
-     (e.g. Singapore, anecdotally easier per community reports) was
-     considered but the user opted not to pursue it — flagged risk: Oracle
-     generally allows one Always Free account per identity/card, and a
-     second account created to route around this would risk suspension.
-     **Decision: stick with this tenancy, keep retrying Frankfurt.**
-   - Background retry loop running (every 5 min per full cycle, 15s stagger
+     Confirmed via `list_region_subscriptions`. A brand-new account in a
+     different region (e.g. Singapore, anecdotally easier per community
+     reports) was considered but the user opted not to pursue it — flagged
+     risk: Oracle generally allows one Always Free account per
+     identity/card, and a second account created to route around this
+     would risk suspension. **Decision: stick with this tenancy, keep
+     retrying Frankfurt.**
+   - Background retry loop ran every 5 min per full cycle (15s stagger
      between the 3 ADs — an earlier tighter loop hit `429 Too many
-     requests` and was replaced with this slower pacing, which hasn't
-     triggered further rate-limiting). Script is saved at
-     `/tmp/retry_launch.py` on this machine (Windows, not the VM) — just
-     rerun `python /tmp/retry_launch.py` (`run_in_background: true`) to
-     restart it if it's not running. **Check if it's still running or
-     already succeeded before starting a new one** — if a session ended
-     while it was running, it may have died with it. On success it writes
-     the new instance OCID to `/tmp/lvamo_backend_instance_id.txt`.
-   - **Bug hit and fixed once already**: the loop initially only caught
+     requests` and was replaced with this slower pacing). Script:
+     `/tmp/retry_launch.py` on the dev machine (not the VM).
+   - **Bug hit and fixed along the way**: the loop initially only caught
      `oci.exceptions.ServiceError`, so a transient network blip (DNS
      resolution failure, e.g. laptop sleep/wifi drop) raised an uncaught
      `oci.exceptions.RequestException` and silently killed the whole loop —
-     it then sat dead for a while before anyone noticed, since a crashed
-     background process doesn't retry itself. Current version of
-     `/tmp/retry_launch.py` has a catch-all `except Exception` around the
-     launch call so this can't happen again. **If this script is ever
-     recreated from scratch, keep that catch-all** — it's the difference
+     it sat dead for a while before anyone noticed. Fixed with a catch-all
+     `except Exception` around the launch call. **If a retry script like
+     this is ever needed again, keep that catch-all** — it's the difference
      between "retries for hours unattended" and "dies on the first hiccup."
-
-### Launch spec for the new instance (once capacity is available)
-- Name: `lvamo-backend`
-- Compartment: tenancy root (same as before)
-- Region: `eu-frankfurt-1`, try all 3 ADs
-- Shape: `VM.Standard.A1.Flex`, **2 OCPU / 12 GB** (current Always-Free
-  Ampere limit — do not request more, it will fail as not-free-tier-eligible
-  or get flagged)
-- Image: Canonical Ubuntu 24.04 aarch64 (latest available build — was
-  `Canonical-Ubuntu-24.04-aarch64-2026.07.17-0` as of this session; re-check
-  for a newer build via `list_images`)
-- Subnet: reuse the same subnet the old instance was on
-  (`ocid1.subnet.oc1.eu-frankfurt-1.aaaaaaaaoct3zxvdiahsqkdscx5wseko2mogydeu6ojvfxvxzr5ps5cv6dca`)
-  — inherits the same VCN-level security list (ports 22/80/443 already
-  open there, that part doesn't need redoing)
-- SSH key: same one as before (`ssh-key-2026-07-10.key` / `.pub` derived via
-  `ssh-keygen -y -f`), so existing local tooling keeps working
-
-### Once the new instance is up — remaining steps
-1. SSH in, confirm OS/ARM64 specs.
-2. Replicate the "audited old VM config" steps above exactly (Docker via
-   `docker.io` + compose/buildx plugins, iptables rules + persistence,
-   certbot via apt).
-3. `git clone` the repo into `~/lvamo-applaut`, `scp` `.env.production` up
-   from the local backup.
-4. Bring up `postgres` via `docker-compose.prod.yml`, restore
-   `applaut_backup.dump` into it (`pg_restore` inside the container).
-5. Bring up `backend` + `nginx`, run Alembic migrations.
-6. Validate directly against the new IP (`curl` with a `Host:
-   api.applaut.lvamo.com` header) **before** touching DNS — health, login,
-   opportunities/applications/audit/resume (the pages whose bug got fixed
-   earlier this session).
-7. **DNS cutover** (manual — no Cloudflare API token configured): update
-   the `api.applaut.lvamo.com` A record in Cloudflare from `130.61.65.131`
-   (dead) to the new IP. It's a DNS-only/grey-cloud record, not proxied.
-8. Once DNS propagates, `certbot certonly --standalone -d
-   api.applaut.lvamo.com` on the new box.
-9. Full verification: health check, real login, Playwright pass against
-   `https://www.lvamo.com` end to end.
-10. Update this file + `.claude/settings.local.json`'s SSH permission rule
-    with the new IP once everything is confirmed live.
+   - Eventually switched from an in-session background loop to a `CronCreate`
+     recurring job (5 min interval) calling an idempotent
+     `attempt_launch_once.py` (checks first whether `lvamo-backend` already
+     exists in a live state before attempting anything) — this proved more
+     durable across session boundaries than the plain background process.
+6. ✅ **Provisioned** — replicated the audited old-VM config on the new box:
+   - Docker packages differ by Ubuntu version: old box (20.04) used
+     `docker.io docker-compose-plugin docker-buildx-plugin`; new box (24.04)
+     needed **`docker.io docker-compose-v2 docker-buildx`** instead — apt
+     aborts the whole install line if any package name is wrong, so this
+     needs fixing before anything else installs.
+   - iptables: fresh Ubuntu 24.04 image has the identical default-REJECT
+     baseline as the old 20.04 one — opened 80/443 the same way, persisted
+     with `netfilter-persistent save`.
+   - certbot via apt as before — `certbot.timer` auto-enabled.
+   - Repo cloned, `.env.production` + DB dump `scp`'d up from the local
+     backup, `postgres` brought up first and the dump restored via
+     `pg_restore` inside the container before starting anything else —
+     verified row counts matched the backup (2 users, 2 profiles, 12
+     opportunities).
+   - `backend` built and started cleanly on ARM64 — all Python dependencies
+     in `requirements.txt` had prebuilt `aarch64` wheels, no compile-from-
+     source issues.
+   - Alembic migrations ran clean (no-op, DB was already at head from the
+     restored dump).
+   - Validated the backend directly, bypassing `nginx` (chicken-and-egg:
+     `nginx`'s config requires a TLS cert that can't be issued until DNS
+     points here) — the `python:3.12-slim` image has no `curl`, so used
+     `python3 -c "import urllib.request..."` inside the container instead.
+     Health, a bad-login 401, and an unauthenticated-access 403 all came
+     back correct.
+7. ✅ **Account upgraded to Pay-As-You-Go mid-migration** — almost certainly
+   *why* the ~22.5h capacity wait finally succeeded (PAYG gets priority
+   capacity access even for Always-Free-eligible shapes). User then resized
+   the instance up to the *full* Always-Free Ampere allotment (4 OCPU/24GB,
+   still $0) and rebooted. Verified clean afterward: same public IP, shape
+   confirmed 4 OCPU/24GB at both the OCI API and OS level (`nproc`=4,
+   `free -h`=23Gi), Docker daemon active, `backend`+`postgres` survived
+   the reboot and stayed healthy, iptables rules persisted. Only `nginx`
+   needed re-stopping (a full host reboot resets Docker's memory of a
+   manual `docker stop`, unlike a daemon-only restart — it came back into
+   its crash loop and had to be stopped again).
+8. ✅ **Cloudflare API access set up** (durable, same pattern as OCI) —
+   scoped API Token (Zone → DNS → Edit, restricted to the `lvamo.com` zone
+   only, no other-zone/billing access), created via the dashboard
+   (**dash.cloudflare.com/profile/api-tokens** → Create Token → "Edit zone
+   DNS" template), saved locally at `~/.cloudflare/token`. Verified via
+   `GET /client/v4/user/tokens/verify` before use.
+9. ✅ **DNS cutover** — updated the `api.applaut.lvamo.com` A record (zone
+   `fb08020e0634c5add91336af3cb709f6`, record
+   `34df1e922eeeb9157a21bd432b8fcf49`) via `PATCH
+   /client/v4/zones/{zone}/dns_records/{id}` from `130.61.65.131` (dead) to
+   `130.61.106.172`. Propagated within seconds (it's a DNS-only/grey-cloud
+   record on Cloudflare, so no proxy cache to wait on).
+10. ✅ **Cert issued**: `certbot certonly --standalone -d
+    api.applaut.lvamo.com` — succeeded immediately once DNS pointed here.
+    Expires 2026-11-15, auto-renewal via `certbot.timer` already confirmed
+    enabled. `nginx` started clean.
+11. ✅ **Full end-to-end verification**: health check over HTTPS through
+    nginx, real login attempt against a real production account (wrong
+    password, confirmed proper 401 not a crash), and a full Playwright
+    browser pass against `https://www.lvamo.com/applaut/login` — frontend →
+    DNS → TLS → nginx → backend → DB, all through the new server, all
+    correct.
 
 ---
 
