@@ -58,8 +58,8 @@ Quick start for next session:
 | Layer | Status | URL / Location |
 |---|---|---|
 | Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is now the **LVAMO hub** (lists verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`), not Applaut directly. All of Applaut's pages (login, dashboard, opportunities, etc.) live under `/applaut/*` now, not at the frontend root. |
-| Backend API | 🚧 New VM up, DNS not cut over | `api.applaut.lvamo.com` still points at the dead old IP and won't respond. New VM `lvamo-backend` is `RUNNING` at `130.61.106.172`, SSH confirmed — provisioning (Docker, iptables, certbot, app stack, DB restore) not yet done. See "Oracle Backend Migration" below. |
-| Database | 🚧 Backup ready, not yet restored | **Full dump backed up locally** at `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` (verified: all 11 tables present) — still needs restoring onto the new VM's Postgres container. |
+| Backend API | 🚧 Provisioned, waiting on DNS cutover | `api.applaut.lvamo.com` still points at the dead old IP and won't respond. New VM `lvamo-backend` (`130.61.106.172`) is fully provisioned: Docker/compose/buildx/certbot installed, iptables 80/443 open + persisted, repo cloned, `.env.production` copied, `postgres`+`backend` containers up, migrations confirmed at head. Backend validated directly (health/auth/authz all correct) — bypassing `nginx`, which is intentionally **stopped** (crash-loops without a TLS cert — expected, cert can't be issued until DNS points here). **Next: DNS cutover, then certbot, then start nginx.** |
+| Database | ✅ Restored on new VM | Restored from `C:\Projects\lvamo-applaut\.deploy-backup\applaut_backup.dump` into the new VM's Postgres container — verified row counts match (2 users, 2 profiles, 12 opportunities). |
 | Storage | Configured | Cloudflare R2 (resumes, documents) — unaffected by the backend migration |
 
 **New VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
