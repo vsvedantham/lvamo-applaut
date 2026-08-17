@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+import uuid
+from datetime import date, datetime
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr
+
+from app.jobref.models.jobref_employee_profile import ReferFrequency
+from app.jobref.models.jobref_seeker_profile import JobSeekerStatus
+from app.jobref.models.jobref_user import JobrefUserType
+
+
+class EmployeeProfileResponse(BaseModel):
+    company_name: str
+    working_since: date
+    can_refer: bool
+    refer_frequency: Optional[ReferFrequency]
+    refer_count: Optional[int]
+    company_careers_url: str
+
+    model_config = {"from_attributes": True}
+
+
+class SeekerProfileResponse(BaseModel):
+    current_job_status: JobSeekerStatus
+    notice_join_date: Optional[date]
+    cv_drive_link: str
+
+    model_config = {"from_attributes": True}
+
+
+class JobrefUserResponse(BaseModel):
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone: str
+    user_type: JobrefUserType
+    domain: str
+    is_active: bool
+    created_at: datetime
+    employee_profile: Optional[EmployeeProfileResponse] = None
+    seeker_profile: Optional[SeekerProfileResponse] = None
+
+    model_config = {"from_attributes": True}

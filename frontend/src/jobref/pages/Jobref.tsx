@@ -3,7 +3,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import BrandedPage from '../../components/BrandedPage'
 
 export default function Jobref() {
-  useDocumentTitle('Jobref — coming soon | LVAMO')
+  useDocumentTitle('Jobref — get referred | LVAMO')
   return (
     <BrandedPage>
       <div style={{ textAlign: 'center', maxWidth: '560px' }}>
@@ -29,18 +29,18 @@ export default function Jobref() {
           marginBottom: '1.25rem',
           color: 'var(--text-1)',
         }}>
-          Jobref is coming soon
+          Get referred. Get hired.
         </h1>
 
         <p style={{ fontSize: '1.0625rem', color: 'var(--text-2)', lineHeight: 1.65, marginBottom: '2.25rem', maxWidth: '440px', margin: '0 auto 2.25rem' }}>
-          We're building a way to connect job seekers with employees willing to
-          refer them at their company — something good is on the way. Check
-          back soon.
+          Jobref connects job seekers with employees willing to refer them at
+          their company. Sign up as an employee to refer candidates, or as a
+          job seeker to get referred.
         </p>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link
-            to="/"
+            to="/jobref/register"
             style={{
               padding: '0.7rem 1.75rem',
               background: 'var(--accent)',
@@ -54,10 +54,10 @@ export default function Jobref() {
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            Back to LVAMO
+            Get started
           </Link>
           <Link
-            to="/applaut"
+            to="/jobref/login"
             style={{
               padding: '0.7rem 1.75rem',
               background: 'transparent',
@@ -72,9 +72,13 @@ export default function Jobref() {
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-2)' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong)' }}
           >
-            Try Applaut instead
+            Sign in
           </Link>
         </div>
+
+        <p style={{ marginTop: '1.75rem' }}>
+          <Link to="/" style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>Back to LVAMO</Link>
+        </p>
       </div>
     </BrandedPage>
   )

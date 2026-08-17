@@ -1,9 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './applaut/context/AuthContext'
+import { JobrefAuthProvider } from './jobref/context/AuthContext'
 import Layout from './applaut/components/layout/Layout'
 import Hub from './pages/Hub'
 import Landing from './applaut/pages/Landing'
 import Jobref from './jobref/pages/Jobref'
+import JobrefLogin from './jobref/pages/Login'
+import JobrefRegister from './jobref/pages/Register'
+import JobrefDashboard from './jobref/pages/Dashboard'
+import JobrefProtectedRoute from './jobref/components/ProtectedRoute'
 import Login from './applaut/pages/Login'
 import Register from './applaut/pages/Register'
 import Dashboard from './applaut/pages/Dashboard'
@@ -20,10 +25,21 @@ import ProtectedRoute from './applaut/components/ProtectedRoute'
 export default function App() {
   return (
     <AuthProvider>
+    <JobrefAuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Hub />} />
           <Route path="jobref" element={<Jobref />} />
+          <Route path="jobref/login" element={<JobrefLogin />} />
+          <Route path="jobref/register" element={<JobrefRegister />} />
+          <Route
+            path="jobref/dashboard"
+            element={
+              <JobrefProtectedRoute>
+                <JobrefDashboard />
+              </JobrefProtectedRoute>
+            }
+          />
           <Route path="applaut" element={<Layout />}>
             <Route index element={<Landing />} />
             <Route path="login" element={<Login />} />
@@ -98,6 +114,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+    </JobrefAuthProvider>
     </AuthProvider>
   )
 }

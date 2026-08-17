@@ -18,7 +18,7 @@
 | Vertical | Status | Progress file |
 |---|---|---|
 | **Applaut** | Live, in active development | [`PROGRESS_APPLAUT.md`](PROGRESS_APPLAUT.md) — primary task: keep scaling `company_boards.json` |
-| **Jobref** | Not started — frontend placeholder only | [`PROGRESS_JOBREF.md`](PROGRESS_JOBREF.md) |
+| **Jobref** | Login/registration built, verified locally, not yet deployed | [`PROGRESS_JOBREF.md`](PROGRESS_JOBREF.md) |
 
 ---
 
@@ -26,9 +26,9 @@
 
 | Layer | Status | URL / Location |
 |---|---|---|
-| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref placeholder at `/jobref`. |
-| Backend API | Live | `api.applaut.lvamo.com` (Oracle Cloud VM `lvamo-backend`, `130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) — currently serves Applaut only, endpoints under `/api/v1/applaut/*`. See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for how a future vertical's backend would attach to it (or get its own). |
-| Database | Live | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema only today (see `PROGRESS_APPLAUT.md`). |
+| Frontend | Live (Jobref auth pages built, pending redeploy) | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref at `/jobref/*` (landing, login, register, dashboard). |
+| Backend API | Live (Jobref router built, pending deploy) | `api.applaut.lvamo.com` (Oracle Cloud VM `lvamo-backend`, `130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) — serves both verticals: Applaut under `/api/v1/applaut/*`, Jobref under `/api/v1/jobref/*`. See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for how each vertical's backend attaches to it. |
+| Database | Live (Jobref tables migrated locally, pending prod migration) | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema (see `PROGRESS_APPLAUT.md`) plus Jobref's `jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles` (see `PROGRESS_JOBREF.md`). |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
 
 **VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
@@ -60,8 +60,10 @@ next). The pattern, established Aug 2026, for any vertical `<x>`:
 - Verticals currently **share** the backend VM and database server. Nothing
   about the URL namespacing requires this — a vertical can be split onto
   its own process, container, database, or VM later without touching the
-  others, if/when it needs independent scaling or deploy cycles. Not needed
-  yet: Jobref has no backend at all so far.
+  others, if/when it needs independent scaling or deploy cycles. Jobref's
+  auth now lives on this shared backend/DB too (its own tables, own JWTs
+  scoped with a `"vertical": "jobref"` claim so a token can't be replayed
+  across verticals — see `PROGRESS_JOBREF.md`).
 
 Applaut's namespacing work (the actual migration, file-by-file) is recorded
 in `PROGRESS_APPLAUT.md`, not here — this section is the durable policy, not
@@ -91,8 +93,8 @@ is "package by feature" / a modular-monolith split, not something unusual:
 
 **Frontend** (`frontend/src/`):
 - `applaut/{api,components,context,pages}/` — everything Applaut-specific.
-- `jobref/pages/` — Jobref's placeholder page (grows the same shape as it
-  gets built out).
+- `jobref/{api,components,context,pages}/` — Jobref's auth flow
+  (login/register/dashboard); grows the same shape as more gets built.
 - Shared top-level: `main.tsx`, `App.tsx`, `index.css`,
   `components/{Logo,BrandedPage}.tsx`, `hooks/useDocumentTitle.ts`,
   `pages/Hub.tsx`.

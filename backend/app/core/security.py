@@ -17,12 +17,15 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(subject: Any) -> str:
+def create_access_token(subject: Any, extra_claims: dict[str, Any] | None = None) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.access_token_expire_minutes
     )
+    payload: dict[str, Any] = {"sub": str(subject), "exp": expire}
+    if extra_claims:
+        payload.update(extra_claims)
     return jwt.encode(
-        {"sub": str(subject), "exp": expire},
+        payload,
         settings.secret_key,
         algorithm=settings.jwt_algorithm,
     )
@@ -33,3 +36,12 @@ def decode_access_token(token: str) -> str:
         token, settings.secret_key, algorithms=[settings.jwt_algorithm]
     )
     return payload["sub"]
+
+
+def decode_access_token_payload(token: str) -> dict[str, Any]:
+    """Full claim set, for verticals that stamp extra claims (e.g. "vertical")
+    onto their tokens to prevent a token minted for one vertical being
+    replayed against another's endpoints."""
+    return jwt.decode(
+        token, settings.secret_key, algorithms=[settings.jwt_algorithm]
+    )

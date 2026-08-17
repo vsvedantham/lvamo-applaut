@@ -5,49 +5,79 @@
 
 ---
 
-## Status: Not started
+## Status: Login / registration built and verified locally, not yet deployed
 
-Jobref is a planned second vertical for LVAMO — a job-referral platform
-connecting job seekers with employees willing to refer them at their
-company. As of Aug 2026, only a frontend placeholder exists; there is no
-backend, no database schema, no auth, and no product logic.
+Jobref is LVAMO's second vertical — a job-referral platform connecting job
+seekers with employees willing to refer them at their company. As of Aug
+2026, auth (register/login/me) is fully built end-to-end (backend + DB +
+frontend) and verified locally; nothing beyond auth exists yet (no referral
+matching, no messaging, no notifications).
 
 ## What exists today
 
-- **Frontend placeholder page** at `/jobref` (`frontend/src/jobref/pages/Jobref.tsx`)
-  — a static "Jobref is coming soon" message, linked from the LVAMO hub
-  (`/`). Uses the shared `frontend/src/components/BrandedPage.tsx` shell —
-  no dependency on Applaut's routing, layout, or auth code.
-- **Reserved namespace** (not yet mounted, just reserved by convention —
-  see `PROGRESS.md` → Multi-Vertical Architecture): when a backend is
-  built, it should mount under `/api/v1/jobref/*`, and any frontend
-  auth/session should use a `jobref_access_token` localStorage key so it
-  can't collide with Applaut's.
-- **Folder structure convention already set** (see `PROGRESS.md` →
-  "Codebase structure matches the URL structure"): backend code should go
-  in `backend/app/jobref/` mirroring `app/applaut/`'s shape (models,
-  schemas, services, `api/v1/routers/`), reusing the shared
-  `app/db/session.py` + `app/db/base.py` + `app/core/security.py` +
-  `app/core/storage.py` rather than duplicating them. Frontend code should
-  go in `frontend/src/jobref/{api,components,context,pages}/` mirroring
-  `src/applaut/`'s shape.
+- **Backend** (`backend/app/jobref/`), mounted at `/api/v1/jobref/*`:
+  - `models/`: `jobref_users` (shared fields incl. `domain` — free-text
+    professional field/industry, same concept for both employee and job
+    seeker per the resolved open question), `jobref_employee_profiles`,
+    `jobref_seeker_profiles` (both 1:1 on `user_id`, `ON DELETE CASCADE`).
+  - `schemas/auth.py`: `RegisterRequest` with conditional `employee` /
+    `seeker` sub-payloads gated by `user_type`; Pydantic validators enforce
+    the conditional-required fields (`refer_frequency`/`refer_count` only
+    when `can_refer=true`; `notice_join_date` only when
+    `current_job_status=serving_notice`) and a loose German phone number
+    format check.
+  - `services/auth.py`: register/login/`get_current_user`, reusing shared
+    `app/core/security.py` (hash/verify password) and `app/db/session.py`.
+  - **Vertical-scoped JWTs**: `core/security.py`'s `create_access_token` now
+    accepts optional `extra_claims`; Jobref stamps `{"vertical": "jobref"}`
+    on every token it issues, and its `get_current_user` rejects any token
+    missing that claim — so a token minted for Applaut (or a future
+    vertical) can never be replayed against Jobref's endpoints, even though
+    JWT signing secret/algorithm are shared infra. Applaut's own tokens are
+    unchanged (no claim added, same as before).
+  - Router: `api/v1/routers/{health,auth}.py` → `/register`, `/login`,
+    `/me`. Registration is **open** (no invite gate, unlike Applaut).
+  - Migration `0007_jobref_tables.py` — raw-SQL, matches repo convention
+    (see `0006_application_settings.py`), incl. DB-level CHECK constraints
+    mirroring the Pydantic conditional-field rules as defense in depth.
+- **Frontend** (`frontend/src/jobref/`), routes under `/jobref/*`:
+  - `api/client.ts` — own axios instance, own token key
+    (`jobref_access_token`, never collides with Applaut's
+    `applaut_access_token`).
+  - `context/AuthContext.tsx` (`JobrefAuthProvider` / `useJobrefAuth`),
+    `components/ProtectedRoute.tsx` (`JobrefProtectedRoute`) — independent
+    of Applaut's equivalents, same shape.
+  - `pages/Jobref.tsx` — updated from the old "coming soon" placeholder to
+    a real landing page with "Get started" / "Sign in" CTAs.
+  - `pages/Login.tsx`, `pages/Register.tsx` (full conditional form: shared
+    fields, employee/job-seeker type selector, conditional sub-fields),
+    `pages/Dashboard.tsx` (minimal post-auth profile summary + sign out).
+  - Wired into `App.tsx`: `JobrefAuthProvider` wraps the router alongside
+    Applaut's `AuthProvider` (siblings, fully independent state).
+- **Verified locally**: backend boots clean, migration applied, full
+  register→login→`/me` flow tested via curl for both user types plus
+  validation edge cases (bad German phone, missing conditional fields,
+  cross-vertical token rejection). Frontend: `tsc --noEmit` and
+  `npm run build` clean; full Playwright pass through
+  hub→landing→register (both types)→dashboard→logout→login→dashboard, plus
+  an Applaut-page regression check — zero console errors.
 
-## Next steps (none started yet)
+## Resolved decisions (previously open)
 
-- Product/requirements definition — mostly gathered (login: email+password;
-  registration: first/last name, email, German phone, password, user type
-  [employee / job seeker] with conditional fields per type — see the
-  in-progress design discussion for full field list) but one open question
-  remains: whether the "domain" field (professional field/industry, e.g.
-  "Data Engineering") means the same thing for both employee and job-seeker
-  registration, free text either way. Registration will be open (no
-  invite-gate), and the CV Google-Drive-link field is required for job
-  seekers.
-- Database schema design (own tables in `backend/app/jobref/models/`,
-  sharing the same Postgres instance on `lvamo-backend` for now — see
-  `PROGRESS.md`'s note that verticals can share or split infra as needed)
-- Backend build (FastAPI router under `/api/v1/jobref/*`, in
-  `backend/app/jobref/`)
-- Auth mechanism (independent of Applaut's, per platform architecture —
-  separate `jobref_users` table, separate `jobref_access_token`)
-- Frontend build-out beyond the placeholder page (`frontend/src/jobref/`)
+- **`domain` field**: same free-text professional-field/industry concept
+  for both employee and job-seeker registration — confirmed.
+- **Registration gate**: open, no invite-gate.
+- **CV Google-Drive-link**: required for job seekers.
+- **`company_careers_url`**: made required for employees (core to the
+  referral value prop — without it there's no way to point a job seeker at
+  open roles).
+
+## Next steps
+
+- Deploy: backend migration + redeploy on `lvamo-backend`, frontend
+  redeploy via Cloudflare Pages, then verify both in production (same
+  pattern as every other deploy this session — health check + real
+  register/login against production).
+- Beyond auth: the actual referral-matching product logic (how a job
+  seeker gets connected to a referring employee at the same company/domain)
+  is not yet designed — next major feature after this auth foundation ships.

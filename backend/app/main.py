@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.applaut.api.v1.router import router as applaut_v1_router
 from app.applaut.discovery.scheduler import start_scheduler, stop_scheduler
+from app.jobref.api.v1.router import router as jobref_v1_router
 
 
 @asynccontextmanager
@@ -30,3 +31,4 @@ app.add_middleware(
 )
 
 app.include_router(applaut_v1_router, prefix="/api/v1/applaut")
+app.include_router(jobref_v1_router, prefix="/api/v1/jobref")

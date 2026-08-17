@@ -1,0 +1,66 @@
+import client from './client'
+
+export type UserType = 'employee' | 'job_seeker'
+export type ReferFrequency = 'weekly' | 'monthly'
+export type JobSeekerStatus = 'none' | 'part_time' | 'mini_job' | 'serving_notice'
+
+export interface EmployeeDetails {
+  company_name: string
+  working_since: string // YYYY-MM-DD
+  can_refer: boolean
+  refer_frequency?: ReferFrequency | null
+  refer_count?: number | null
+  company_careers_url: string
+}
+
+export interface SeekerDetails {
+  current_job_status: JobSeekerStatus
+  notice_join_date?: string | null // YYYY-MM-DD, only when serving_notice
+  cv_drive_link: string
+}
+
+export interface RegisterPayload {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  password: string
+  user_type: UserType
+  domain: string
+  employee?: EmployeeDetails
+  seeker?: SeekerDetails
+}
+
+export interface TokenResponse {
+  access_token: string
+  token_type: string
+}
+
+export interface JobrefUser {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  user_type: UserType
+  domain: string
+  is_active: boolean
+  created_at: string
+  employee_profile: EmployeeDetails | null
+  seeker_profile: SeekerDetails | null
+}
+
+export async function register(payload: RegisterPayload): Promise<TokenResponse> {
+  const { data } = await client.post<TokenResponse>('/auth/register', payload)
+  return data
+}
+
+export async function login(email: string, password: string): Promise<TokenResponse> {
+  const { data } = await client.post<TokenResponse>('/auth/login', { email, password })
+  return data
+}
+
+export async function getMe(): Promise<JobrefUser> {
+  const { data } = await client.get<JobrefUser>('/auth/me')
+  return data
+}
