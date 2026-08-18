@@ -7,17 +7,16 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Seeker dashboard merged into one two-column view + 5-min idle timeout
-(Aug 2026, verified locally, not yet deployed)**: user's explicit
-follow-up to the "My requests" page from the previous entry — they didn't
-want a separate icon/page after all. That page's content is now the
-*right* column of the seeker's dashboard itself (left: companies, a thin
-`border-right` divider, right: requests sent), and the standalone page +
-nav icon are gone entirely. Separately: any authenticated Jobref session
-(either user type, wherever in the app) now auto-logs-out after 5 minutes
-of no mouse/keyboard/touch/scroll activity. See "Seeker dashboard: merged
-two-column layout + idle timeout" below. **Next session**: deploy to
-production.
+**Seeker dashboard merged into one two-column view + 5-min idle timeout —
+deployed (Aug 2026)**: user's explicit follow-up to the "My requests"
+page from the previous entry — they didn't want a separate icon/page
+after all. That page's content is now the *right* column of the seeker's
+dashboard itself (left: companies, a thin `border-right` divider, right:
+requests sent), and the standalone page + nav icon are gone entirely.
+Separately: any authenticated Jobref session (either user type, wherever
+in the app) now auto-logs-out after 5 minutes of no
+mouse/keyboard/touch/scroll activity. See "Seeker dashboard: merged
+two-column layout + idle timeout" below.
 
 **Status (Aug 2026): the entire referral request lifecycle is live in
 production**, built and deployed across one long session — auth through
@@ -158,8 +157,15 @@ present; then 5:01 of continuous idle from that reset → token cleared;
 reloading afterward correctly landed on `/jobref/login`. `tsc --noEmit`
 clean. Applaut/Jobref regression clean. Cascade delete confirmed clean.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: no migration needed (pure
+frontend + minor API-usage change). Registered a real employee + seeker
+against prod, submitted a real request, then confirmed the live page at
+`www.lvamo.com/jobref/dashboard` shows both columns together with the
+real submitted request ("Prod Layout Co", "Pending review", the exact
+message sent) beside the companies list (locked, "Requested" badge) —
+screenshot-verified, zero console errors, confirmed the old "My requests"
+icon is entirely absent from the live page (not just the local build).
+Test data cleaned up, Applaut regression clean.
 
 ## Seeker "My requests" page (Aug 2026, verified locally — superseded same session, see entry above)
 
