@@ -20,15 +20,25 @@ export interface SeekerDetails {
 }
 
 export interface RegisterPayload {
+  // Proves LinkedIn OAuth was completed; the account's email/LinkedIn
+  // identity is always sourced server-side from this token, never from a
+  // client-submitted email field.
+  registration_token: string
   first_name: string
   last_name: string
-  email: string
   phone: string
   password: string
   user_type: UserType
   domain: string
   employee?: EmployeeDetails
   seeker?: SeekerDetails
+}
+
+export interface LinkedInPrefill {
+  first_name: string
+  last_name: string
+  email: string
+  email_verified: boolean
 }
 
 export interface TokenResponse {
@@ -52,6 +62,19 @@ export interface JobrefUser {
 
 export async function register(payload: RegisterPayload): Promise<TokenResponse> {
   const { data } = await client.post<TokenResponse>('/auth/register', payload)
+  return data
+}
+
+// Not a client.ts call — the OAuth handshake itself is a full-page
+// navigation (not XHR) so the LinkedIn Client Secret never has to reach
+// the frontend; the backend does the code exchange server-side.
+export function linkedInAuthorizeUrl(): string {
+  const base = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/jobref'
+  return `${base}/auth/linkedin/authorize`
+}
+
+export async function getLinkedInPrefill(token: string): Promise<LinkedInPrefill> {
+  const { data } = await client.get<LinkedInPrefill>('/auth/linkedin/prefill', { params: { token } })
   return data
 }
 

@@ -22,6 +22,11 @@ class JobrefUser(Base, UUIDPrimaryKey, TimestampMixin):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(32), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    # LinkedIn's stable member id ("sub" claim from the OIDC userinfo
+    # response) — the source of truth for "has this person already
+    # registered", since it can't change the way an email address can.
+    # Registration is gated through LinkedIn OAuth, so every account has one.
+    linkedin_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     user_type: Mapped[JobrefUserType] = mapped_column(
         Enum(
             JobrefUserType,

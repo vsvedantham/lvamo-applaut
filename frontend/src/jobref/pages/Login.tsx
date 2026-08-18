@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
@@ -11,6 +11,8 @@ export default function JobrefLogin() {
   useDocumentTitle('Sign in | Jobref')
   const { login } = useJobrefAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const linkedinExisting = params.get('linkedin') === 'existing'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -39,6 +41,13 @@ export default function JobrefLogin() {
         </div>
 
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem' }}>
+          {linkedinExisting && !error && (
+            <div style={{ padding: '0.7rem 0.875rem', background: 'var(--accent-glow)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
+              <p style={{ color: 'var(--text-1)', fontSize: '0.825rem', margin: 0 }}>
+                You already have an account with this LinkedIn profile — sign in below.
+              </p>
+            </div>
+          )}
           {error && (
             <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
               <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>

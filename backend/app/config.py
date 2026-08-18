@@ -29,9 +29,15 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
 
+    # Jobref — LinkedIn OAuth (registration identity source)
+    jobref_linkedin_client_id: str = ""
+    jobref_linkedin_client_secret: str = ""
+    jobref_linkedin_redirect_uri: str = "http://localhost:8000/api/v1/jobref/auth/linkedin/callback"
+
     # Server
     backend_cors_origins: List[str] = ["http://localhost:5173"]
     backend_port: int = 8000
+    frontend_base_url: str = "http://localhost:5173"
 
     @field_validator("backend_cors_origins", mode="before")
     @classmethod

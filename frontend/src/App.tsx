@@ -7,6 +7,7 @@ import Landing from './applaut/pages/Landing'
 import Jobref from './jobref/pages/Jobref'
 import JobrefLogin from './jobref/pages/Login'
 import JobrefRegister from './jobref/pages/Register'
+import JobrefRegisterComplete from './jobref/pages/RegisterComplete'
 import JobrefDashboard from './jobref/pages/Dashboard'
 import JobrefProtectedRoute from './jobref/components/ProtectedRoute'
 import Login from './applaut/pages/Login'
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="jobref" element={<Jobref />} />
           <Route path="jobref/login" element={<JobrefLogin />} />
           <Route path="jobref/register" element={<JobrefRegister />} />
+          <Route path="jobref/register/complete" element={<JobrefRegisterComplete />} />
           <Route
             path="jobref/dashboard"
             element={

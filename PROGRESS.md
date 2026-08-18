@@ -39,7 +39,7 @@
 **OCI API access is set up** (Python SDK + API key at `~/.oci/config` on the dev machine) — instance create/terminate/resize no longer needs manual Console clicks; see "Oracle Backend Migration" below for the one-time setup and gotchas.
 **Cloudflare API access is set up** too (scoped token, `lvamo.com` zone, DNS edit only, saved at `~/.cloudflare/token` on the dev machine) — DNS record changes for this domain no longer need the dashboard either.
 **⚠️ `nginx` gotcha**: if the VM is ever rebooted, `nginx`'s `restart: always` policy will bring it back even if it was manually `docker stop`ped before — a host reboot resets Docker's memory of that. Not a problem currently (cert exists, nginx starts fine), just worth knowing if this ever needs debugging again.
-**⚠️ Unpushed local commit**: Jobref's login/registration feature (commit `3d5fd42`) is on local `main` but **not pushed to `origin`** and not deployed — the user held off deploying at session end. Don't push/deploy it without checking first; see `PROGRESS_JOBREF.md`'s "Next steps" for detail.
+**⚠️ Unpushed local commits**: Jobref's login/registration feature (commit `3d5fd42`), plus this session's work gating registration through LinkedIn OAuth, are on local `main` but **not pushed to `origin`** and not deployed. The LinkedIn work is also blocked on the user creating a LinkedIn Developer App (not yet done) before it can be tested against real LinkedIn, let alone deployed. Don't push/deploy without checking first; see `PROGRESS_JOBREF.md`'s banner + "Next steps" for detail.
 
 ---
 

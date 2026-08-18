@@ -1,238 +1,48 @@
-import { type FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
-import { useJobrefAuth } from '../context/AuthContext'
-import type { JobSeekerStatus, ReferFrequency, RegisterPayload, UserType } from '../api/auth'
-
-const field: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' }
-const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)' }
-const sectionLabel: React.CSSProperties = {
-  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-  color: 'var(--text-3)', marginTop: '0.5rem', marginBottom: '-0.25rem',
-}
-
-const typeCard = (active: boolean): React.CSSProperties => ({
-  flex: 1,
-  padding: '0.85rem 1rem',
-  borderRadius: 'var(--radius-sm)',
-  border: `1px solid ${active ? 'var(--accent-border)' : 'var(--border-strong)'}`,
-  background: active ? 'var(--accent-glow)' : 'transparent',
-  cursor: 'pointer',
-  textAlign: 'center',
-  fontSize: '0.85rem',
-  fontWeight: 600,
-  color: active ? 'var(--accent)' : 'var(--text-2)',
-  transition: 'border-color 0.15s, background 0.15s, color 0.15s',
-})
+import { linkedInAuthorizeUrl } from '../api/auth'
 
 export default function JobrefRegister() {
   useDocumentTitle('Create account | Jobref')
-  const { register } = useJobrefAuth()
-  const navigate = useNavigate()
-
-  // Shared fields
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [password, setPassword] = useState('')
-  const [domain, setDomain] = useState('')
-  const [userType, setUserType] = useState<UserType>('employee')
-
-  // Employee fields
-  const [companyName, setCompanyName] = useState('')
-  const [workingSince, setWorkingSince] = useState('')
-  const [canRefer, setCanRefer] = useState(false)
-  const [referFrequency, setReferFrequency] = useState<ReferFrequency>('monthly')
-  const [referCount, setReferCount] = useState('')
-  const [companyCareersUrl, setCompanyCareersUrl] = useState('')
-
-  // Job seeker fields
-  const [jobStatus, setJobStatus] = useState<JobSeekerStatus>('none')
-  const [noticeJoinDate, setNoticeJoinDate] = useState('')
-  const [cvDriveLink, setCvDriveLink] = useState('')
-
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    const payload: RegisterPayload = {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      phone,
-      password,
-      domain,
-      user_type: userType,
-    }
-
-    if (userType === 'employee') {
-      payload.employee = {
-        company_name: companyName,
-        working_since: workingSince,
-        can_refer: canRefer,
-        refer_frequency: canRefer ? referFrequency : null,
-        refer_count: canRefer ? Number(referCount) : null,
-        company_careers_url: companyCareersUrl,
-      }
-    } else {
-      payload.seeker = {
-        current_job_status: jobStatus,
-        notice_join_date: jobStatus === 'serving_notice' ? noticeJoinDate : null,
-        cv_drive_link: cvDriveLink,
-      }
-    }
-
-    setLoading(true)
-    try {
-      await register(payload)
-      navigate('/jobref/dashboard')
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      setError(
-        Array.isArray(detail)
-          ? detail.map((d: any) => d.msg).join(' ')
-          : detail ?? 'Registration failed. Please try again.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [params] = useSearchParams()
+  const linkedinError = params.get('linkedin') === 'error'
 
   return (
     <BrandedPage>
-      <div style={{ width: '100%', maxWidth: '460px' }}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
         <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.35rem' }}>Create account</h1>
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Get referred, or start referring others</p>
         </div>
 
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem' }}>
-          {error && (
+          {linkedinError && (
             <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
-              <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>
+              <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>
+                LinkedIn sign-in was cancelled or failed. Please try again.
+              </p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div style={field}>
-                <label style={labelStyle}>First name</label>
-                <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Ada" />
-              </div>
-              <div style={field}>
-                <label style={labelStyle}>Last name</label>
-                <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Lovelace" />
-              </div>
-            </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+            Jobref uses LinkedIn to verify your identity and prevent duplicate accounts.
+            We only request your <strong>name and email address</strong> from your LinkedIn
+            profile to pre-fill your registration — nothing else. We never see your
+            connections or messages, and we never post on your behalf.
+          </p>
 
-            <div style={field}>
-              <label style={labelStyle}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="email" />
-            </div>
-
-            <div style={field}>
-              <label style={labelStyle}>Phone <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(German number)</span></label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="+49 170 1234567" />
-            </div>
-
-            <div style={field}>
-              <label style={labelStyle}>Password <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(min. 8 characters)</span></label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder="••••••••" autoComplete="new-password" />
-            </div>
-
-            <div style={field}>
-              <label style={labelStyle}>Professional field / domain</label>
-              <input type="text" value={domain} onChange={e => setDomain(e.target.value)} required placeholder="e.g. Data Engineering" />
-            </div>
-
-            <div style={sectionLabel}>I am a</div>
-            <div style={{ display: 'flex', gap: '0.6rem' }}>
-              <div style={typeCard(userType === 'employee')} onClick={() => setUserType('employee')}>
-                Full-time employee
-              </div>
-              <div style={typeCard(userType === 'job_seeker')} onClick={() => setUserType('job_seeker')}>
-                Job seeker
-              </div>
-            </div>
-
-            {userType === 'employee' ? (
-              <>
-                <div style={field}>
-                  <label style={labelStyle}>Company name</label>
-                  <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} required placeholder="Acme GmbH" />
-                </div>
-                <div style={field}>
-                  <label style={labelStyle}>Working since</label>
-                  <input type="date" value={workingSince} onChange={e => setWorkingSince(e.target.value)} required />
-                </div>
-                <div style={field}>
-                  <label style={labelStyle}>Company careers page URL</label>
-                  <input type="url" value={companyCareersUrl} onChange={e => setCompanyCareersUrl(e.target.value)} required placeholder="https://company.com/careers" />
-                </div>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-1)' }}>
-                  <input type="checkbox" checked={canRefer} onChange={e => setCanRefer(e.target.checked)} />
-                  I can refer other candidates at my company
-                </label>
-
-                {canRefer && (
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <div style={field}>
-                      <label style={labelStyle}>Referral capacity</label>
-                      <select value={referFrequency} onChange={e => setReferFrequency(e.target.value as ReferFrequency)}>
-                        <option value="weekly">Per week</option>
-                        <option value="monthly">Per month</option>
-                      </select>
-                    </div>
-                    <div style={field}>
-                      <label style={labelStyle}>How many</label>
-                      <input type="number" min={1} value={referCount} onChange={e => setReferCount(e.target.value)} required={canRefer} placeholder="e.g. 2" />
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div style={field}>
-                  <label style={labelStyle}>Current job status</label>
-                  <select value={jobStatus} onChange={e => setJobStatus(e.target.value as JobSeekerStatus)}>
-                    <option value="none">Not currently employed</option>
-                    <option value="part_time">Part-time</option>
-                    <option value="mini_job">Mini-job</option>
-                    <option value="serving_notice">Serving notice period</option>
-                  </select>
-                </div>
-
-                {jobStatus === 'serving_notice' && (
-                  <div style={field}>
-                    <label style={labelStyle}>Available to join from</label>
-                    <input type="date" value={noticeJoinDate} onChange={e => setNoticeJoinDate(e.target.value)} required />
-                  </div>
-                )}
-
-                <div style={field}>
-                  <label style={labelStyle}>
-                    CV Google Drive link{' '}
-                    <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>("Anyone with the link" access)</span>
-                  </label>
-                  <input type="url" value={cvDriveLink} onChange={e => setCvDriveLink(e.target.value)} required placeholder="https://drive.google.com/file/d/..." />
-                </div>
-              </>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem', opacity: loading ? 0.7 : 1 }}
-            >
-              {loading ? 'Creating account…' : 'Create account'}
-            </button>
-          </form>
+          <a
+            href={linkedInAuthorizeUrl()}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+              padding: '0.7rem', background: '#0A66C2', color: '#fff', borderRadius: 'var(--radius-xs)',
+              fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+            }}
+          >
+            <LinkedInMark />
+            Continue with LinkedIn
+          </a>
         </div>
 
         <p style={{ marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
@@ -241,5 +51,13 @@ export default function JobrefRegister() {
         </p>
       </div>
     </BrandedPage>
+  )
+}
+
+function LinkedInMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
+    </svg>
   )
 }

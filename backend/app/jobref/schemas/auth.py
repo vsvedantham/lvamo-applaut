@@ -54,9 +54,13 @@ class SeekerDetails(BaseModel):
 
 
 class RegisterRequest(BaseModel):
+    # Proves the registrant completed LinkedIn OAuth and carries their
+    # verified LinkedIn id + email — see services/linkedin.py. Registration
+    # can no longer supply an arbitrary email directly; it's always sourced
+    # server-side from this token so it can't be spoofed or mismatched.
+    registration_token: str
     first_name: str = Field(min_length=1, max_length=255)
     last_name: str = Field(min_length=1, max_length=255)
-    email: EmailStr
     phone: str
     password: str = Field(min_length=8)
     user_type: JobrefUserType
@@ -87,3 +91,14 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class LinkedInPrefillResponse(BaseModel):
+    """What the registration form prefills from LinkedIn, plus the
+    verification flag — shown to the user so it's transparent exactly what
+    was pulled from their LinkedIn profile."""
+
+    first_name: str
+    last_name: str
+    email: EmailStr
+    email_verified: bool
