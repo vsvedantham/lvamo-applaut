@@ -17,6 +17,17 @@ class ReferFrequency(str, enum.Enum):
     MONTHLY = "monthly"
 
 
+class ReferralViewCapacity(str, enum.Enum):
+    """How many incoming referral requests (from job seekers) an employee
+    is willing to look at per day — distinct from can_refer/refer_frequency
+    below, which is about how many candidates they'll actively refer."""
+
+    UP_TO_5 = "up_to_5"
+    FIVE_TO_TEN = "5_to_10"
+    TEN_TO_TWENTY = "10_to_20"
+    NO_CAP = "no_cap"
+
+
 class JobrefEmployeeProfile(Base, TimestampMixin):
     __tablename__ = "jobref_employee_profiles"
 
@@ -27,6 +38,16 @@ class JobrefEmployeeProfile(Base, TimestampMixin):
     )
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
     working_since: Mapped[date] = mapped_column(Date, nullable=False)
+    daily_referral_view_cap: Mapped[ReferralViewCapacity] = mapped_column(
+        Enum(
+            ReferralViewCapacity,
+            name="jobref_referral_view_capacity",
+            native_enum=False,
+            length=10,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
+        nullable=False,
+    )
     can_refer: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # Only set when can_refer is true
     refer_frequency: Mapped[Optional[ReferFrequency]] = mapped_column(

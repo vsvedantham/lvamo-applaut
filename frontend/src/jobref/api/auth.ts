@@ -2,11 +2,13 @@ import client, { API_ROOT } from './client'
 
 export type UserType = 'employee' | 'job_seeker'
 export type ReferFrequency = 'weekly' | 'monthly'
+export type ReferralViewCapacity = 'up_to_5' | '5_to_10' | '10_to_20' | 'no_cap'
 export type JobSeekerStatus = 'none' | 'part_time' | 'mini_job' | 'serving_notice'
 
 export interface EmployeeDetails {
   company_name: string
   working_since: string // YYYY-MM-DD
+  daily_referral_view_cap: ReferralViewCapacity
   can_refer: boolean
   refer_frequency?: ReferFrequency | null
   refer_count?: number | null

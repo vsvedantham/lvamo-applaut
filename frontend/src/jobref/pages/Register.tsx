@@ -4,7 +4,7 @@ import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
 import { linkedInAuthorizeUrl } from '../api/auth'
-import type { EmployeeRegisterPayload, ReferFrequency } from '../api/auth'
+import type { EmployeeRegisterPayload, ReferFrequency, ReferralViewCapacity } from '../api/auth'
 
 const field: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' }
 const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)' }
@@ -42,6 +42,7 @@ export default function JobrefRegister() {
   const [domain, setDomain] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [workingSince, setWorkingSince] = useState('')
+  const [dailyReferralViewCap, setDailyReferralViewCap] = useState<ReferralViewCapacity>('up_to_5')
   const [canRefer, setCanRefer] = useState(false)
   const [referFrequency, setReferFrequency] = useState<ReferFrequency>('monthly')
   const [referCount, setReferCount] = useState('')
@@ -65,6 +66,7 @@ export default function JobrefRegister() {
       employee: {
         company_name: companyName,
         working_since: workingSince,
+        daily_referral_view_cap: dailyReferralViewCap,
         can_refer: canRefer,
         refer_frequency: canRefer ? referFrequency : null,
         refer_count: canRefer ? Number(referCount) : null,
@@ -185,6 +187,16 @@ export default function JobrefRegister() {
                 <input type="url" value={companyCareersUrl} onChange={e => setCompanyCareersUrl(e.target.value)} required placeholder="https://company.com/careers" />
               </div>
 
+              <div style={field}>
+                <label style={labelStyle}>How many referral requests can you view per day?</label>
+                <select value={dailyReferralViewCap} onChange={e => setDailyReferralViewCap(e.target.value as ReferralViewCapacity)}>
+                  <option value="up_to_5">Max 5</option>
+                  <option value="5_to_10">5 - 10</option>
+                  <option value="10_to_20">10 - 20</option>
+                  <option value="no_cap">No Cap</option>
+                </select>
+              </div>
+
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-1)' }}>
                 <input type="checkbox" checked={canRefer} onChange={e => setCanRefer(e.target.checked)} />
                 I can refer other candidates at my company
@@ -230,8 +242,8 @@ export default function JobrefRegister() {
 
             <p style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
               We use LinkedIn to sign you in. We only take your <strong>name and
-              email address</strong> from your LinkedIn profile — nothing else —
-              just so you don't end up with more than one account.
+              email address</strong> from your LinkedIn profile — nothing else.
+              This is used to prevent duplicate accounts on Jobref.
             </p>
 
             <a

@@ -6,7 +6,7 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
-from app.jobref.models.jobref_employee_profile import ReferFrequency
+from app.jobref.models.jobref_employee_profile import ReferFrequency, ReferralViewCapacity
 from app.jobref.models.jobref_seeker_profile import JobSeekerStatus
 from app.jobref.models.jobref_user import JobrefUserType
 
@@ -18,6 +18,10 @@ GERMAN_PHONE_RE = re.compile(r"^(?:\+49|0049|0)[0-9 \-]{6,14}$")
 class EmployeeDetails(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
     working_since: date
+    # How many incoming referral requests they're willing to view per day —
+    # always required, independent of can_refer below (that's about
+    # actively referring; this is about reviewing incoming requests).
+    daily_referral_view_cap: ReferralViewCapacity
     can_refer: bool
     refer_frequency: Optional[ReferFrequency] = None
     refer_count: Optional[int] = Field(default=None, ge=1)

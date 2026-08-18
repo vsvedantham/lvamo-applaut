@@ -7,22 +7,28 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Registration UX changed again, same day — progressive disclosure, user's
-request — deployed.** `/jobref/register` no longer shows the choice + both
-mechanisms at once; it now shows *only* the "I am a" choice first (two
-cards, zero form fields), and reveals just the relevant path — full
-employee form, or the LinkedIn disclaimer+button — once clicked. User's own
-reasoning: looked fine on desktop already, but the two-column
-always-visible layout crowded mobile with a full form *and* a competing
-LinkedIn option stacked below it. Choice is carried in the URL
-(`?as=employee` / `?as=job_seeker`), not just component state, so both the
-in-page "Back" link and the browser's native back button correctly return
-to the choice screen — verified both ways, locally and in production.
-Frontend-only change (no backend/schema impact) — pushed, Cloudflare Pages
-auto-redeployed, confirmed live at `https://www.lvamo.com/jobref/register`
-within moments of the push (zero-input choice screen, employee-card reveal,
-and real browser back-button behavior all re-verified against production).
-See "Progressive disclosure" section below.
+**Two small changes on top of everything above, same day — committed
+locally, NOT yet pushed/deployed:**
+
+1. New required employee field, **"How many referral requests can you view
+   per day?"** (`Max 5` / `5 - 10` / `10 - 20` / `No Cap`), placed right
+   before the existing "I can refer other candidates" section — a distinct
+   capacity dimension (viewing incoming requests) from `can_refer` (actively
+   referring). New DB column `jobref_employee_profiles.daily_referral_view_cap`,
+   migration `0010`, `NOT NULL` with a CHECK constraint. Existing rows
+   (disposable test data only, nothing real yet) backfilled to `'no_cap'` in
+   the migration.
+2. **Disclaimer copy on the Job Seeker panel reworded** — user's specific
+   concern: the old wording ("...so you don't end up with more than one
+   account") indirectly implied *the user themselves* might try to create
+   duplicates. Reworded as a general platform-policy statement instead: "We
+   use LinkedIn to sign you in. We only take your name and email address
+   from your LinkedIn profile — nothing else. This is used to prevent
+   duplicate accounts on Jobref." No accusatory "you" framing.
+
+See "New employee field + disclaimer reword" section below for full detail.
+**Once approved to deploy**: `git push`, `bash deploy.sh` on the VM (runs
+migration `0010`), Cloudflare Pages auto-redeploys the frontend.
 
 **Still outstanding, unchanged**: nobody has completed a real *job-seeker*
 registration through the actual LinkedIn consent screen and final form
@@ -34,7 +40,58 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production — split registration with progressive disclosure (choice screen first, then employee-direct or job-seeker-via-LinkedIn), deployed Aug 2026
+## Status: Live in production (previous round) — a same-day follow-up (new employee field + disclaimer reword) is built and verified locally but NOT yet pushed/deployed
+
+## New employee field + disclaimer reword (Aug 2026, committed locally — not deployed)
+
+Two small, unrelated changes requested together:
+
+**1. New required employee field**: "How many referral requests can you
+view per day?" — a dropdown (`Max 5` / `5 - 10` / `10 - 20` / `No Cap`)
+placed immediately before the existing "I can refer other candidates"
+checkbox section, per the user's specified placement. Deliberately modeled
+as a *separate* dimension from `can_refer`/`refer_frequency`/`refer_count`
+(which is about how many candidates they'll actively refer) — this is about
+capacity to review *incoming* requests, so it's always required, not gated
+behind the `can_refer` checkbox.
+
+- Backend: new `ReferralViewCapacity` str-enum
+  (`up_to_5`/`5_to_10`/`10_to_20`/`no_cap`) in
+  `models/jobref_employee_profile.py`, new `daily_referral_view_cap` column
+  (`NOT NULL`, CHECK constraint), migration `0010`. `EmployeeDetails`
+  schema and `EmployeeProfileResponse` both updated; `_register_employee`
+  persists it.
+  - **Existing-row backfill note**: only disposable test data exists in
+    `jobref_employee_profiles` at this point (Jobref just launched, no real
+    employees registered yet) — the migration backfills those rows to
+    `'no_cap'` before enforcing `NOT NULL`, since every *new* registration
+    now always supplies a real answer via the required form field. Worth
+    knowing if this migration is ever read later and the backfill value
+    looks arbitrary — it is, deliberately, because no real user's answer
+    existed to preserve.
+- Frontend: `EmployeeDetails`/`ReferralViewCapacity` types in `api/auth.ts`,
+  new `<select>` in `Register.tsx`'s employee form at the exact position
+  requested, defaults to `up_to_5`.
+
+**2. Disclaimer reworded** (Job Seeker panel) — user's specific concern:
+the old copy ("...so you don't end up with more than one account")
+indirectly framed *the user* as the one who might create duplicates. New
+copy states the platform's general policy instead, no "you" framing: "We
+use LinkedIn to sign you in. We only take your name and email address from
+your LinkedIn profile — nothing else. This is used to prevent duplicate
+accounts on Jobref."
+
+**Verified locally** (real, not mocked): backend — register with the new
+field → `201`; register missing the field → `422` field-required error,
+confirming it's genuinely enforced. Frontend — `tsc`/`vite build` clean;
+Playwright confirms the new field's label is present and correctly
+positioned, a full real browser submission through the choice→employee
+form→new field→submit flow lands on `/jobref/dashboard`; the seeker panel
+shows the new disclaimer text and confirms the old accusatory phrasing is
+gone.
+
+**Not yet done**: not pushed to `origin`, not deployed — see banner at top
+of this file.
 
 ## Progressive disclosure: choice screen first, then the relevant path only (Aug 2026, live in production)
 

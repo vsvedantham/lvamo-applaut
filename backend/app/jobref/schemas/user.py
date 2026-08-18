@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
-from app.jobref.models.jobref_employee_profile import ReferFrequency
+from app.jobref.models.jobref_employee_profile import ReferFrequency, ReferralViewCapacity
 from app.jobref.models.jobref_seeker_profile import JobSeekerStatus
 from app.jobref.models.jobref_user import JobrefUserType
 
@@ -14,6 +14,7 @@ from app.jobref.models.jobref_user import JobrefUserType
 class EmployeeProfileResponse(BaseModel):
     company_name: str
     working_since: date
+    daily_referral_view_cap: ReferralViewCapacity
     can_refer: bool
     refer_frequency: Optional[ReferFrequency]
     refer_count: Optional[int]
