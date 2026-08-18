@@ -10,7 +10,9 @@
 **Employee registration form is now fully settled (Aug 2026, deployed) —
 three rounds same day, all live:**
 
-1. New required field, "How many referral requests can you view per day?"
+1. New required field, "How many referral requests can you review per day?"
+   (wording tweaked from "view" → "review" later the same day, copy-only,
+   field name unchanged)
    (`Max 5`/`5-10`/`10-20`/`No Cap`), migration `0010`.
 2. Job Seeker disclaimer reworded to general platform-policy phrasing.
 3. The old "I can refer other candidates" checkbox removed entirely —
