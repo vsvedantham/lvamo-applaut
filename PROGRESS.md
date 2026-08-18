@@ -18,7 +18,7 @@
 | Vertical | Status | Progress file |
 |---|---|---|
 | **Applaut** | Live, in active development | [`PROGRESS_APPLAUT.md`](PROGRESS_APPLAUT.md) — primary task: keep scaling `company_boards.json` |
-| **Jobref** | Login/registration built, verified locally, not yet deployed | [`PROGRESS_JOBREF.md`](PROGRESS_JOBREF.md) |
+| **Jobref** | Live — LinkedIn-gated registration + email/password login deployed Aug 2026 | [`PROGRESS_JOBREF.md`](PROGRESS_JOBREF.md) |
 
 ---
 
@@ -26,9 +26,9 @@
 
 | Layer | Status | URL / Location |
 |---|---|---|
-| Frontend | Live (Jobref auth pages built, pending redeploy) | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref at `/jobref/*` (landing, login, register, dashboard). |
-| Backend API | Live (Jobref router built, pending deploy) | Oracle Cloud VM `lvamo-backend` (`130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) runs one shared backend process, fronted by nginx on two hostnames: `api.applaut.lvamo.com` (Applaut, `/api/v1/applaut/*`) and `api.jobref.lvamo.com` (Jobref, `/api/v1/jobref/*`, DNS+cert live since Aug 2026, code not yet deployed). See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for the per-vertical-hostname pattern. |
-| Database | Live (Jobref tables migrated locally, pending prod migration) | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema (see `PROGRESS_APPLAUT.md`) plus Jobref's `jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles` (see `PROGRESS_JOBREF.md`). |
+| Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref at `/jobref/*` (landing, LinkedIn-gated register, login, dashboard). |
+| Backend API | Live | Oracle Cloud VM `lvamo-backend` (`130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) runs one shared backend process, fronted by nginx on two hostnames: `api.applaut.lvamo.com` (Applaut, `/api/v1/applaut/*`) and `api.jobref.lvamo.com` (Jobref, `/api/v1/jobref/*`, live since Aug 2026). See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for the per-vertical-hostname pattern. |
+| Database | Live | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema (see `PROGRESS_APPLAUT.md`) plus Jobref's `jobref_users` (incl. `linkedin_id`)/`jobref_employee_profiles`/`jobref_seeker_profiles` (see `PROGRESS_JOBREF.md`), migrations `0007`+`0008` applied in prod Aug 2026. |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
 
 **VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
@@ -39,7 +39,7 @@
 **OCI API access is set up** (Python SDK + API key at `~/.oci/config` on the dev machine) — instance create/terminate/resize no longer needs manual Console clicks; see "Oracle Backend Migration" below for the one-time setup and gotchas.
 **Cloudflare API access is set up** too (scoped token, `lvamo.com` zone, DNS edit only, saved at `~/.cloudflare/token` on the dev machine) — DNS record changes for this domain no longer need the dashboard either.
 **⚠️ `nginx` gotcha**: if the VM is ever rebooted, `nginx`'s `restart: always` policy will bring it back even if it was manually `docker stop`ped before — a host reboot resets Docker's memory of that. Not a problem currently (cert exists, nginx starts fine), just worth knowing if this ever needs debugging again.
-**⚠️ Unpushed local commits**: Jobref's login/registration feature (commit `3d5fd42`), plus this session's work gating registration through LinkedIn OAuth, are on local `main` but **not pushed to `origin`** and not deployed. The LinkedIn work is also blocked on the user creating a LinkedIn Developer App (not yet done) before it can be tested against real LinkedIn, let alone deployed. Don't push/deploy without checking first; see `PROGRESS_JOBREF.md`'s banner + "Next steps" for detail.
+**Jobref deployed (Aug 2026)**: pushed to `origin`, backend migrated (`0007`+`0008`) and redeployed via `deploy.sh`, frontend redeployed via Cloudflare Pages. Verified in production: health checks, LinkedIn authorize redirect (real client_id + correct prod redirect URI), Applaut regression pass. **Not yet verified in production**: an actual full register submission (name/password/employee-seeker fields → account created) — the LinkedIn OAuth handshake itself was verified for real (a real LinkedIn login + consent + prefill, done locally before deploy), but the user didn't complete that local form submission before asking to deploy anyway. First real account creation, if any, will be the first true test of that path. See `PROGRESS_JOBREF.md` for detail.
 
 ---
 

@@ -7,45 +7,28 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Blocked on the user creating the LinkedIn Developer App.** Registration now
-requires LinkedIn OAuth end-to-end (code complete, verified locally with
-mocked LinkedIn responses — see "LinkedIn OAuth registration" below) but
-can't be tested against the real LinkedIn API until real credentials exist.
-Jobref's production backend hostname (`api.jobref.lvamo.com`) is already live
-— see "Dedicated hostname" below — so the redirect URI to register is that
-one, not `api.applaut.lvamo.com`.
+**Deployed to production (Aug 2026).** LinkedIn app created, credentials
+wired in both locally and on the VM, code pushed, backend migrated
+(`0007`+`0008`) and redeployed, frontend redeployed via Cloudflare Pages.
+See "Production deploy" below for the full log. One real gap remains:
 
-1. User creates the LinkedIn app (steps given in chat this session — Company
-   Page → app → request "Sign In with LinkedIn using OpenID Connect" →
-   redirect URIs (`http://localhost:8000/...` for dev,
-   `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback` for
-   prod) → Client ID/Secret).
-2. User drops `JOBREF_LINKEDIN_CLIENT_ID` / `JOBREF_LINKEDIN_CLIENT_SECRET`
-   into `.env` locally (already has placeholder lines) — no need to share
-   the values in chat, Claude reads them from env.
-3. Restart backend (`docker compose restart backend`), then a real
-   register→LinkedIn→callback→complete-form→dashboard pass, plus the
-   "already registered" dedup path (try registering the same LinkedIn
-   account twice).
-4. ✅ **Done** — user updated Cloudflare Pages build environment variables
-   (dashboard-only, Claude's Cloudflare API token is DNS-only scoped and
-   can't reach the Pages API): renamed `VITE_API_BASE_URL` →
-   `VITE_APPLAUT_API_BASE_URL` (old one deleted) and added
-   `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`. **Not live yet**
-   — Pages build vars only take effect on the *next* build, and nothing's
-   been pushed, so the currently-deployed bundle still has the old var name
-   baked in. Takes effect automatically as part of step 5's frontend
-   redeploy — no separate action needed then.
-5. Once verified locally end-to-end: push, deploy (migration `0008`, backend
-   redeploy — `.env.production` on the VM needs
-   `JOBREF_LINKEDIN_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` added, matching
-   what's in the LinkedIn app — and `FRONTEND_BASE_URL=https://www.lvamo.com`
-   for the post-callback redirects to land on the right domain), frontend
-   redeploy, then verify register→LinkedIn→dashboard for real in production.
+**Nobody has completed a real registration submission yet** — locally or in
+production. The LinkedIn OAuth handshake itself *was* verified for real
+(actual LinkedIn login + consent + prefill worked, confirmed via backend
+logs — see "LinkedIn OAuth registration" below), but the user stopped at the
+prefilled form and asked to deploy before submitting it. So `register()`'s
+actual account-creation path (password hashing, employee/seeker fields,
+`linkedin_id` insert) has only ever been exercised by Claude's own mocked
+test, never by a real browser submission. **First priority next session:**
+do one real register→LinkedIn→complete-form→submit→dashboard pass against
+production (`https://www.lvamo.com/jobref/register`), then a second attempt
+with the same LinkedIn account to confirm the dedup redirect
+(`/jobref/login?linkedin=existing`) fires correctly against real data, not
+just the mocked test from earlier this session.
 
 ---
 
-## Status: Login built (email/password unchanged), registration now gated via LinkedIn OAuth — code complete, blocked on real LinkedIn credentials, not yet deployed
+## Status: Live in production — LinkedIn-gated registration + email/password login, deployed Aug 2026
 
 Jobref is LVAMO's second vertical — a job-referral platform connecting job
 seekers with employees willing to refer them at their company. As of Aug
@@ -102,7 +85,7 @@ matching, no messaging, no notifications).
   hub→landing→register (both types)→dashboard→logout→login→dashboard, plus
   an Applaut-page regression check — zero console errors.
 
-## LinkedIn OAuth registration (Aug 2026, code complete — not yet deployed)
+## LinkedIn OAuth registration (Aug 2026, live in production)
 
 Registration is now gated through LinkedIn OAuth (user's explicit request):
 LinkedIn is the **only** option shown on the register page, used purely as
@@ -179,11 +162,65 @@ verified as far as possible without them):
   fully prefilled (name editable, email locked+badged) — all with zero
   console errors.
 
-**Not yet possible without real credentials**: an actual browser round-trip
-through LinkedIn's real consent screen, and production redirect URI
-registration. See banner at top of this file for exact next steps.
+**Update — real LinkedIn credentials arrived, tested for real (Aug 2026):**
+user created the LinkedIn app, credentials added to local `.env`. Full real
+browser round-trip through the actual LinkedIn consent screen worked
+cleanly, confirmed via backend logs: `authorize` → 307 to LinkedIn →
+`callback?code=...` → 307 to `/jobref/register/complete?token=...` →
+`prefill` → 200 OK with real decoded data (real email, real name). No mocks
+involved. **However, the user stopped there and asked to deploy before
+submitting the completed form** — so the actual `register()` call (password
+hash, employee/seeker fields, `linkedin_id` insert) is still only verified
+by Claude's earlier synthetic/mocked test, never by a real submission. See
+"Production deploy" below and the banner at the top of this file.
 
 ---
+
+## Production deploy (Aug 2026)
+
+Pushed and deployed end-to-end, same session as the real LinkedIn OAuth
+test above. Sequence:
+
+1. `.env.production` on the VM was missing the LinkedIn/frontend-URL vars
+   entirely (checked via `grep -oE '^[A-Z_]+='` — names only, values never
+   printed; a plain `cat` of the file was correctly blocked by the
+   permission classifier since it's a secrets file). Appended
+   `JOBREF_LINKEDIN_CLIENT_ID`, `JOBREF_LINKEDIN_CLIENT_SECRET`,
+   `JOBREF_LINKEDIN_REDIRECT_URI=https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback`,
+   `FRONTEND_BASE_URL=https://www.lvamo.com` directly via SSH heredoc, never
+   round-tripped through a local file. Confirmed `BACKEND_CORS_ORIGINS`
+   already included `https://www.lvamo.com` — no change needed there.
+2. `git push origin main` — 6 commits (LinkedIn gating, dedicated hostname,
+   var rename, this doc's updates).
+3. `bash deploy.sh` on the VM — hit one snag: the VM's working copy of
+   `nginx/nginx.conf` had an uncommitted local diff (from the earlier direct
+   `scp` when setting up the dedicated hostname, done outside git on
+   purpose at the time) that blocked `git pull`. Diffed it against
+   `origin/main`'s version first to confirm byte-identical content, then
+   `git checkout -- nginx/nginx.conf` to discard the redundant local copy
+   and let the pull proceed. `deploy.sh` then ran clean: pulled, rebuilt the
+   backend image, ran `alembic upgrade head` (`0006`→`0007`→`0008`),
+   recreated the backend container, pruned old images. `nginx`/`postgres`
+   untouched (no config changes to those this deploy).
+4. **Verified in production** (all real, no mocks):
+   - `GET https://api.jobref.lvamo.com/api/v1/jobref/health` → `200 OK`.
+   - LinkedIn `authorize` redirect on the prod hostname carries the real
+     `client_id` and the correct prod `redirect_uri`
+     (`https://api.jobref.lvamo.com/...`, not the localhost one).
+   - Regression: `api.applaut.lvamo.com` health + a real login attempt
+     (401 on bad credentials, not a crash) — unaffected by any of this.
+   - Playwright against the live production frontend: `/jobref/register`
+     shows the LinkedIn-only page with the button correctly pointed at
+     `api.jobref.lvamo.com` (proves the Cloudflare Pages env-var rename from
+     earlier took effect on this build); `/applaut/login`'s failed-login
+     error message rendered (proves it's hitting the real prod API under
+     `VITE_APPLAUT_API_BASE_URL`, not falling back to `localhost:8000`) —
+     zero console errors beyond the deliberately-triggered 401.
+5. **Not verified in production**: an actual completed registration (see
+   the callout above and the banner at the top of this file) — the user
+   asked to deploy before finishing that local test, so the very first real
+   account creation, whenever it happens, is also the first real test of
+   that code path.
 
 ## Dedicated hostname: `api.jobref.lvamo.com` (Aug 2026, live)
 
@@ -240,20 +277,16 @@ health endpoint, since Jobref's own routes aren't deployed yet — got a clean
 200). Old hostname re-tested afterward, unaffected. `tsc`/`vite build` clean
 after the frontend env-var split.
 
-**Still needed (can't be done without dashboard/LinkedIn access — see
-banner at top of this file):**
-- ✅ Cloudflare Pages build env vars — done by the user: renamed
-  `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL` (old one deleted), added
-  `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`. Not live until
-  the next Pages build (i.e. next push), which is fine — nothing's been
-  pushed yet anyway.
-- User registers `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback`
-  as the production redirect URI on the LinkedIn app (not
-  `api.applaut.lvamo.com` — that would point at the wrong hostname now).
-- `.env.production` on the VM needs the LinkedIn credentials + a
-  `FRONTEND_BASE_URL` value added once Jobref's backend is actually
-  deployed there (currently doesn't have them — nothing reads them yet
-  since the vertical isn't deployed).
+**All of the below are now done** — see "Production deploy" above for the
+full log:
+- ✅ Cloudflare Pages build env vars renamed/added by the user, confirmed
+  live on the current build (Playwright-verified against
+  `www.lvamo.com` post-deploy).
+- ✅ Production redirect URI registered on the LinkedIn app and confirmed
+  working (real consent-screen round trip, see "LinkedIn OAuth
+  registration" above).
+- ✅ `.env.production` on the VM has the LinkedIn credentials +
+  `FRONTEND_BASE_URL`.
 
 ## Resolved decisions (previously open)
 
@@ -267,23 +300,15 @@ banner at top of this file):**
 
 ## Next steps
 
-- **See the banner at the top of this file** — currently blocked on the user
-  creating the LinkedIn Developer App; that supersedes everything below
-  until it's done.
-- **⚠️ Still committed locally only, NOT pushed to `origin`** — the original
-  auth commit (`3d5fd42`) plus this session's LinkedIn-gating work sit ahead
-  of the remote. Don't push/deploy without checking with the user first —
-  same standing rule as before, now compounded by "also not yet tested
-  against real LinkedIn."
-- Deploy (once approved *and* the LinkedIn flow is verified against real
-  credentials locally): `git push`, then backend migration + redeploy on
-  `lvamo-backend` (runs migrations `0007` and `0008`), frontend redeploy via
-  Cloudflare Pages (auto, on push), register the production redirect URI on
-  the LinkedIn app, then verify both in production (same pattern as every
-  other deploy — health check + real register/login against production).
+- **See the banner at the top of this file** — a real end-to-end register
+  submission (not just the LinkedIn handshake) is the one thing nobody's
+  verified yet, in local or prod. Do that first next session.
 - Beyond auth: the actual referral-matching product logic (how a job
   seeker gets connected to a referring employee at the same company/domain)
   is not yet designed — next major feature after this auth foundation ships.
+- The latent `api.applaut.lvamo.com` cert auto-renewal risk noted in
+  "Dedicated hostname" above (due ~mid-Oct 2026) is still unfixed — worth
+  doing before then, low effort (switch to `--webroot` like Jobref's cert).
 
 ---
 
