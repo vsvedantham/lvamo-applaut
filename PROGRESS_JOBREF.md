@@ -7,15 +7,14 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Seeker request limits + "already requested" badge (Aug 2026, verified
-locally, not yet deployed)**: a seeker can now send only **one referral
-request per UTC calendar day**, across any company — the dashboard shows
-a note (in the seeker's own local time) and greys out every company tile
-once they've used today's request; companies they've ever messaged get a
-"Requested" badge. Re-requesting the same company on a later day is
-allowed, but not with a job posting link already used there (`409` if it
-matches). See "Seeker request limits" below. **Next session**: deploy to
-production.
+**Seeker request limits + "already requested" badge — deployed (Aug
+2026)**: a seeker can now send only **one referral request per UTC
+calendar day**, across any company — the dashboard shows a note (in the
+seeker's own local time) and greys out every company tile once they've
+used today's request; companies they've ever messaged get a "Requested"
+badge. Re-requesting the same company on a later day is allowed, but not
+with a job posting link already used there (`409` if it matches). See
+"Seeker request limits" below.
 
 **Dashboard redesign: profile moved into a slide-out panel — deployed
 (Aug 2026)**: the main dashboard now shows just one thing — "Companies
@@ -190,8 +189,15 @@ timestamp), both companies greyed out and non-clickable
 "Requested" badge. Zero console errors. `tsc --noEmit` clean.
 Applaut/Jobref regression clean. Cascade delete confirmed clean.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: migration `0017` ran clean.
+Re-ran the exact same sequence against the real prod API — 1st request
+→ `201`, 2nd same day (different company) → `429`; backdated the first
+request a day, same job link → `409`, different job link → `201`; a
+seeker's own `GET /referral-requests` correctly returned only their own 2
+requests. Cloudflare Pages auto-rebuilt — confirmed both "Locked until
+tomorrow" and the note's exact wording present in the live built JS
+bundle. All test data cleaned up, cascade confirmed clean. Applaut
+regression clean.
 
 ## Dashboard redesign: profile panel + PC layout (Aug 2026, verified locally)
 
