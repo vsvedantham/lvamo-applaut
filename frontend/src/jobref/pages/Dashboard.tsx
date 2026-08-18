@@ -49,7 +49,7 @@ export default function JobrefDashboard() {
                 value={`${CAPACITY_LABEL[user.employee_profile.referral_capacity]} per ${user.employee_profile.refer_frequency === 'weekly' ? 'week' : 'month'}`}
               />
               <Row
-                label="Requests viewed"
+                label="Requests reviewed"
                 value={`${CAPACITY_LABEL[user.employee_profile.daily_referral_view_cap]} per day`}
               />
             </>

@@ -18,9 +18,9 @@ GERMAN_PHONE_RE = re.compile(r"^(?:\+49|0049|0)[0-9 \-]{6,14}$")
 class EmployeeDetails(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
     working_since: date
-    # How many incoming referral requests they're willing to view per day —
-    # a distinct question from referral_capacity below (reviewing incoming
-    # requests vs. actively making referrals).
+    # How many incoming referral requests they're willing to review per
+    # day — a distinct question from referral_capacity below (reviewing
+    # incoming requests vs. actively making referrals).
     daily_referral_view_cap: ReferralViewCapacity
     # Always asked directly now — no more "can you refer at all?" gate
     # (Aug 2026 product decision). Uses the same bucketed scale as

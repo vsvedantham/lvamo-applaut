@@ -186,7 +186,7 @@ export default function JobrefRegister() {
               </div>
 
               <div style={field}>
-                <label style={labelStyle}>How many referral requests can you view per day?</label>
+                <label style={labelStyle}>How many referral requests can you review per day?</label>
                 <select value={dailyReferralViewCap} onChange={e => setDailyReferralViewCap(e.target.value as ReferralViewCapacity)}>
                   <option value="up_to_5">Max 5</option>
                   <option value="5_to_10">5 - 10</option>
