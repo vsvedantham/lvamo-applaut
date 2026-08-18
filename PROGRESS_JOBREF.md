@@ -7,34 +7,23 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Two small changes on top of everything above, same day — deployed:**
+**Employee registration form is now fully settled (Aug 2026, deployed) —
+three rounds same day, all live:**
 
-1. New required employee field, **"How many referral requests can you view
-   per day?"** (`Max 5` / `5 - 10` / `10 - 20` / `No Cap`), placed right
-   before the existing "I can refer other candidates" section. New DB
-   column `jobref_employee_profiles.daily_referral_view_cap`, migration
-   `0010`. Verified live in production: a real registration with the field
-   → `201`, missing it → `422`, confirming it's genuinely enforced;
-   frontend confirmed showing the field at the right position on
-   `www.lvamo.com`.
-2. **Disclaimer copy on the Job Seeker panel reworded** to a general
-   platform-policy statement, no "you" framing — confirmed live.
+1. New required field, "How many referral requests can you view per day?"
+   (`Max 5`/`5-10`/`10-20`/`No Cap`), migration `0010`.
+2. Job Seeker disclaimer reworded to general platform-policy phrasing.
+3. The old "I can refer other candidates" checkbox removed entirely —
+   referral capacity is now asked directly: "How many referrals can you do
+   in a…" with a Week/Month segmented toggle, then the *same* bucketed
+   scale as #1 above (not a raw number). `can_refer`/`refer_count` dropped
+   from the schema, migration `0011`.
 
-See "New employee field + disclaimer reword" section below for full detail.
-
-**Same-day follow-up on top of that, committed locally — NOT yet
-pushed/deployed**: removed the "I can refer other candidates" checkbox
-entirely — referral capacity is now asked directly and unconditionally.
-"How many referrals can you do in a…" with a Week/Month segmented toggle,
-then the *same* bucketed options as the daily-view-cap field above it (`Max
-5`/`5-10`/`10-20`/`No Cap`) instead of a raw number — per the user's
-explicit request to reuse the same scale. `can_refer` and the old integer
-`refer_count` are gone from the schema entirely, replaced by a required
-`referral_capacity` (same enum as `daily_referral_view_cap`) and
-`refer_frequency` (now always required, was conditional before). Migration
-`0011`. See "Referral capacity: always-asked, bucketed scale" section below.
-**Once approved to deploy**: `git push`, `bash deploy.sh` (runs migration
-`0011`), Cloudflare Pages auto-redeploys.
+All verified live in production with real API calls (`201`/`422` on
+valid/missing data) and against the live frontend (`www.lvamo.com`) —
+zero checkboxes left in the form, both toggle buttons functional, Applaut
+regression clean each round. See "Referral capacity" and "New employee
+field + disclaimer reword" sections below for full detail.
 
 **Still outstanding, unchanged**: nobody has completed a real *job-seeker*
 registration through the actual LinkedIn consent screen and final form
@@ -46,9 +35,9 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production (previous round) — a same-day follow-up (referral capacity: always-asked, bucketed scale, no more can_refer checkbox) is built and verified locally but NOT yet pushed/deployed
+## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
 
-## Referral capacity: always-asked, bucketed scale (Aug 2026, committed locally — not deployed)
+## Referral capacity: always-asked, bucketed scale (Aug 2026, live in production)
 
 Follow-up to the field added in the previous entry — user's explicit
 request: drop the "I can refer other candidates at my company" checkbox,
@@ -91,8 +80,11 @@ browser submission through choice→employee form→both new fields→submit
 lands on `/jobref/dashboard`, which correctly displays the submitted values
 ("10 - 20 Per Month", "5 - 10 Per Day" in this run).
 
-**Not yet done**: not pushed to `origin`, not deployed — see banner at top
-of this file.
+**Deployed and re-verified in production**: pushed, migration `0011` ran
+clean on the VM, Cloudflare Pages auto-rebuilt. Re-ran the same checks
+directly against production: real registration with both fields → `201`,
+missing `referral_capacity` → `422`; `www.lvamo.com` confirmed showing
+zero checkboxes and both working toggle buttons; Applaut regression clean.
 
 ## New employee field + disclaimer reword (Aug 2026, live in production)
 
