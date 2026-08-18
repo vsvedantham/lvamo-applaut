@@ -27,13 +27,15 @@ one, not `api.applaut.lvamo.com`.
    register→LinkedIn→callback→complete-form→dashboard pass, plus the
    "already registered" dedup path (try registering the same LinkedIn
    account twice).
-4. **User updates Cloudflare Pages build environment variables** (Pages
-   project → Settings → Environment variables) — Claude's Cloudflare API
-   token is DNS-only scoped and can't reach the Pages API at all:
-   - Rename existing `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL`
-     (same value, just the new name — **skipping this breaks Applaut in
-     prod on the next frontend deploy**, not just Jobref).
-   - Add new `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`.
+4. ✅ **Done** — user updated Cloudflare Pages build environment variables
+   (dashboard-only, Claude's Cloudflare API token is DNS-only scoped and
+   can't reach the Pages API): renamed `VITE_API_BASE_URL` →
+   `VITE_APPLAUT_API_BASE_URL` (old one deleted) and added
+   `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`. **Not live yet**
+   — Pages build vars only take effect on the *next* build, and nothing's
+   been pushed, so the currently-deployed bundle still has the old var name
+   baked in. Takes effect automatically as part of step 5's frontend
+   redeploy — no separate action needed then.
 5. Once verified locally end-to-end: push, deploy (migration `0008`, backend
    redeploy — `.env.production` on the VM needs
    `JOBREF_LINKEDIN_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` added, matching
@@ -240,12 +242,11 @@ after the frontend env-var split.
 
 **Still needed (can't be done without dashboard/LinkedIn access — see
 banner at top of this file):**
-- User updates Cloudflare Pages build environment variables (the API token
-  in use is DNS-only scoped for the zone — confirmed it can't reach the
-  Pages API at all, `10000 Authentication error` — so this is
-  dashboard-only): rename `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL`
-  (same value — **skipping this breaks Applaut in prod**, not just Jobref),
-  and add `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`.
+- ✅ Cloudflare Pages build env vars — done by the user: renamed
+  `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL` (old one deleted), added
+  `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`. Not live until
+  the next Pages build (i.e. next push), which is fine — nothing's been
+  pushed yet anyway.
 - User registers `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback`
   as the production redirect URI on the LinkedIn app (not
   `api.applaut.lvamo.com` — that would point at the wrong hostname now).
