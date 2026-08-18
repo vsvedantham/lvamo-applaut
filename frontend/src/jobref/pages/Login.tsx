@@ -18,6 +18,8 @@ export default function JobrefLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const formValid = email.trim() !== '' && password.trim() !== ''
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -65,8 +67,13 @@ export default function JobrefLogin() {
             </div>
             <button
               type="submit"
-              disabled={loading}
-              style={{ marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem', opacity: loading ? 0.7 : 1 }}
+              disabled={loading || !formValid}
+              style={{
+                marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff',
+                border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem',
+                opacity: loading || !formValid ? 0.5 : 1,
+                cursor: loading || !formValid ? 'not-allowed' : 'pointer',
+              }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
