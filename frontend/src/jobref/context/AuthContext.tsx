@@ -21,6 +21,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+// Applies across the whole authenticated Jobref session — any page, both
+// user types — since this provider wraps the entire app, not just
+// individual routes.
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000
+
 export function JobrefAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<JobrefUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,6 +41,29 @@ export function JobrefAuthProvider({ children }: { children: React.ReactNode }) 
       .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setLoading(false))
   }, [])
+
+  // 5 minutes of no mouse/keyboard/touch/scroll activity signs the user
+  // out. Only armed while actually logged in; ProtectedRoute picks up the
+  // resulting user=null and redirects to login on its own, so no
+  // navigation needs to happen here.
+  useEffect(() => {
+    if (!user) return
+    let timer: ReturnType<typeof setTimeout>
+    const resetTimer = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        localStorage.removeItem(TOKEN_KEY)
+        setUser(null)
+      }, IDLE_TIMEOUT_MS)
+    }
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart']
+    activityEvents.forEach(evt => window.addEventListener(evt, resetTimer))
+    resetTimer()
+    return () => {
+      clearTimeout(timer)
+      activityEvents.forEach(evt => window.removeEventListener(evt, resetTimer))
+    }
+  }, [user])
 
   const login = async (email: string, password: string) => {
     const { access_token } = await apiLogin(email, password)

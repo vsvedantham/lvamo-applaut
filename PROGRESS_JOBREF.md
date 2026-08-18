@@ -7,12 +7,17 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Seeker "My requests" page — deployed (Aug 2026)**: a new page listing
-everything a seeker has sent — company, status, message, and for decided
-ones, either an acceptance confirmation or the employee's rejection
-reason. Reached via a new icon on the seeker dashboard (a paper-airplane,
-next to Profile/Logout). Read-only — symmetric to the employee inbox, but
-nothing here changes state. See "Seeker 'My requests' page" below.
+**Seeker dashboard merged into one two-column view + 5-min idle timeout
+(Aug 2026, verified locally, not yet deployed)**: user's explicit
+follow-up to the "My requests" page from the previous entry — they didn't
+want a separate icon/page after all. That page's content is now the
+*right* column of the seeker's dashboard itself (left: companies, a thin
+`border-right` divider, right: requests sent), and the standalone page +
+nav icon are gone entirely. Separately: any authenticated Jobref session
+(either user type, wherever in the app) now auto-logs-out after 5 minutes
+of no mouse/keyboard/touch/scroll activity. See "Seeker dashboard: merged
+two-column layout + idle timeout" below. **Next session**: deploy to
+production.
 
 **Status (Aug 2026): the entire referral request lifecycle is live in
 production**, built and deployed across one long session — auth through
@@ -89,7 +94,74 @@ change). **Next session**: one real seeker signup at
 
 ## Status: Live in production — auth, companies, the full referral request flow (routing, seeker limits) and employee decisions (accept/reject, evidence upload) all deployed, Aug 2026
 
-## Seeker "My requests" page (Aug 2026, verified locally)
+## Seeker dashboard: merged two-column layout + idle timeout (Aug 2026, verified locally)
+
+User's direct follow-up, same session as the "My requests" page below —
+explicit reversal of that choice: no separate icon, no separate page.
+"Referral requests sent" moves onto the seeker's actual homepage, as a
+second column beside "Companies available for referrals," divided by a
+thin line. Separately, unrelated: a 5-minute idle timeout across the
+whole authenticated session.
+
+**Layout**: `pages/Dashboard.tsx`'s seeker branch is now
+`display: flex; flex-wrap: wrap` with two children, each
+`flex: 1 1 420px` — companies on the left (`border-right: 1px solid
+var(--border)` for the divider, `padding-right`/`margin-right` for
+symmetric spacing), sent requests on the right (the exact card markup
+`MyReferralRequests.tsx` used, moved in directly — read-only, no
+`Link`/click affordance, since these are the seeker's own past
+submissions, not something to act on). No new fetch needed:
+`myRequests` was already being fetched unconditionally for every logged-
+in user (it back the companies badges/lockout logic too), so the second
+column just renders data the component already had.
+
+**Why `flex-wrap` + `minmax`-style basis, not a media query**: same
+reasoning as every other responsive layout in this codebase — at
+`flex-basis: 420px` each, two columns fit side by side above roughly
+900px combined width and wrap to a single stacked column below it,
+without an explicit breakpoint. The divider (`border-right` on the left
+column) doesn't disappear when stacked on mobile — it just reads as a
+subtle accent line on the right edge of the companies panel instead of a
+true mid-page divider. Decided that was an acceptable trade-off rather
+than reaching for a `@container` query (which would still be a
+breakpoint in spirit, just container- instead of viewport-relative) to
+make it vanish exactly on wrap.
+
+**Removed entirely**: `pages/MyReferralRequests.tsx`, the `/jobref/requests`
+list route (`/jobref/requests/:id`, the *employee's* per-item detail page,
+is untouched — different route, no collision), `components/Icons.tsx`'s
+`SentIcon` (now unused), and the `IconLink` helper in `Dashboard.tsx`
+(also now unused, since the top-right icon row is back down to just
+Profile + Logout for every user type).
+
+**Idle timeout**: `context/AuthContext.tsx` — a `useEffect` that arms
+only while `user` is truthy, listens for
+`mousemove`/`mousedown`/`keydown`/`scroll`/`touchstart` on `window`, and
+resets a 5-minute `setTimeout` on each one; firing clears the token and
+`setUser(null)`. No explicit navigation call needed — `JobrefProtectedRoute`
+already redirects to `/jobref/login` on its own once `user` is null, and
+the provider wraps the *entire* app (both user types, every route,
+protected or not), so this is a true session-wide idle timer, not
+per-page. Scoped to Jobref only for this pass — Applaut has its own
+separate `AuthContext.tsx` and wasn't touched.
+
+**Verified locally** (real, not mocked): full real-browser Playwright
+check of the merged dashboard at both 1440px and 390px — companies (with
+the daily-limit note and "Requested"/lockout state) and "Referral requests
+sent" both render in one view, zero console errors either viewport,
+confirmed the old "My requests" icon is entirely gone. Idle timeout
+verified without an actual 5-minute wait, via Playwright's
+`page.clock.install()`/`fastForward()` against the component's real
+scheduled `setTimeout` (not a fake one): 2 minutes idle → a real
+`mousemove` event (resets the timer) → another 2 minutes → token still
+present; then 5:01 of continuous idle from that reset → token cleared;
+reloading afterward correctly landed on `/jobref/login`. `tsc --noEmit`
+clean. Applaut/Jobref regression clean. Cascade delete confirmed clean.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
+
+## Seeker "My requests" page (Aug 2026, verified locally — superseded same session, see entry above)
 
 Follow-up to employee actions above — the seeker side of the same
 lifecycle: a page listing everything they've sent and what happened to
