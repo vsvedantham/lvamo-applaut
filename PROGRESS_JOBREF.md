@@ -7,33 +7,32 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Registration flow changed again (Aug 2026, same day) — LinkedIn is now
-job-seeker-only, not required for employees.** Code complete, verified
-locally (real browser submission end-to-end), **committed locally, NOT yet
-pushed/deployed** — see "Split registration: employees direct, job seekers
-via LinkedIn" below for the full change. Don't push/deploy without checking
-with the user first, per standing rule — this reshapes a flow that's
-already live in production.
+**Deployed to production (Aug 2026, same day as the split-registration and
+mobile-CSS changes below).** `git push` → `deploy.sh` on the VM (migration
+`0009` ran clean) → Cloudflare Pages auto-redeploy. Verified for real in
+production: a genuine employee account created end-to-end via `curl`
+against `https://api.jobref.lvamo.com` (`201`), duplicate-email dedup
+(`409`), login with that account (`200`), LinkedIn authorize redirect still
+correct, Applaut regression clean. Frontend verified live at
+`https://www.lvamo.com/jobref/register` — the split two-column layout,
+updated disclaimer copy, and the 16px-font/46px-tap-target mobile fix all
+confirmed present via `getComputedStyle`, not just a screenshot.
 
-Once approved to deploy: `git push`, `bash deploy.sh` on the VM (runs
-migration `0009` — makes `linkedin_id` nullable), frontend redeploys via
-Cloudflare Pages automatically. No new env vars or LinkedIn app changes
-needed — the job-seeker LinkedIn path is unchanged, just no longer the only
-registration path.
-
-**Still outstanding from before**: nobody has completed a real *seeker*
-registration submission through the actual LinkedIn consent screen yet
-(only the OAuth handshake itself + a mocked-token submission have been
-verified for that path — see "LinkedIn OAuth registration" below). The
-employee path, by contrast, **has** now been verified with a real browser
-submission end-to-end (see below) — it just doesn't touch LinkedIn at all,
-so that verification doesn't cover the seeker side.
+**One gap remains, unchanged from before**: nobody has completed a real
+*job-seeker* registration through the actual LinkedIn consent screen and
+final form submission — only the OAuth handshake itself (real, verified
+earlier this session) and a mocked-token submission have exercised that
+path. The employee path, by contrast, is now fully verified end-to-end in
+production with real data. **Next session**: do one real seeker signup at
+`https://www.lvamo.com/jobref/register` (Job Seeker column) to close this
+out, plus a second attempt with the same LinkedIn account to confirm the
+`/jobref/login?linkedin=existing` dedup redirect fires for real.
 
 ---
 
-## Status: Live in production (previous version) — a same-day follow-up change (LinkedIn now job-seeker-only) is built and verified locally but NOT yet pushed/deployed
+## Status: Live in production — split registration (employees direct, job seekers via LinkedIn), deployed Aug 2026
 
-## Split registration: employees direct, job seekers via LinkedIn (Aug 2026, committed locally — not deployed)
+## Split registration: employees direct, job seekers via LinkedIn (Aug 2026, live in production)
 
 Same-day follow-up to the LinkedIn-gated registration work above — user's
 explicit request: **employees should not have to go through LinkedIn at
@@ -105,11 +104,12 @@ at all; it just lets employees have no LinkedIn identity.
 
 ### Not yet done
 
-- Not pushed to `origin`, not deployed — see banner at top of this file.
+- ✅ Pushed and deployed — see banner at top of this file for the production
+  verification log.
 - The job-seeker path's *actual account-creation step* (as opposed to just
   the OAuth handshake) still hasn't been exercised through a real LinkedIn
-  consent screen + real form submission — only via a minted token, same gap
-  noted before this change.
+  consent screen + real form submission — only via a minted token. Still
+  the one open gap — see banner at top of this file.
 
 ### Mobile-first follow-up: app-wide input sizing fix (same session)
 
