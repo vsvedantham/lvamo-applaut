@@ -31,3 +31,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Claude Code — local-only session state (not shared across machines/devs).
+# .claude/skills/ IS committed — that's shared project tooling.
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

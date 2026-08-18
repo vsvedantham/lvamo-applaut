@@ -10,6 +10,14 @@
 > vertical file(s) are relevant to the work at hand.
 > At the end of a session: "save progress" — update this file if anything
 > platform-level changed, and/or the relevant vertical file(s), then commit.
+>
+> **Scoping a session to one vertical**: invoke `/applaut` or `/jobref` at
+> the start of a session (`.claude/skills/applaut/`,
+> `.claude/skills/jobref/`) to restrict that session to one vertical's own
+> files only — touching the other vertical's code or shared platform files
+> then requires flagging to the user first. No skill invoked = full-platform
+> scope (today's default). See either skill file for the exact in/out-of-
+> scope path lists.
 
 ---
 

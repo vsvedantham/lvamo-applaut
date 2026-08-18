@@ -1,0 +1,66 @@
+---
+name: applaut
+description: Scope this session to the Applaut vertical only. Reads PROGRESS.md + PROGRESS_APPLAUT.md, restricts work to Applaut's own backend/frontend/migrations, and flags before touching Jobref files or shared platform code. Invoke with /applaut at the start of a session.
+---
+
+# Applaut-only session
+
+The user invoked this to scope the **entire rest of this session** to the
+**Applaut** vertical only — not Jobref, not platform-wide work — unless
+they explicitly say otherwise mid-session. This scoping persists for every
+turn from here on, not just the first one.
+
+## Start here
+
+Read, in order:
+1. `PROGRESS.md` — platform-level context (shared infra, ground rules,
+   Multi-Vertical Architecture). Applaut's code still lives on shared
+   infra (one backend VM/process, one Postgres), so this matters even
+   though the *work* is Applaut-scoped.
+2. `PROGRESS_APPLAUT.md` — Applaut-specific status, the current primary
+   task banner, and recent history.
+
+This matches the project's own documented session-start convention — see
+`PROGRESS.md`'s header comment.
+
+## In scope — work freely here
+
+- `backend/app/applaut/**` (models, schemas, services, `api/v1/`,
+  `discovery/`, `generation/`, `scoring/`, and the Applaut-only bits of
+  `core/` — `ai.py`, `extract_text.py`, `role_synonyms.py`)
+- `frontend/src/applaut/**`
+- `backend/migrations/versions/*` **only** when the migration touches
+  Applaut's own tables (`users`, `profiles`, `resumes`, `opportunities`,
+  `scores`, `applications`, `generated_documents`, `notifications`,
+  `audit_logs`, `application_settings`)
+- Applaut-specific scripts under `backend/scripts/` (e.g.
+  `discover_company_slugs.py`, its seed files)
+- `PROGRESS_APPLAUT.md`
+
+## Out of scope — flag before touching
+
+Stop, explain exactly what needs to change and why, and wait for explicit
+go-ahead before editing any of these:
+
+- `backend/app/jobref/**`, `frontend/src/jobref/**` — Jobref's own code
+- Shared platform files: `backend/app/main.py`, `backend/app/config.py`,
+  `backend/app/core/security.py`, `backend/app/core/storage.py`,
+  `backend/app/db/*`, `frontend/src/App.tsx`,
+  `frontend/src/components/*`, `frontend/src/pages/Hub.tsx`,
+  `frontend/src/hooks/*`, `nginx/nginx.conf`, `docker-compose*.yml`, root
+  `.env*`
+- `PROGRESS.md` (platform-level doc) and `PROGRESS_JOBREF.md`
+
+The one exception: read-only access to any of the above (to understand
+context, verify something, check for conflicts) never needs flagging —
+only *edits* do.
+
+## Deploying
+
+The backend is one shared process on one VM (see `PROGRESS.md`'s
+Multi-Vertical Architecture) — there's no way to deploy just Applaut's
+changes in isolation. Before running `deploy.sh` or `git push`, check
+`git log`/`git status` for any committed-but-undiscussed Jobref changes
+that would ride along, and flag them to the user before deploying if
+found. Frontend deploys (Cloudflare Pages) are similarly all-or-nothing
+per push.
