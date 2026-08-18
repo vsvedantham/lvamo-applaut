@@ -4,6 +4,11 @@ import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
 import { listCompanies, type Company } from '../api/companies'
+import {
+  listReferralInbox,
+  type ReferralInboxItem,
+  type ReferralRequestStatus,
+} from '../api/referralRequests'
 import type { ReferralViewCapacity } from '../api/auth'
 
 const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
@@ -11,6 +16,13 @@ const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
   '5_to_10': '5 - 10',
   '10_to_20': '10 - 20',
   no_cap: 'No cap',
+}
+
+// Only one status exists today — more get added once the employee-side
+// action flow (accept/decline/etc.) is built. Keeping this as a lookup
+// rather than a raw string makes that later addition a one-line change.
+const STATUS_LABEL: Record<ReferralRequestStatus, string> = {
+  pending_review: 'Pending review',
 }
 
 export default function JobrefDashboard() {
@@ -32,6 +44,26 @@ export default function JobrefDashboard() {
       })
       .catch(() => {
         if (!cancelled) setCompaniesError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user, isEmployee])
+
+  // Referral inbox is employee-only, symmetric to the seeker's companies
+  // list above.
+  const [inbox, setInbox] = useState<ReferralInboxItem[] | null>(null)
+  const [inboxError, setInboxError] = useState(false)
+
+  useEffect(() => {
+    if (!user || !isEmployee) return
+    let cancelled = false
+    listReferralInbox()
+      .then((data) => {
+        if (!cancelled) setInbox(data)
+      })
+      .catch(() => {
+        if (!cancelled) setInboxError(true)
       })
     return () => {
       cancelled = true
@@ -134,6 +166,68 @@ export default function JobrefDashboard() {
                       {c.referrer_count} {c.referrer_count === 1 ? 'referrer' : 'referrers'}
                     </div>
                   </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isEmployee && (
+          <div style={{ marginTop: '1.75rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.85rem' }}>
+              Referral requests
+            </h2>
+            {inboxError && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+                Couldn't load your requests right now — try refreshing the page.
+              </p>
+            )}
+            {!inboxError && inbox === null && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>Loading…</p>
+            )}
+            {inbox && inbox.length === 0 && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+                No referral requests yet — job seekers will show up here once they reach out.
+              </p>
+            )}
+            {inbox && inbox.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {inbox.map((r) => (
+                  <div
+                    key={r.id}
+                    style={{
+                      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)' }}>
+                          {r.first_name} {r.last_name}
+                        </div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '0.75rem' }}>
+                          {new Date(r.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{
+                        flexShrink: 0, padding: '0.25rem 0.65rem', background: 'var(--warn-bg)',
+                        border: '1px solid var(--warn-border)', borderRadius: '999px', fontSize: '0.7rem',
+                        fontWeight: 600, color: 'var(--warn)', whiteSpace: 'nowrap',
+                      }}>
+                        {STATUS_LABEL[r.status]}
+                      </div>
+                    </div>
+
+                    <p style={{ color: 'var(--text-2)', fontSize: '0.83rem', margin: 0, fontStyle: 'italic' }}>
+                      "{r.message}"
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+                      <a href={r.job_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Job posting ↗</a>
+                      <a href={r.cv_drive_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>CV ↗</a>
+                      <a href={r.cover_letter_drive_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Cover letter ↗</a>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

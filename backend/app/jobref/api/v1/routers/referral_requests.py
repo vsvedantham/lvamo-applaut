@@ -3,9 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.jobref.models.jobref_user import JobrefUser
-from app.jobref.schemas.referral_request import ReferralRequestCreate, ReferralRequestResponse
+from app.jobref.schemas.referral_request import (
+    ReferralRequestCreate,
+    ReferralRequestInboxItem,
+    ReferralRequestResponse,
+)
 from app.jobref.services.auth import get_current_user
-from app.jobref.services.referral_request import create_referral_request
+from app.jobref.services.referral_request import create_referral_request, list_inbox
 
 router = APIRouter(prefix="/referral-requests")
 
@@ -25,3 +29,16 @@ async def submit_referral_request(
             detail="Only job seekers can submit referral requests",
         )
     return await create_referral_request(payload, current_user, db)
+
+
+@router.get("", response_model=list[ReferralRequestInboxItem])
+async def referral_inbox(
+    current_user: JobrefUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.is_employee:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only employees have a referral inbox",
+        )
+    return await list_inbox(current_user.id, db)

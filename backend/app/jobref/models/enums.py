@@ -34,3 +34,14 @@ class JobSeekerStatus(str, enum.Enum):
     PART_TIME = "part_time"
     MINI_JOB = "mini_job"
     SERVING_NOTICE = "serving_notice"
+
+
+class ReferralRequestStatus(str, enum.Enum):
+    """Only one value for now, per the user's explicit note: further
+    statuses (accepted/declined/referred/etc.) get decided once the
+    employee-side action flow itself is built — this just needs to exist
+    and be extensible today (migration 0016 uses a single-value CHECK
+    constraint, the same ALTER-to-add-a-value pattern already used for
+    ReferralViewCapacity in migrations 0010/0011)."""
+
+    PENDING_REVIEW = "pending_review"

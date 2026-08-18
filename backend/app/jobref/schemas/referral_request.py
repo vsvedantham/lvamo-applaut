@@ -5,6 +5,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.jobref.models.enums import ReferralRequestStatus
+
 
 class ReferralRequestCreate(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
@@ -20,6 +22,24 @@ class ReferralRequestCreate(BaseModel):
 class ReferralRequestResponse(BaseModel):
     id: uuid.UUID
     company_name: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ReferralRequestInboxItem(BaseModel):
+    """One row in an employee's referral inbox — see
+    GET /api/v1/jobref/referral-requests."""
+
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    company_name: str
+    job_link: str
+    cv_drive_link: str
+    cover_letter_drive_link: str
+    message: str
+    status: ReferralRequestStatus
     created_at: datetime
 
     model_config = {"from_attributes": True}

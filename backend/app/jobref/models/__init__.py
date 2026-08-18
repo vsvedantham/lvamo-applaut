@@ -2,6 +2,7 @@ from app.jobref.models.enums import (
     JobSeekerStatus,
     JobrefUserType,
     ReferFrequency,
+    ReferralRequestStatus,
     ReferralViewCapacity,
 )
 from app.jobref.models.jobref_company import JobrefCompany
@@ -16,4 +17,5 @@ __all__ = [
     "ReferFrequency",
     "ReferralViewCapacity",
     "JobSeekerStatus",
+    "ReferralRequestStatus",
 ]

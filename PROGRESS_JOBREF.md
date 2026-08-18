@@ -7,6 +7,17 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Employee-side referral inbox + routing algorithm (Aug 2026, verified
+locally, not yet deployed)**: referral requests now route to a specific
+employee (`to_user_id`) at submission time — among a company's employees,
+one is picked at random from whoever hasn't hit their own daily
+`daily_referral_view_cap` yet today (UTC calendar day, computed live from
+today's row count, no cron needed); once every employee at a company is at
+capacity, new requests get a `409`. Employees see routed requests on their
+dashboard under "Referral requests" — name, message, links, a status pill.
+See "Employee referral inbox + routing" below. **Next session**: deploy to
+production.
+
 **Referral request flow — deployed (Aug 2026)**: clicking a company tile
 on the seeker dashboard now opens a full request page — instructions
 (visit careers page → find a matching posting → tailor CV/cover letter →
@@ -88,6 +99,77 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## Employee referral inbox + routing (Aug 2026, verified locally)
+
+Follow-up to the referral request flow below — user's explicit spec:
+`jobref.referral_requests` needed a `From` (seeker), `To` (referrer) and a
+`status`, plus a routing rule they defined precisely: if 3 employees at a
+company each set a daily cap of 5, that's 15 possible requests/day for the
+company; allocate the referrer **randomly** among employees, track how
+many each has received, and exclude an employee once their own threshold
+is hit **for that day**.
+
+**Migration `0016`** (table had zero rows, so straight `ADD COLUMN ...
+NOT NULL` with no backfill needed): `to_user_id` (FK → `jobref.users`,
+`ON DELETE CASCADE`, indexed), `status` (`VARCHAR(30)`, single-value CHECK
+`'pending_review'` for now — same ALTER-to-add-a-value pattern already
+used for `ReferralViewCapacity` in migrations `0010`/`0011`, ready to grow
+once employee actions exist), `reviewed_at` (nullable, unset by anything
+yet — a "timestamp you'll want later" per the user's own prompt, ready for
+whenever an accept/decline action gets built).
+
+**Routing algorithm** (`services/referral_request.py`):
+1. Find every employee at the target company (via `jobref.companies`,
+   keyed by `name`+`careers_url`, same grouping key the `/companies`
+   listing uses).
+2. For each, compute their effective daily cap from
+   `daily_referral_view_cap`'s bucket — **the upper bound of the range**
+   (`up_to_5`→5, `5_to_10`→10, `10_to_20`→20, `no_cap`→unlimited). Matches
+   the user's own example verbatim (`up_to_5` = "5 reviews per day").
+3. Count that employee's `jobref.referral_requests` rows created **today**
+   (`func.date(created_at) = UTC today`) — computed live, not a separately
+   maintained counter, so it self-resets at UTC midnight with no reset job.
+4. Exclude anyone at or over their cap; **randomly** pick one of whoever's
+   left.
+5. If nobody's left (whole company at capacity) or the company has no
+   employees at all, reject with `409` (capacity) — the seeker's existing
+   generic error-banner handling on `ReferralRequest.tsx` already
+   surfaces this with no frontend changes needed.
+
+**Backend**: `GET /api/v1/jobref/referral-requests` (new) — employee-only
+(`403` for seekers, mirroring the existing `POST`'s seeker-only `403` for
+employees), returns that employee's routed requests newest-first.
+`POST /referral-requests`'s payload/response shape is unchanged; routing
+just happens internally now instead of a hardcoded/absent referrer.
+
+**Frontend**: Dashboard.tsx gets a second type-gated section, symmetric to
+the seeker's companies list — `isEmployee && ...` renders "Referral
+requests": a card per request (seeker name, timestamp, a status pill,
+the message in quotes, and job posting / CV / cover letter links). No new
+route or page needed — reuses the exact same dashboard-hosts-type-specific-
+content pattern as the companies list. `STATUS_LABEL` is a lookup (one
+entry today) rather than inline text, so adding future statuses is a
+one-line change.
+
+**Verified locally** (real, not mocked): registered 3 employees at the
+same company, each with `daily_referral_view_cap: up_to_5`; submitted 15
+referral requests from one seeker — all `201`, and a DB query confirmed an
+exact 5/5/5 split across the three employees; the 16th request correctly
+`409`'d ("reached its daily referral capacity"). Employee inbox endpoint
+confirmed newest-first ordering and seeker-blocked (`403`). Full
+real-browser flow via Playwright: seeker submits a request through the
+real UI → employee's dashboard shows it under "Referral requests" with
+correct name/message/status/links, zero console errors, screenshot
+confirms the visual matches the rest of the app. `tsc --noEmit` clean.
+Applaut/Jobref regression clean. All test data cleaned up (cascade delete
+confirmed no orphans).
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file). Still not built: any employee action on
+a request (accept/decline/mark reviewed) — `reviewed_at` and the
+single-value `status` CHECK are both ready for that, but no endpoint sets
+them yet.
 
 ## Referral request flow (Aug 2026, verified locally)
 
