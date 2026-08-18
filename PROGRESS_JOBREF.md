@@ -7,14 +7,13 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Companies list now shown on the job-seeker dashboard (Aug 2026, verified
-locally, not yet deployed)**: new `GET /api/v1/jobref/companies` endpoint
-(any authenticated Jobref user) returns `jobref.companies` grouped by
-`(name, careers_url)` with a `referrer_count`, so a seeker sees each
-company once even though the table itself has one row per employee.
-Dashboard.tsx shows it under "Companies available for referrals" —
-seeker-only in the UI. See "Companies list on the seeker dashboard" below.
-**Next session**: deploy to production.
+**Companies list on the job-seeker dashboard — deployed (Aug 2026)**: new
+`GET /api/v1/jobref/companies` endpoint (any authenticated Jobref user)
+returns `jobref.companies` grouped by `(name, careers_url)` with a
+`referrer_count`, so a seeker sees each company once even though the
+table itself has one row per employee. Dashboard.tsx shows it under
+"Companies available for referrals" — seeker-only in the UI. See
+"Companies list on the seeker dashboard" below.
 
 **Companies-gathering step (Aug 2026, deployed)**: employee registration
 writes a row to `jobref.companies` (`name`, `careers_url`, `user_id` FK
@@ -122,8 +121,14 @@ employee dashboard screenshot confirms the section is entirely absent.
 Zero console errors on either. `tsc --noEmit` clean. Test data cleaned up
 afterward on both frontend and DB.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: no new migration needed (pure
+API/frontend addition). Re-ran the grouping check directly against prod —
+`GET /companies` correctly shows "Verify GmbH" with `referrer_count: 3`
+(the 3 existing test employees there) alongside the other companies, each
+counted correctly; unauthenticated request still `403`s. Cloudflare Pages
+auto-rebuilt on push — confirmed by finding the new "Companies available
+for referrals" string in the live built JS bundle at `www.lvamo.com`.
+Applaut regression clean (health check).
 
 ## Companies-gathering step (Aug 2026, deployed)
 
