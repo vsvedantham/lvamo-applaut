@@ -14,7 +14,10 @@ from app.applaut.models.enums import EmploymentTypeEnum, RemotePreferenceEnum
 
 class Opportunity(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "opportunities"
-    __table_args__ = (sa.UniqueConstraint("source", "external_id"),)
+    __table_args__ = (
+        sa.UniqueConstraint("source", "external_id"),
+        {"schema": "applaut"},
+    )
 
     source: Mapped[str] = mapped_column(String(100), nullable=False)
     external_id: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -24,10 +27,20 @@ class Opportunity(Base, UUIDPrimaryKey, TimestampMixin):
     country_code: Mapped[Optional[str]] = mapped_column(String(10))
 
     remote_option: Mapped[Optional[str]] = mapped_column(
-        sa.Enum(RemotePreferenceEnum, name="remote_preference_enum", create_type=False)
+        sa.Enum(
+            RemotePreferenceEnum,
+            name="remote_preference_enum",
+            schema="applaut",
+            create_type=False,
+        )
     )
     employment_type: Mapped[Optional[str]] = mapped_column(
-        sa.Enum(EmploymentTypeEnum, name="employment_type_enum", create_type=False)
+        sa.Enum(
+            EmploymentTypeEnum,
+            name="employment_type_enum",
+            schema="applaut",
+            create_type=False,
+        )
     )
 
     description: Mapped[Optional[str]] = mapped_column(Text)

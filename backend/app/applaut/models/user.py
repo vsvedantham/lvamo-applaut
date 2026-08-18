@@ -12,6 +12,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKey
 
 class User(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "users"
+    __table_args__ = {"schema": "applaut"}
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255))

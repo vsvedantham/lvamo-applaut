@@ -562,6 +562,13 @@ full log:
 
 ## Next steps
 
+- **Move Jobref's own tables (`jobref_users`, `jobref_employee_profiles`,
+  `jobref_seeker_profiles`) from `public` into a `jobref` Postgres schema**
+  — the `jobref` schema itself already exists (created alongside `applaut`
+  in migration `0012`, see `PROGRESS_APPLAUT.md`'s "Postgres schema
+  separation" entry and `PROGRESS.md`'s Multi-Vertical Architecture
+  section), but Jobref's tables were deliberately left unmoved as a
+  separate task. This is queued as the next piece of DB work.
 - **See the banner at the top of this file** — a real end-to-end register
   submission (not just the LinkedIn handshake) is the one thing nobody's
   verified yet, in local or prod. Do that first next session.

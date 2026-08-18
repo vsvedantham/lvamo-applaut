@@ -133,20 +133,90 @@ at the top of this file references running that script.
 
 ## Database
 
-**6 migrations applied** (`backend/migrations/versions/`):
+**7 migrations applied** (`backend/migrations/versions/`):
 - `0001` — initial schema (users, profiles, resumes, opportunities, scores, applications, generated_documents, notifications, audit_logs)
 - `0002` — scoring columns
 - `0003` — document columns
 - `0004` — profile discovery timestamps
 - `0005` — profile score threshold (`good_threshold`)
 - `0006` — `application_settings` table
+- `0012` — moved all 10 Applaut tables + 4 enum types from `public` into a
+  dedicated `applaut` Postgres schema (see "Postgres schema separation"
+  below). Jobref's own migrations (`0007`–`0011`) are interleaved in the
+  same linear alembic chain since both verticals still share one DB/one
+  migration history — see `PROGRESS_JOBREF.md`.
 
 **Key DB notes:**
 - Scoring thresholds currently set to **GOOD=50, NEAR_MISS=35** in the DB for testing
-- Revert to GOOD=85, NEAR_MISS=70 before go-live (update `good_threshold` in `profiles` table)
-- This schema/database is currently Applaut-only; it lives on the shared
-  `lvamo-backend` VM (see `PROGRESS.md`) but nothing here is shared with
-  other verticals.
+- Revert to GOOD=85, NEAR_MISS=70 before go-live (update `good_threshold` in `applaut.profiles`)
+- Applaut's tables live in their own `applaut` Postgres schema (see below) on
+  the shared `lvamo-backend` VM/DB instance — namespaced at the schema level
+  from Jobref, even though both still share one Postgres server/database and
+  one alembic migration chain.
+
+---
+
+## Postgres schema separation: `applaut` + `jobref` schemas (Aug 2026, verified locally)
+
+User's request: move from both verticals' tables sitting unnamespaced in
+`public` to one Postgres schema per vertical, matching the existing
+route/codebase namespacing pattern (`/api/v1/<x>/*`, `app/<x>/`) — done as
+DB-first prep work before Jobref's own tables get built out further.
+
+**This pass**: created both `applaut` and `jobref` schemas, moved all 10
+existing Applaut tables and all 4 Applaut enum types
+(`remote_preference_enum`, `employment_type_enum`,
+`application_status_enum`, `document_type_enum`) from `public` into
+`applaut`. Jobref's 3 existing tables (`jobref_users`,
+`jobref_employee_profiles`, `jobref_seeker_profiles`) were deliberately
+**left in `public`** — moving those into the `jobref` schema is explicit
+follow-up work, not part of this pass (see `PROGRESS_JOBREF.md`).
+`alembic_version` also stays unschemaed in `public` — it's shared migration-
+history bookkeeping, not vertical data.
+
+**Migration**: `0012_vertical_schemas.py` — `CREATE SCHEMA IF NOT EXISTS`
+for both, then `ALTER TABLE ... SET SCHEMA applaut` / `ALTER TYPE ... SET
+SCHEMA applaut` for each of the 10 tables / 4 enum types (in-place schema
+moves, no data copy, no downtime). `downgrade()` reverses both sets of
+moves and drops both schemas.
+
+**Code changes** (`backend/app/applaut/models/*.py`, all 10 model files):
+every model now declares `__table_args__ = {"schema": "applaut"}` (merged
+into the existing tuple form for the two models — `Opportunity`, `Score` —
+that already had a `UniqueConstraint` in `__table_args__`); every
+cross-table `sa.ForeignKey(...)` target is now schema-qualified
+(`"applaut.users.id"` etc. instead of `"users.id"`); every `sa.Enum(...,
+create_type=False)` column now also carries `schema="applaut"`, so the
+association is explicit at the SQLAlchemy layer rather than relying on the
+DB connection's `search_path` — no engine/session/`db/base.py` changes were
+needed, since schema is declared per-table/per-type, not connection-wide.
+
+**Not changed**: `app/db/base.py`, `app/db/session.py`, `app/config.py`,
+`migrations/env.py` — none needed edits; `Base.metadata` picks up each
+table's `schema` attribute automatically. No raw SQL elsewhere in the
+codebase references these table names directly (checked).
+
+**Verified locally** (real, not mocked) — migration applied against the
+local dev DB, then exercised through the live local API after a backend
+restart:
+- `\dn`/`\dt`/`\dT` in psql confirm the exact intended layout: 10 tables + 4
+  enum types in `applaut`; `jobref_users`/`jobref_employee_profiles`/
+  `jobref_seeker_profiles`/`alembic_version` still in `public`; `jobref`
+  schema exists and is empty.
+- Real API round-trip: `POST /api/v1/applaut/auth/register` → `201`, row
+  confirmed present in `applaut.users` via psql, then deleted. A second
+  registration → `GET /me` (JWT-authenticated read) → `200`; `POST
+  /api/v1/applaut/profiles` (exercises both the `remote_preference` enum
+  column and the `profiles.user_id → applaut.users.id` cross-table FK) →
+  `201`. Both throwaway test users deleted afterward (profile cascaded).
+- Regression: `POST /api/v1/jobref/auth/login` with bad credentials → `401`
+  (not a crash) — Jobref unaffected, still reading/writing `public.jobref_*`
+  tables as before.
+
+**Not yet done**: not pushed/deployed to production — committed to local
+`main` only, pending the user's go-ahead to deploy. Moving Jobref's own
+tables into the `jobref` schema is the deliberately-deferred next step (see
+`PROGRESS_JOBREF.md`).
 
 ---
 

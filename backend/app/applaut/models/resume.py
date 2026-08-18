@@ -13,12 +13,13 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKey
 
 class Resume(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "resumes"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="CASCADE"), nullable=False
     )
     profile_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("profiles.id", ondelete="SET NULL")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.profiles.id", ondelete="SET NULL")
     )
     file_name: Mapped[str] = mapped_column(String(500), nullable=False)
     r2_key: Mapped[str] = mapped_column(String(1000), nullable=False)

@@ -15,27 +15,33 @@ from app.applaut.models.enums import DocumentTypeEnum
 
 class GeneratedDocument(Base, UUIDPrimaryKey):
     __tablename__ = "generated_documents"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="CASCADE"), nullable=False
     )
     profile_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("profiles.id", ondelete="CASCADE")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.profiles.id", ondelete="CASCADE")
     )
     application_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("applications.id", ondelete="SET NULL")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.applications.id", ondelete="SET NULL")
     )
     opportunity_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("opportunities.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.opportunities.id", ondelete="CASCADE"),
         nullable=False,
     )
     source_resume_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("resumes.id", ondelete="SET NULL")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.resumes.id", ondelete="SET NULL")
     )
 
     document_type: Mapped[str] = mapped_column(
-        sa.Enum(DocumentTypeEnum, name="document_type_enum", create_type=False),
+        sa.Enum(
+            DocumentTypeEnum,
+            name="document_type_enum",
+            schema="applaut",
+            create_type=False,
+        ),
         nullable=False,
     )
     generation_mode: Mapped[str] = mapped_column(String(20), nullable=False, default="template")

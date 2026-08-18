@@ -10,6 +10,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKey
 
 class ApplicationSetting(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "application_settings"
+    __table_args__ = {"schema": "applaut"}
 
     setting_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     value: Mapped[str] = mapped_column(String(255), nullable=False)

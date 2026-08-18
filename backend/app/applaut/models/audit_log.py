@@ -14,9 +14,10 @@ from app.db.base import Base, UUIDPrimaryKey
 
 class AuditLog(Base, UUIDPrimaryKey):
     __tablename__ = "audit_logs"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="SET NULL")
     )
     action: Mapped[str] = mapped_column(String(200), nullable=False)
     entity_type: Mapped[Optional[str]] = mapped_column(String(100))

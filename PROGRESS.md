@@ -36,7 +36,7 @@
 |---|---|---|
 | Frontend | Live | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref at `/jobref/*` (landing, LinkedIn-gated register, login, dashboard). |
 | Backend API | Live | Oracle Cloud VM `lvamo-backend` (`130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) runs one shared backend process, fronted by nginx on two hostnames: `api.applaut.lvamo.com` (Applaut, `/api/v1/applaut/*`) and `api.jobref.lvamo.com` (Jobref, `/api/v1/jobref/*`, live since Aug 2026). See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for the per-vertical-hostname pattern. |
-| Database | Live | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema (see `PROGRESS_APPLAUT.md`) plus Jobref's `jobref_users` (incl. `linkedin_id`)/`jobref_employee_profiles`/`jobref_seeker_profiles` (see `PROGRESS_JOBREF.md`), migrations `0007`+`0008` applied in prod Aug 2026. |
+| Database | Live | PostgreSQL 16 in Docker on `lvamo-backend` — one Postgres database, one alembic migration chain, shared by both verticals but namespaced at the schema level: Applaut's 10 tables live in an `applaut` Postgres schema (migration `0012`, see `PROGRESS_APPLAUT.md`; **not yet deployed to prod**, verified locally only), while Jobref's `jobref_users` (incl. `linkedin_id`)/`jobref_employee_profiles`/`jobref_seeker_profiles` still sit unschemaed in `public` pending the same treatment (see `PROGRESS_JOBREF.md`) — migrations `0007`+`0008` applied in prod Aug 2026. |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
 
 **VM access:** `ssh -i C:\Users\vvenk\Downloads\ssh-key-2026-07-10.key ubuntu@130.61.106.172`
@@ -73,6 +73,18 @@ next). The pattern, established Aug 2026, for any vertical `<x>`:
   cycles. Jobref's auth now lives on this shared backend/DB too (its own
   tables, own JWTs scoped with a `"vertical": "jobref"` claim so a token
   can't be replayed across verticals — see `PROGRESS_JOBREF.md`).
+- **Database namespacing follows the same per-vertical pattern, one layer
+  down** (Aug 2026): within the single shared Postgres database, each
+  vertical gets its own Postgres schema (`applaut`, `jobref`) rather than
+  all tables sitting unqualified in `public`. Applaut's 10 tables + 4 enum
+  types were moved into the `applaut` schema via migration `0012` (verified
+  locally, not yet deployed — see `PROGRESS_APPLAUT.md`); Jobref's 3 tables
+  still sit in `public` pending the equivalent move (see
+  `PROGRESS_JOBREF.md`). `alembic_version` stays unschemaed in `public` —
+  shared migration bookkeeping, not vertical data. Each SQLAlchemy model
+  declares its own `schema=` explicitly (table args, FK targets, enum
+  types) rather than relying on the DB connection's `search_path`, so
+  `db/base.py`/`db/session.py`/`config.py` needed no changes.
 - **Backend hostname is per-vertical even though the backend itself is
   shared** (Aug 2026) — `api.applaut.lvamo.com` was named before Jobref
   existed as a concept; rather than have Jobref sit under a hostname

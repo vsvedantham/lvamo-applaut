@@ -14,9 +14,10 @@ from app.db.base import Base, UUIDPrimaryKey
 
 class Notification(Base, UUIDPrimaryKey):
     __tablename__ = "notifications"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="CASCADE"), nullable=False
     )
     type: Mapped[str] = mapped_column(String(100), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)

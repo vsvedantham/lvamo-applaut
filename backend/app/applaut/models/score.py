@@ -13,21 +13,24 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKey
 
 class Score(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "scores"
-    __table_args__ = (sa.UniqueConstraint("opportunity_id", "profile_id"),)
+    __table_args__ = (
+        sa.UniqueConstraint("opportunity_id", "profile_id"),
+        {"schema": "applaut"},
+    )
 
     opportunity_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("opportunities.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.opportunities.id", ondelete="CASCADE"),
         nullable=False,
     )
     profile_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("profiles.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.profiles.id", ondelete="CASCADE"),
         nullable=False,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.users.id", ondelete="CASCADE"),
         nullable=False,
     )
 

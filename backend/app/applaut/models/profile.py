@@ -15,9 +15,10 @@ from app.applaut.models.enums import EmploymentTypeEnum, RemotePreferenceEnum
 
 class Profile(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "profiles"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="CASCADE"), nullable=False
     )
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
     total_experience_years: Mapped[Optional[int]] = mapped_column(SmallInteger)
@@ -28,7 +29,12 @@ class Profile(Base, UUIDPrimaryKey, TimestampMixin):
     languages: Mapped[list] = mapped_column(ARRAY(String), nullable=False, default=list)
 
     remote_preference: Mapped[str] = mapped_column(
-        sa.Enum(RemotePreferenceEnum, name="remote_preference_enum", create_type=False),
+        sa.Enum(
+            RemotePreferenceEnum,
+            name="remote_preference_enum",
+            schema="applaut",
+            create_type=False,
+        ),
         nullable=False,
         default=RemotePreferenceEnum.any,
     )

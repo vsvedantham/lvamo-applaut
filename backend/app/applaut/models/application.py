@@ -15,26 +15,32 @@ from app.applaut.models.enums import ApplicationStatusEnum
 
 class Application(Base, UUIDPrimaryKey, TimestampMixin):
     __tablename__ = "applications"
+    __table_args__ = {"schema": "applaut"}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), sa.ForeignKey("applaut.users.id", ondelete="CASCADE"), nullable=False
     )
     opportunity_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("opportunities.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.opportunities.id", ondelete="CASCADE"),
         nullable=False,
     )
     profile_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        sa.ForeignKey("profiles.id", ondelete="CASCADE"),
+        sa.ForeignKey("applaut.profiles.id", ondelete="CASCADE"),
         nullable=False,
     )
     score_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), sa.ForeignKey("scores.id", ondelete="SET NULL")
+        UUID(as_uuid=True), sa.ForeignKey("applaut.scores.id", ondelete="SET NULL")
     )
 
     status: Mapped[str] = mapped_column(
-        sa.Enum(ApplicationStatusEnum, name="application_status_enum", create_type=False),
+        sa.Enum(
+            ApplicationStatusEnum,
+            name="application_status_enum",
+            schema="applaut",
+            create_type=False,
+        ),
         nullable=False,
         default=ApplicationStatusEnum.pending_review,
     )
