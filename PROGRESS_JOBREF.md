@@ -7,16 +7,15 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Employee-side referral inbox + routing algorithm (Aug 2026, verified
-locally, not yet deployed)**: referral requests now route to a specific
-employee (`to_user_id`) at submission time — among a company's employees,
-one is picked at random from whoever hasn't hit their own daily
-`daily_referral_view_cap` yet today (UTC calendar day, computed live from
-today's row count, no cron needed); once every employee at a company is at
-capacity, new requests get a `409`. Employees see routed requests on their
-dashboard under "Referral requests" — name, message, links, a status pill.
-See "Employee referral inbox + routing" below. **Next session**: deploy to
-production.
+**Employee-side referral inbox + routing algorithm — deployed (Aug
+2026)**: referral requests now route to a specific employee (`to_user_id`)
+at submission time — among a company's employees, one is picked at random
+from whoever hasn't hit their own daily `daily_referral_view_cap` yet
+today (UTC calendar day, computed live from today's row count, no cron
+needed); once every employee at a company is at capacity, new requests get
+a `409`. Employees see routed requests on their dashboard under "Referral
+requests" — name, message, links, a status pill. See "Employee referral
+inbox + routing" below.
 
 **Referral request flow — deployed (Aug 2026)**: clicking a company tile
 on the seeker dashboard now opens a full request page — instructions
@@ -165,11 +164,20 @@ confirms the visual matches the rest of the app. `tsc --noEmit` clean.
 Applaut/Jobref regression clean. All test data cleaned up (cascade delete
 confirmed no orphans).
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file). Still not built: any employee action on
-a request (accept/decline/mark reviewed) — `reviewed_at` and the
-single-value `status` CHECK are both ready for that, but no endpoint sets
-them yet.
+**Deployed and re-verified in production**: migration `0016` ran clean.
+Re-ran the exact same routing test against the real prod API — 3
+employees at one company, each `daily_referral_view_cap: up_to_5`, 15
+submitted requests all `201` with a confirmed 5/5/5 split via direct DB
+query, 16th request correctly `409`'d. Employee inbox endpoint confirmed
+5 items, newest-first field shape correct; seeker calling it → `403`.
+Cloudflare Pages auto-rebuilt — confirmed both "Referral requests" and
+"Pending review" strings present in the live built JS bundle. All test
+data (4 users, 15 referral requests) deleted afterward, cascade confirmed
+clean. Applaut regression clean.
+
+Still not built: any employee action on a request (accept/decline/mark
+reviewed) — `reviewed_at` and the single-value `status` CHECK are both
+ready for that, but no endpoint sets them yet.
 
 ## Referral request flow (Aug 2026, verified locally)
 
