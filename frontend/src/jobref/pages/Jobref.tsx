@@ -1,9 +1,18 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import BrandedPage from '../../components/BrandedPage'
+import { useJobrefAuth } from '../context/AuthContext'
 
 export default function Jobref() {
   useDocumentTitle('Jobref — get referred | LVAMO')
+  const { user, loading } = useJobrefAuth()
+
+  // An existing session should persist across a trip back through the
+  // LVAMO hub — landing here already logged in shouldn't re-show
+  // Get started/Sign in, it should just continue to the dashboard.
+  if (loading) return null
+  if (user) return <Navigate to="/jobref/dashboard" replace />
+
   return (
     <BrandedPage>
       <div style={{ textAlign: 'center', maxWidth: '560px' }}>

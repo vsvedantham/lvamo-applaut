@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
@@ -9,7 +9,7 @@ const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, c
 
 export default function JobrefLogin() {
   useDocumentTitle('Sign in | Jobref')
-  const { login } = useJobrefAuth()
+  const { login, user, loading: authLoading } = useJobrefAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const linkedinExisting = params.get('linkedin') === 'existing'
@@ -33,6 +33,11 @@ export default function JobrefLogin() {
       setLoading(false)
     }
   }
+
+  // An existing session should persist — landing here already logged in
+  // shouldn't ask for a password again, it should just continue on.
+  if (authLoading) return null
+  if (user) return <Navigate to="/jobref/dashboard" replace />
 
   return (
     <BrandedPage>

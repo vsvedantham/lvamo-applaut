@@ -7,6 +7,19 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Bug fix: session didn't persist through the LVAMO hub (Aug 2026,
+verified locally, not yet deployed)**: user reported that clicking the
+logo/"Back to LVAMO" while logged in, then clicking back into Jobref from
+the hub, landed on the marketing landing page (Get started/Sign in) again
+instead of continuing to the dashboard — even though the session was
+still valid the whole time. Root cause: `pages/Jobref.tsx` (and, found
+while checking for the same pattern, `Login.tsx`/`Register.tsx`/
+`RegisterComplete.tsx`) never checked auth state at all — always rendered
+their logged-out content unconditionally. All four now redirect to
+`/jobref/dashboard` if a valid session already exists. See "Bug fix:
+auth pages didn't check for an existing session" below. **Next session**:
+deploy to production.
+
 **Seeker dashboard merged into one two-column view + 5-min idle timeout —
 deployed (Aug 2026)**: user's explicit follow-up to the "My requests"
 page from the previous entry — they didn't want a separate icon/page
@@ -92,6 +105,48 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — auth, companies, the full referral request flow (routing, seeker limits) and employee decisions (accept/reject, evidence upload) all deployed, Aug 2026
+
+## Bug fix: auth pages didn't check for an existing session (Aug 2026, verified locally)
+
+User's report: log in, click the LVAMO logo or "Back to LVAMO" (both go
+to `/`, the shared hub — not touched, out of scope), then click "Jobref"
+from there — landed back on the Get-started/Sign-in landing page instead
+of the dashboard, despite still being genuinely logged in the whole time
+(token untouched, `useJobrefAuth()`'s session check would have confirmed
+it). "The earlier login should persist" was the exact, correct
+expectation.
+
+**Root cause**: `pages/Jobref.tsx` never called `useJobrefAuth()` at
+all — it's a static landing page with no auth awareness whatsoever, so it
+always rendered the logged-out CTAs regardless of session state. Checking
+`Login.tsx`/`Register.tsx`/`RegisterComplete.tsx` for the same pattern
+found all three had the identical gap (each only destructured the
+*action* — `login`/`register` — from the context, never `user`), which
+matters beyond just this bug report: without the fix, an already-
+logged-in seeker could land on `Register.tsx`/`RegisterComplete.tsx` (via
+a stray bookmark, a second LinkedIn attempt, etc.) and genuinely create a
+second account.
+
+**Fix, identical shape in all four**: `if (loading) return null; if
+(user) return <Navigate to="/jobref/dashboard" replace />` before the
+existing render logic — `Login.tsx`/`Register.tsx` both already had a
+local `loading` state (form-submission spinner), so the context's own
+`loading` is aliased to `authLoading` to avoid a name collision.
+
+**Verified locally** (real, not mocked): full real-browser Playwright
+run of the exact reported sequence — logged in as a seeker, clicked
+"Back to LVAMO," landed on the hub, clicked "Jobref," confirmed the final
+URL is `/jobref/dashboard` and the actual dashboard content is genuinely
+rendered (not a flash of the landing page — checked via a screenshot at
+the intermediate moment too, since an initial loose text-match check
+raised a false alarm that turned out to just be dashboard copy
+coincidentally containing the words "get started"). Also confirmed direct
+navigation to `/jobref/login` and `/jobref/register` while already logged
+in both correctly redirect to the dashboard instead of showing the form.
+Zero console errors. `tsc --noEmit` clean.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
 
 ## Seeker dashboard: merged two-column layout + idle timeout (Aug 2026, verified locally)
 

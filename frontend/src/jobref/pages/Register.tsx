@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
@@ -27,7 +27,7 @@ type Choice = 'employee' | 'job_seeker' | null
 
 export default function JobrefRegister() {
   useDocumentTitle('Create account | Jobref')
-  const { register } = useJobrefAuth()
+  const { register, user, loading: authLoading } = useJobrefAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const linkedinError = params.get('linkedin') === 'error'
@@ -104,6 +104,11 @@ export default function JobrefRegister() {
   }
 
   const goBack = () => setParams({}, { replace: false })
+
+  // An existing session should persist — landing here already logged in
+  // shouldn't offer to create a new account, it should just continue on.
+  if (authLoading) return null
+  if (user) return <Navigate to="/jobref/dashboard" replace />
 
   return (
     <BrandedPage>

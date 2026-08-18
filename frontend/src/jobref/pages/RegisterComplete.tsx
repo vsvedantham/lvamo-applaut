@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
@@ -14,7 +14,7 @@ const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, c
 // register directly on Register.tsx and never land here.
 export default function JobrefRegisterComplete() {
   useDocumentTitle('Complete registration | Jobref')
-  const { register } = useJobrefAuth()
+  const { register, user, loading: authLoading } = useJobrefAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const token = params.get('token') ?? ''
@@ -95,6 +95,11 @@ export default function JobrefRegisterComplete() {
       setLoading(false)
     }
   }
+
+  // An existing session should persist — landing here already logged in
+  // shouldn't offer to create a second account, it should just continue on.
+  if (authLoading) return null
+  if (user) return <Navigate to="/jobref/dashboard" replace />
 
   if (prefillError) {
     return (
