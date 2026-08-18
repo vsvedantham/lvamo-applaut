@@ -7,28 +7,20 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Two small changes on top of everything above, same day — committed
-locally, NOT yet pushed/deployed:**
+**Two small changes on top of everything above, same day — deployed:**
 
 1. New required employee field, **"How many referral requests can you view
    per day?"** (`Max 5` / `5 - 10` / `10 - 20` / `No Cap`), placed right
-   before the existing "I can refer other candidates" section — a distinct
-   capacity dimension (viewing incoming requests) from `can_refer` (actively
-   referring). New DB column `jobref_employee_profiles.daily_referral_view_cap`,
-   migration `0010`, `NOT NULL` with a CHECK constraint. Existing rows
-   (disposable test data only, nothing real yet) backfilled to `'no_cap'` in
-   the migration.
-2. **Disclaimer copy on the Job Seeker panel reworded** — user's specific
-   concern: the old wording ("...so you don't end up with more than one
-   account") indirectly implied *the user themselves* might try to create
-   duplicates. Reworded as a general platform-policy statement instead: "We
-   use LinkedIn to sign you in. We only take your name and email address
-   from your LinkedIn profile — nothing else. This is used to prevent
-   duplicate accounts on Jobref." No accusatory "you" framing.
+   before the existing "I can refer other candidates" section. New DB
+   column `jobref_employee_profiles.daily_referral_view_cap`, migration
+   `0010`. Verified live in production: a real registration with the field
+   → `201`, missing it → `422`, confirming it's genuinely enforced;
+   frontend confirmed showing the field at the right position on
+   `www.lvamo.com`.
+2. **Disclaimer copy on the Job Seeker panel reworded** to a general
+   platform-policy statement, no "you" framing — confirmed live.
 
 See "New employee field + disclaimer reword" section below for full detail.
-**Once approved to deploy**: `git push`, `bash deploy.sh` on the VM (runs
-migration `0010`), Cloudflare Pages auto-redeploys the frontend.
 
 **Still outstanding, unchanged**: nobody has completed a real *job-seeker*
 registration through the actual LinkedIn consent screen and final form
@@ -40,7 +32,7 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production (previous round) — a same-day follow-up (new employee field + disclaimer reword) is built and verified locally but NOT yet pushed/deployed
+## Status: Live in production — includes the daily-referral-view-cap employee field and reworded seeker disclaimer, deployed Aug 2026
 
 ## New employee field + disclaimer reword (Aug 2026, committed locally — not deployed)
 
@@ -90,8 +82,12 @@ form→new field→submit flow lands on `/jobref/dashboard`; the seeker panel
 shows the new disclaimer text and confirms the old accusatory phrasing is
 gone.
 
-**Not yet done**: not pushed to `origin`, not deployed — see banner at top
-of this file.
+**Deployed and re-verified in production**: pushed, `deploy.sh` ran
+migration `0010` clean on the VM, Cloudflare Pages auto-rebuilt. Re-ran the
+same checks directly against production: real registration with the field
+→ `201`, missing it → `422`; `www.lvamo.com` frontend confirmed showing the
+new field (correct position) and the new disclaimer text (old phrasing
+gone); Applaut regression clean. Zero console errors throughout.
 
 ## Progressive disclosure: choice screen first, then the relevant path only (Aug 2026, live in production)
 
