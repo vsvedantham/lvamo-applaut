@@ -7,52 +7,44 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Employee actions on a referral request (Aug 2026, verified locally, not
-yet deployed)**: clicking a request tile now opens a detail page instead
-of just showing CV/cover-letter/job links inline — opening it moves the
-request `pending_review` → `under_review`. The employee sees the seeker's
-info plus two counts (how many total requests this seeker has sent them,
-how many total requests exist for this exact job posting), then decides:
-**Accept** (asks whether to share evidence — optional file upload, image
-or PDF — then marks `accepted`) or **Reject** (a required 150-char
-response to the seeker, with clickable suggested reasons, then marks
-`rejected`). See "Employee actions on a referral request" below. **Next
-session**: deploy to production.
-
-**Status (Aug 2026): the full referral request loop is live in
-production**, built and deployed across one long session:
+**Status (Aug 2026): the entire referral request lifecycle is live in
+production**, built and deployed across one long session — auth through
+a decided request, employee-side:
 
 - Auth — both employee-direct and job-seeker-via-LinkedIn registration
   proven end-to-end in production with real data (including a real
-  LinkedIn consent-screen signup, closing out what was the last standing
-  gap). `jobref.users` is a single flat table, `is_employee` the sole
-  differentiator (migration `0013`).
+  LinkedIn consent-screen signup). `jobref.users` is a single flat table,
+  `is_employee` the sole differentiator (migration `0013`).
 - `jobref.companies` seeded automatically at employee registration
   (migration `0014`), shown to seekers on their dashboard grouped with a
-  referrer count (`GET /companies`).
-- The full request flow: a seeker clicks a company tile → instructions +
-  form → `jobref.referral_requests` (migration `0015`), routed to a
-  specific employee at that company via a random-among-under-cap
-  algorithm that respects each employee's own daily review cap (migration
-  `0016`) — employees see what's routed to them in an inbox on their own
-  dashboard.
-- Dashboard redesign: profile info moved out of the main view into a
-  slide-out panel (with real editing, everything except email), leaving
-  the main page as just a responsive grid of companies/requests.
+  referrer count.
+- A seeker clicks a company tile → instructions + form →
+  `jobref.referral_requests` (migration `0015`), routed to a specific
+  employee at that company via a random-among-under-cap algorithm that
+  respects each employee's own daily review cap (migration `0016`).
 - Seeker-side limits (migration `0017`): one request per UTC day across
   any company, a dashboard note + per-tile lockout when used, a persistent
-  "Requested" badge on companies already messaged, and no duplicate job
-  link when re-requesting a company later.
+  "Requested" badge on companies already messaged, no duplicate job link
+  when re-requesting a company later.
+- The employee opens a routed request (auto-marks `under_review`), sees
+  the seeker's info plus two counts (from this seeker, for this job
+  posting), then **Accept**s (optionally uploading real evidence of the
+  referral to Cloudflare R2) or **Reject**s (a required 150-char response
+  to the seeker, with suggested reasons) — migration `0018`.
+- Dashboard redesign: profile info lives in a slide-out panel (with real
+  editing, everything except email) reached via a top-right icon, leaving
+  the main page as just a responsive grid of companies/requests.
 
 Every piece above was pushed, deployed via `deploy.sh` + Cloudflare Pages,
 and re-verified against the real production API immediately after (not
-just locally) — see the dated entries below for the full build log and
-verification detail of each one.
+just locally, and for the evidence upload specifically, not just the DB
+row either — a real object was confirmed sitting in the actual R2 bucket)
+— see the dated entries below for the full build log and verification
+detail of each one.
 
-Employee actions on a request (accept/reject, with evidence-sharing and a
-rejection response) shipped right after — see the banner entry above this
-one for that, and "Next steps" near the bottom of this file for what's
-still open beyond it.
+**Next up**: nothing notifies a seeker when their request gets decided —
+no email, no in-app signal, nothing. That's the natural next feature; see
+"Next steps" near the bottom of this file.
 
 ---
 
@@ -88,7 +80,7 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production — auth, companies, and the full referral request flow (routing, employee inbox, seeker daily limits) all deployed, Aug 2026
+## Status: Live in production — auth, companies, the full referral request flow (routing, seeker limits) and employee decisions (accept/reject, evidence upload) all deployed, Aug 2026
 
 ## Employee actions on a referral request (Aug 2026, verified locally)
 
