@@ -7,80 +7,42 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Seeker request limits + "already requested" badge — deployed (Aug
-2026)**: a seeker can now send only **one referral request per UTC
-calendar day**, across any company — the dashboard shows a note (in the
-seeker's own local time) and greys out every company tile once they've
-used today's request; companies they've ever messaged get a "Requested"
-badge. Re-requesting the same company on a later day is allowed, but not
-with a job posting link already used there (`409` if it matches). See
-"Seeker request limits" below.
+**Status (Aug 2026): the full referral request loop is live in
+production**, built and deployed across one long session:
 
-**Dashboard redesign: profile moved into a slide-out panel — deployed
-(Aug 2026)**: the main dashboard now shows just one thing — "Companies
-available for referrals" (seeker) or "Referral requests" (employee), laid
-out as a responsive grid (1 column on mobile, auto-fills more on wide
-screens). Profile info moved out of the main flow entirely, into a
-slide-out panel opened via a new profile icon at the top-right (next to a
-new logout icon, replacing the old inline "Sign out" button). The panel
-also gained real editing — every profile field except email, via a new
-`PATCH /api/v1/jobref/auth/me`. See "Dashboard redesign" below.
+- Auth — both employee-direct and job-seeker-via-LinkedIn registration
+  proven end-to-end in production with real data (including a real
+  LinkedIn consent-screen signup, closing out what was the last standing
+  gap). `jobref.users` is a single flat table, `is_employee` the sole
+  differentiator (migration `0013`).
+- `jobref.companies` seeded automatically at employee registration
+  (migration `0014`), shown to seekers on their dashboard grouped with a
+  referrer count (`GET /companies`).
+- The full request flow: a seeker clicks a company tile → instructions +
+  form → `jobref.referral_requests` (migration `0015`), routed to a
+  specific employee at that company via a random-among-under-cap
+  algorithm that respects each employee's own daily review cap (migration
+  `0016`) — employees see what's routed to them in an inbox on their own
+  dashboard.
+- Dashboard redesign: profile info moved out of the main view into a
+  slide-out panel (with real editing, everything except email), leaving
+  the main page as just a responsive grid of companies/requests.
+- Seeker-side limits (migration `0017`): one request per UTC day across
+  any company, a dashboard note + per-tile lockout when used, a persistent
+  "Requested" badge on companies already messaged, and no duplicate job
+  link when re-requesting a company later.
 
-**Employee-side referral inbox + routing algorithm — deployed (Aug
-2026)**: referral requests now route to a specific employee (`to_user_id`)
-at submission time — among a company's employees, one is picked at random
-from whoever hasn't hit their own daily `daily_referral_view_cap` yet
-today (UTC calendar day, computed live from today's row count, no cron
-needed); once every employee at a company is at capacity, new requests get
-a `409`. Employees see routed requests on their dashboard under "Referral
-requests" — name, message, links, a status pill. See "Employee referral
-inbox + routing" below.
+Every piece above was pushed, deployed via `deploy.sh` + Cloudflare Pages,
+and re-verified against the real production API immediately after (not
+just locally) — see the dated entries below for the full build log and
+verification detail of each one.
 
-**Referral request flow — deployed (Aug 2026)**: clicking a company tile
-on the seeker dashboard now opens a full request page — instructions
-(visit careers page → find a matching posting → tailor CV/cover letter →
-fill in the form) plus a form (name, job posting link, CV + cover letter
-Google Drive links, a 150-char message to the referrer) that POSTs to a
-new `jobref.referral_requests` table. See "Referral request flow" below.
-
-**Companies list on the job-seeker dashboard — deployed (Aug 2026)**: new
-`GET /api/v1/jobref/companies` endpoint (any authenticated Jobref user)
-returns `jobref.companies` grouped by `(name, careers_url)` with a
-`referrer_count`, so a seeker sees each company once even though the
-table itself has one row per employee. Dashboard.tsx shows it under
-"Companies available for referrals" — seeker-only in the UI. See
-"Companies list on the seeker dashboard" below.
-
-**Companies-gathering step (Aug 2026, deployed)**: employee registration
-writes a row to `jobref.companies` (`name`, `careers_url`, `user_id` FK
-back to the registering employee) — migration `0014`. Seed data for the
-above. See "Companies-gathering step" below.
-
-**Auth is fully closed out end-to-end, both paths, in production (Aug
-2026).** Two things landed the session before this:
-
-1. **DB restructured and deployed**: Jobref's 3 tables
-   (`jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles`, all
-   unschemaed in `public`) merged into one flat `jobref.users` table in a
-   dedicated `jobref` Postgres schema, `is_employee` boolean as the sole
-   differentiator, every type-specific field `NULL` for the other type
-   (migration `0013`). Deployed and verified in production. See "DB
-   restructure: single jobref.users table" below.
-2. **The last standing gap is closed**: the user completed a real
-   job-seeker registration through the actual LinkedIn consent screen
-   against production (`www.lvamo.com/jobref/register` → Job Seeker →
-   real LinkedIn login/approve → completed form) — confirmed via direct DB
-   query: a row with a real `linkedin_id` populated. Alongside a real
-   employee registration, both landed correctly in `jobref.users`. **Both
-   registration paths are now proven end-to-end in production with real
-   data, not mocks or minted tokens.**
-
-**Also this session**: the shared Postgres role/database was renamed
-`applaut` → `lvamo` (affects both verticals — see `PROGRESS.md`).
-
-**Next major work**: auth is done; the actual referral-matching product
-logic (how a job seeker gets connected to a referring employee at the same
-company/domain) is undesigned and is the next feature to scope.
+**Next up**: nothing on the employee side *acts* on a request yet — no
+accept/decline, no "mark reviewed." `status` (only `pending_review` is a
+valid value today — DB `CHECK` constraint) and `reviewed_at` both already
+exist on `jobref.referral_requests` (migration `0016`) ready for this, but
+nothing sets them yet. That's the natural next feature — see "Next steps"
+near the bottom of this file.
 
 ---
 
@@ -116,7 +78,7 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+## Status: Live in production — auth, companies, and the full referral request flow (routing, employee inbox, seeker daily limits) all deployed, Aug 2026
 
 ## Seeker request limits (Aug 2026, verified locally)
 
@@ -1190,12 +1152,17 @@ full log:
 
 ## Next steps
 
-- Auth is done — both registration paths (employee direct, job seeker via
-  real LinkedIn OAuth) are proven end-to-end in production with real data.
-  See the banner at the top of this file.
-- Beyond auth: the actual referral-matching product logic (how a job
-  seeker gets connected to a referring employee at the same company/domain)
-  is not yet designed — next major feature after this auth foundation ships.
+- **Employee actions on a referral request** — accept/decline/mark
+  reviewed. `status`/`reviewed_at` columns already exist on
+  `jobref.referral_requests` (migration `0016`) but nothing sets them yet;
+  only `pending_review` is a valid `status` value today (DB `CHECK`
+  constraint), so adding a real status also needs a migration to widen it.
+  This is the natural next feature — see the banner at the top of this
+  file.
+- Beyond that: how does a seeker find out their request was
+  accepted/declined? No notification mechanism exists yet in either
+  vertical (email, in-app, or otherwise) — worth deciding once the above
+  exists to act on.
 - The latent `api.applaut.lvamo.com` cert auto-renewal risk noted in
   "Dedicated hostname" above (due ~mid-Oct 2026) is still unfixed — worth
   doing before then, low effort (switch to `--webroot` like Jobref's cert).
