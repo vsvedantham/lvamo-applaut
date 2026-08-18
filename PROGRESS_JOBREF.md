@@ -111,6 +111,33 @@ at all; it just lets employees have no LinkedIn identity.
   consent screen + real form submission — only via a minted token, same gap
   noted before this change.
 
+### Mobile-first follow-up: app-wide input sizing fix (same session)
+
+User asked directly whether this work was mobile-first — honest answer was
+"the layout reflows correctly, but two real gaps exist in the shared global
+CSS that this input-dense form inherits and would expose most": input
+`font-size` was `0.875rem` (14px, computed — root `html` has no explicit
+`font-size` so `rem` resolves against the 16px browser default, not the
+body's 15px), below the 16px threshold that prevents iOS Safari's
+auto-zoom-on-focus; and touch-target height (~34-39px) sat under the 44px
+Apple HIG / WCAG 2.5.5 comfort guideline (still cleared WCAG 2.2 AA's 24px
+hard minimum, so not a strict compliance failure, just below best practice).
+Playwright/Chromium doesn't reproduce the iOS zoom behavior, so this wasn't
+caught by any of the earlier screenshot-based checks — only surfaced by
+actually computing `font-size` in px via `getComputedStyle`.
+
+**Fixed app-wide** in `frontend/src/index.css`'s shared `input, select,
+textarea` rule (affects every form in both verticals, not just this page):
+`font-size: 0.875rem` → `1rem` (16px), `padding: 0.5rem 0.75rem` → `0.75rem`
+(pushes intrinsic height to 46px, clearing the 44px guideline). Verified via
+`getComputedStyle` at a 390px mobile viewport across Jobref register/login
+*and* Applaut login (regression) — all report `font-size: 16px`; register's
+email input measures 46px tall. Full visual regression (`tsc`, `vite
+build`, Playwright screenshots at desktop + mobile across 4 pages) — zero
+console errors, no visual breakage. Re-ran the real employee-form browser
+submission end-to-end after the change — still lands on `/jobref/dashboard`
+cleanly with the larger inputs.
+
 Jobref is LVAMO's second vertical — a job-referral platform connecting job
 seekers with employees willing to refer them at their company. As of Aug
 2026, auth (register/login/me) is fully built end-to-end (backend + DB +

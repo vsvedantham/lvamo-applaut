@@ -55,12 +55,17 @@ body {
 
 input, select, textarea {
   font-family: inherit;
-  font-size: 0.875rem;
+  /* 1rem (16px), not smaller — below 16px, iOS Safari auto-zooms the
+     viewport on focus, which is a real mobile usability bug, not just a
+     style preference. Combined with the padding below, this also lands
+     the tap target close to the 44px comfort guideline (Apple HIG /
+     WCAG 2.5.5), not just WCAG 2.2's 24px hard minimum. */
+  font-size: 1rem;
   color: var(--text-1);
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xs);
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem;
   width: 100%;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
