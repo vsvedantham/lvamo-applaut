@@ -128,15 +128,18 @@ this person before").
 storage`, shared/generic infra, imported without modifying it) and its
 exact graceful-degradation convention for when R2 isn't configured
 (`services/resume.py`'s `if settings.r2_bucket_name: upload_file(...)
-else: r2_key = f"local/{r2_key}"`) — **worth knowing: R2 is not actually
-configured anywhere yet, neither locally nor in production** (`R2_
-ACCOUNT_ID` etc. are all empty in both `.env` and `.env.production`,
-confirmed by grep). So evidence files today always take the `local/`
-key path — the upload endpoint, validation, and DB record all work
-correctly, but no bytes actually reach Cloudflare until real R2
-credentials are added. Applaut has the identical gap (its own resume
-uploads are in the same state) — not something introduced here, and not
-blocking this feature, since sharing evidence is optional either way.
+else: r2_key = f"local/{r2_key}"`). **Correction to an earlier note in
+this entry**: R2 *is* actually configured in production (real
+credentials in `.env.production` — verified properly this time, by
+checking value *lengths* rather than a `grep -o` that could never have
+shown a value either way, which is what produced the wrong "empty
+everywhere" claim originally). Confirmed for real: a genuine `POST
+.../accept` with an evidence file in production landed an object in the
+actual R2 bucket (`head_object` confirmed it, `ContentType: image/png`,
+correct size) — not just a DB row with a `local/`-prefixed key. Deleted
+that test object afterward. **Local dev only** is the `local/`-prefix
+case — `R2_*` vars are genuinely empty there (confirmed by length, not
+just by presence of the line).
 
 **Backend**: `GET /referral-requests/{id}` (the "open = mark under
 review" side effect, employee-only, 404 if not routed to the caller —
@@ -1271,12 +1274,13 @@ full log:
   notification mechanism exists yet in either vertical (email, in-app, or
   otherwise) — the natural next feature now that there's a real decision
   to notify about. See "Employee actions on a referral request" above.
-- **R2 isn't actually configured** (neither locally nor in production —
-  confirmed empty `R2_*` vars both places) — the evidence-upload feature
-  degrades gracefully today (same convention Applaut's resume upload
-  already uses), but no uploaded evidence file is actually retrievable
-  until real credentials are added. Same gap exists for Applaut's resumes,
-  not new here, but worth fixing at some point for either vertical.
+- Evidence files aren't downloadable/viewable anywhere yet (only the
+  filename is shown as confirmation) — R2 *is* actually configured and
+  storing them for real in production (confirmed by a real upload +
+  `head_object` check — see "Employee actions on a referral request"
+  above for the correction to an earlier wrong note here), so a
+  view/download endpoint would be genuinely usable whenever it's wanted,
+  unlike when this was first written.
 - The latent `api.applaut.lvamo.com` cert auto-renewal risk noted in
   "Dedicated hostname" above (due ~mid-Oct 2026) is still unfixed — worth
   doing before then, low effort (switch to `--webroot` like Jobref's cert).
