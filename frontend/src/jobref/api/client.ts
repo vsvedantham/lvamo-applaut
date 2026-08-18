@@ -6,8 +6,15 @@ import axios from 'axios'
 // section.
 export const TOKEN_KEY = 'jobref_access_token'
 
+// Jobref has its own backend hostname in production (api.jobref.lvamo.com,
+// proxied by the same shared nginx/backend as Applaut — see PROGRESS.md) —
+// a separate Cloudflare Pages build var from Applaut's VITE_API_BASE_URL, so
+// set VITE_JOBREF_API_BASE_URL there. Both fall back to the same local
+// backend in dev, since docker-compose only runs one backend container.
+export const API_ROOT = import.meta.env.VITE_JOBREF_API_BASE_URL ?? 'http://localhost:8000'
+
 const client = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/jobref',
+  baseURL: API_ROOT + '/api/v1/jobref',
   headers: { 'Content-Type': 'application/json' },
 })
 

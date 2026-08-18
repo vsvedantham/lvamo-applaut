@@ -1,4 +1,4 @@
-import client from './client'
+import client, { API_ROOT } from './client'
 
 export type UserType = 'employee' | 'job_seeker'
 export type ReferFrequency = 'weekly' | 'monthly'
@@ -69,8 +69,7 @@ export async function register(payload: RegisterPayload): Promise<TokenResponse>
 // navigation (not XHR) so the LinkedIn Client Secret never has to reach
 // the frontend; the backend does the code exchange server-side.
 export function linkedInAuthorizeUrl(): string {
-  const base = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/jobref'
-  return `${base}/auth/linkedin/authorize`
+  return `${API_ROOT}/api/v1/jobref/auth/linkedin/authorize`
 }
 
 export async function getLinkedInPrefill(token: string): Promise<LinkedInPrefill> {

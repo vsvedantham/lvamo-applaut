@@ -11,10 +11,15 @@
 requires LinkedIn OAuth end-to-end (code complete, verified locally with
 mocked LinkedIn responses — see "LinkedIn OAuth registration" below) but
 can't be tested against the real LinkedIn API until real credentials exist.
+Jobref's production backend hostname (`api.jobref.lvamo.com`) is already live
+— see "Dedicated hostname" below — so the redirect URI to register is that
+one, not `api.applaut.lvamo.com`.
 
 1. User creates the LinkedIn app (steps given in chat this session — Company
    Page → app → request "Sign In with LinkedIn using OpenID Connect" →
-   redirect URIs → Client ID/Secret).
+   redirect URIs (`http://localhost:8000/...` for dev,
+   `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback` for
+   prod) → Client ID/Secret).
 2. User drops `JOBREF_LINKEDIN_CLIENT_ID` / `JOBREF_LINKEDIN_CLIENT_SECRET`
    into `.env` locally (already has placeholder lines) — no need to share
    the values in chat, Claude reads them from env.
@@ -22,10 +27,16 @@ can't be tested against the real LinkedIn API until real credentials exist.
    register→LinkedIn→callback→complete-form→dashboard pass, plus the
    "already registered" dedup path (try registering the same LinkedIn
    account twice).
-4. Once verified locally end-to-end: push, deploy (migration `0008`, backend
-   redeploy, frontend redeploy), register the **production** redirect URI
-   (`https://api.applaut.lvamo.com/api/v1/jobref/auth/linkedin/callback`) on
-   the LinkedIn app alongside the localhost one, verify in production too.
+4. **User adds `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com` as a
+   Cloudflare Pages build environment variable** (Pages project → Settings →
+   Environment variables) — Claude's Cloudflare API token is DNS-only scoped
+   and can't do this step; dashboard-only.
+5. Once verified locally end-to-end: push, deploy (migration `0008`, backend
+   redeploy — `.env.production` on the VM needs
+   `JOBREF_LINKEDIN_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` added, matching
+   what's in the LinkedIn app — and `FRONTEND_BASE_URL=https://www.lvamo.com`
+   for the post-callback redirects to land on the right domain), frontend
+   redeploy, then verify register→LinkedIn→dashboard for real in production.
 
 ---
 
@@ -166,6 +177,67 @@ verified as far as possible without them):
 **Not yet possible without real credentials**: an actual browser round-trip
 through LinkedIn's real consent screen, and production redirect URI
 registration. See banner at top of this file for exact next steps.
+
+---
+
+## Dedicated hostname: `api.jobref.lvamo.com` (Aug 2026, live)
+
+Jobref's production backend now has its own hostname instead of sitting
+under Applaut's (`api.applaut.lvamo.com` predates Jobref as a concept — see
+`PROGRESS.md`'s Multi-Vertical Architecture section for the durable policy).
+Live and verified today; only the DNS/TLS/nginx layer — no vertical code was
+deployed as part of this.
+
+**What was done:**
+1. DNS: `A api.jobref.lvamo.com → 130.61.106.172`, DNS-only (grey-cloud,
+   matching `api.applaut.lvamo.com`'s pattern), via the Cloudflare API.
+2. TLS cert: `certbot certonly --webroot -w /var/www/certbot -d
+   api.jobref.lvamo.com` on the VM — issued with **zero nginx downtime**,
+   unlike the original `api.applaut.lvamo.com` cert which was issued via
+   `--standalone` (had to, at the time — nginx didn't exist yet, chicken-
+   and-egg problem, see "Oracle Backend Migration" in `PROGRESS.md`).
+   Expires 2026-11-16, auto-renews via the existing `certbot.timer`.
+   - **⚠️ Latent issue noticed, not fixed**: `api.applaut.lvamo.com`'s
+     renewal config still says `authenticator = standalone`, which needs
+     port 80 free — but the nginx Docker container now permanently holds
+     port 80 (`restart: always`), with no pre/post renewal hook to stop it.
+     Auto-renewal for that cert will likely **fail** when it's actually due
+     (~mid-Oct 2026, 30 days before the Nov 15 expiry). Not urgent today,
+     but worth fixing before then — either switch that cert to `--webroot`
+     like Jobref's (re-issue once, same webroot path already exists in
+     nginx.conf), or add a stop/start-nginx renewal hook.
+3. `nginx/nginx.conf`: added a second `server { listen 443 ssl; server_name
+   api.jobref.lvamo.com; ... }` block, proxying to the same `backend:8000`
+   as the Applaut block — same shared backend process, just a second front
+   door. Deployed to the VM directly (`scp` + `nginx -s reload`, no
+   container restart, no downtime) since this is pure infra config, not the
+   gated Jobref feature deploy — also committed to git locally.
+4. Frontend: `jobref/api/client.ts` and `jobref/api/auth.ts` now read
+   `VITE_JOBREF_API_BASE_URL` (own env var) instead of sharing Applaut's
+   `VITE_API_BASE_URL` — both fall back to `http://localhost:8000` in dev
+   (single shared backend container locally, so no behavior change there;
+   verified via a real dev-server + Playwright check that the LinkedIn
+   button's href is unchanged locally).
+
+**Verified:** new hostname serves the correct cert (`CN=api.jobref.lvamo.com`)
+and correctly proxies to the shared backend (tested via the existing Applaut
+health endpoint, since Jobref's own routes aren't deployed yet — got a clean
+200). Old hostname re-tested afterward, unaffected. `tsc`/`vite build` clean
+after the frontend env-var split.
+
+**Still needed (can't be done without dashboard/LinkedIn access — see
+banner at top of this file):**
+- User adds `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com` as a
+  Cloudflare Pages build environment variable (the API token in use is
+  DNS-only scoped for the zone — confirmed it can't reach the Pages API at
+  all, `10000 Authentication error` — so this is dashboard-only).
+- User registers `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback`
+  as the production redirect URI on the LinkedIn app (not
+  `api.applaut.lvamo.com` — that would point at the wrong hostname now).
+- `.env.production` on the VM needs the LinkedIn credentials + a
+  `FRONTEND_BASE_URL` value added once Jobref's backend is actually
+  deployed there (currently doesn't have them — nothing reads them yet
+  since the vertical isn't deployed).
 
 ## Resolved decisions (previously open)
 

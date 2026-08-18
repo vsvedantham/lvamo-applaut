@@ -27,7 +27,7 @@
 | Layer | Status | URL / Location |
 |---|---|---|
 | Frontend | Live (Jobref auth pages built, pending redeploy) | `www.lvamo.com` (Cloudflare Pages, auto-deploys on push to `main`) — root `/` is the **LVAMO hub** (`frontend/src/pages/Hub.tsx`), listing verticals: Applaut at `/applaut/*`, Jobref at `/jobref/*` (landing, login, register, dashboard). |
-| Backend API | Live (Jobref router built, pending deploy) | `api.applaut.lvamo.com` (Oracle Cloud VM `lvamo-backend`, `130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) — serves both verticals: Applaut under `/api/v1/applaut/*`, Jobref under `/api/v1/jobref/*`. See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for how each vertical's backend attaches to it. |
+| Backend API | Live (Jobref router built, pending deploy) | Oracle Cloud VM `lvamo-backend` (`130.61.106.172`, Ampere A1.Flex, 4 OCPU/24GB, Docker) runs one shared backend process, fronted by nginx on two hostnames: `api.applaut.lvamo.com` (Applaut, `/api/v1/applaut/*`) and `api.jobref.lvamo.com` (Jobref, `/api/v1/jobref/*`, DNS+cert live since Aug 2026, code not yet deployed). See "Oracle Backend Migration" below for how this VM came to be; see "Multi-Vertical Architecture" below for the per-vertical-hostname pattern. |
 | Database | Live (Jobref tables migrated locally, pending prod migration) | PostgreSQL 16 in Docker on `lvamo-backend` — Applaut's schema (see `PROGRESS_APPLAUT.md`) plus Jobref's `jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles` (see `PROGRESS_JOBREF.md`). |
 | Storage | Configured | Cloudflare R2 (resumes, documents) |
 
@@ -58,13 +58,26 @@ next). The pattern, established Aug 2026, for any vertical `<x>`:
   (`<x>_access_token`), separate JWT issuance, so one vertical's session
   can't collide with another's even though they currently share one backend
   process and one Postgres instance.
-- Verticals currently **share** the backend VM and database server. Nothing
-  about the URL namespacing requires this — a vertical can be split onto
-  its own process, container, database, or VM later without touching the
-  others, if/when it needs independent scaling or deploy cycles. Jobref's
-  auth now lives on this shared backend/DB too (its own tables, own JWTs
-  scoped with a `"vertical": "jobref"` claim so a token can't be replayed
-  across verticals — see `PROGRESS_JOBREF.md`).
+- Verticals currently **share** the backend VM, Docker process, and database
+  server. Nothing about the URL namespacing requires this — a vertical can
+  be split onto its own process, container, database, or VM later without
+  touching the others, if/when it needs independent scaling or deploy
+  cycles. Jobref's auth now lives on this shared backend/DB too (its own
+  tables, own JWTs scoped with a `"vertical": "jobref"` claim so a token
+  can't be replayed across verticals — see `PROGRESS_JOBREF.md`).
+- **Backend hostname is per-vertical even though the backend itself is
+  shared** (Aug 2026) — `api.applaut.lvamo.com` was named before Jobref
+  existed as a concept; rather than have Jobref sit under a hostname
+  carrying another vertical's name, it got its own: `api.jobref.lvamo.com`.
+  Both are just nginx `server_name` blocks on the same VM/container,
+  proxying to the same `backend:8000` — the routing that actually matters
+  (which vertical's code handles the request) is still the `/api/v1/<x>/*`
+  path prefix above, not the hostname. Each new vertical should get its own
+  `api.<x>.lvamo.com` DNS record + nginx block + Let's Encrypt cert (all
+  three cheap — DNS/cert/nginx-reload, no code or deploy-pipeline change)
+  rather than stacking onto an existing vertical's hostname. See
+  `nginx/nginx.conf` for both blocks, and `PROGRESS_JOBREF.md` for the
+  Jobref-specific setup log.
 
 Applaut's namespacing work (the actual migration, file-by-file) is recorded
 in `PROGRESS_APPLAUT.md`, not here — this section is the durable policy, not
