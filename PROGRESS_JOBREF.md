@@ -7,18 +7,18 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Bug fix: session didn't persist through the LVAMO hub (Aug 2026,
-verified locally, not yet deployed)**: user reported that clicking the
-logo/"Back to LVAMO" while logged in, then clicking back into Jobref from
-the hub, landed on the marketing landing page (Get started/Sign in) again
-instead of continuing to the dashboard — even though the session was
-still valid the whole time. Root cause: `pages/Jobref.tsx` (and, found
-while checking for the same pattern, `Login.tsx`/`Register.tsx`/
-`RegisterComplete.tsx`) never checked auth state at all — always rendered
-their logged-out content unconditionally. All four now redirect to
-`/jobref/dashboard` if a valid session already exists. See "Bug fix:
-auth pages didn't check for an existing session" below. **Next session**:
-deploy to production.
+None open. Most recent work — bug fix: session didn't persist through
+the LVAMO hub — is deployed and verified in production (Aug 2026). User
+reported that clicking the logo/"Back to LVAMO" while logged in, then
+clicking back into Jobref from the hub, landed on the marketing landing
+page (Get started/Sign in) again instead of continuing to the dashboard —
+even though the session was still valid the whole time. Root cause:
+`pages/Jobref.tsx` (and, found while checking for the same pattern,
+`Login.tsx`/`Register.tsx`/`RegisterComplete.tsx`) never checked auth
+state at all — always rendered their logged-out content unconditionally.
+All four now redirect to `/jobref/dashboard` if a valid session already
+exists. See "Bug fix: auth pages didn't check for an existing session"
+below.
 
 **Seeker dashboard merged into one two-column view + 5-min idle timeout —
 deployed (Aug 2026)**: user's explicit follow-up to the "My requests"
@@ -106,7 +106,7 @@ change). **Next session**: one real seeker signup at
 
 ## Status: Live in production — auth, companies, the full referral request flow (routing, seeker limits) and employee decisions (accept/reject, evidence upload) all deployed, Aug 2026
 
-## Bug fix: auth pages didn't check for an existing session (Aug 2026, verified locally)
+## Bug fix: auth pages didn't check for an existing session (Aug 2026, deployed and verified in production)
 
 User's report: log in, click the LVAMO logo or "Back to LVAMO" (both go
 to `/`, the shared hub — not touched, out of scope), then click "Jobref"
@@ -145,8 +145,18 @@ navigation to `/jobref/login` and `/jobref/register` while already logged
 in both correctly redirect to the dashboard instead of showing the form.
 Zero console errors. `tsc --noEmit` clean.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: `bash deploy.sh` on the VM
+(pure frontend fix — migration output showed "no change"). Confirmed the
+new Cloudflare Pages build was live (bundle contains the landing-page
+copy), and both `jobref`/`applaut` health checks returned `200`. Then ran
+a real end-to-end Playwright check against `www.lvamo.com` itself,
+reproducing the user's exact reported steps: registered a real employee
+(`prod-persist-emp@example.com`) via the live API, logged in for a real
+token, loaded the dashboard, clicked "Back to LVAMO," landed on
+`https://www.lvamo.com/`, clicked "Jobref," and confirmed the URL went
+straight to `https://www.lvamo.com/jobref/dashboard` with the dashboard
+genuinely rendered and zero console errors. Test data (the prod employee
+row) deleted afterward.
 
 ## Seeker dashboard: merged two-column layout + idle timeout (Aug 2026, verified locally)
 
