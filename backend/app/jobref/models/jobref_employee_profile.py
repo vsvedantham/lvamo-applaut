@@ -3,9 +3,8 @@ from __future__ import annotations
 import enum
 import uuid
 from datetime import date
-from typing import Optional
 
-from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String
+from sqlalchemy import Date, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -48,18 +47,34 @@ class JobrefEmployeeProfile(Base, TimestampMixin):
         ),
         nullable=False,
     )
-    can_refer: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    # Only set when can_refer is true
-    refer_frequency: Mapped[Optional[ReferFrequency]] = mapped_column(
+    # How many referrals they'll actively make, per week or per month —
+    # always asked directly now (no more "can you refer at all?" gate,
+    # Aug 2026 product decision: everyone states a capacity, using the same
+    # bucketed scale as daily_referral_view_cap above rather than a raw
+    # number, for consistency between the two related questions).
+    refer_frequency: Mapped[ReferFrequency] = mapped_column(
         Enum(
             ReferFrequency,
             name="jobref_refer_frequency",
             native_enum=False,
             length=10,
             values_callable=lambda enum_cls: [e.value for e in enum_cls],
-        )
+        ),
+        nullable=False,
     )
-    refer_count: Mapped[Optional[int]] = mapped_column(Integer)
+    referral_capacity: Mapped[ReferralViewCapacity] = mapped_column(
+        Enum(
+            ReferralViewCapacity,
+            # Distinct name from daily_referral_view_cap's column above even
+            # though it's the same Python enum/value set — two CHECK
+            # constraints on the same table need distinct names.
+            name="jobref_referral_capacity",
+            native_enum=False,
+            length=10,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
+        nullable=False,
+    )
     company_careers_url: Mapped[str] = mapped_column(String(1024), nullable=False)
 
     user: Mapped["JobrefUser"] = relationship(back_populates="employee_profile")

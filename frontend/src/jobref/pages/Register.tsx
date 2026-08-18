@@ -43,9 +43,8 @@ export default function JobrefRegister() {
   const [companyName, setCompanyName] = useState('')
   const [workingSince, setWorkingSince] = useState('')
   const [dailyReferralViewCap, setDailyReferralViewCap] = useState<ReferralViewCapacity>('up_to_5')
-  const [canRefer, setCanRefer] = useState(false)
-  const [referFrequency, setReferFrequency] = useState<ReferFrequency>('monthly')
-  const [referCount, setReferCount] = useState('')
+  const [referFrequency, setReferFrequency] = useState<ReferFrequency>('weekly')
+  const [referralCapacity, setReferralCapacity] = useState<ReferralViewCapacity>('up_to_5')
   const [companyCareersUrl, setCompanyCareersUrl] = useState('')
 
   const [error, setError] = useState('')
@@ -67,9 +66,8 @@ export default function JobrefRegister() {
         company_name: companyName,
         working_since: workingSince,
         daily_referral_view_cap: dailyReferralViewCap,
-        can_refer: canRefer,
-        refer_frequency: canRefer ? referFrequency : null,
-        refer_count: canRefer ? Number(referCount) : null,
+        refer_frequency: referFrequency,
+        referral_capacity: referralCapacity,
         company_careers_url: companyCareersUrl,
       },
     }
@@ -197,26 +195,22 @@ export default function JobrefRegister() {
                 </select>
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-1)' }}>
-                <input type="checkbox" checked={canRefer} onChange={e => setCanRefer(e.target.checked)} />
-                I can refer other candidates at my company
-              </label>
-
-              {canRefer && (
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <div style={field}>
-                    <label style={labelStyle}>Referral capacity</label>
-                    <select value={referFrequency} onChange={e => setReferFrequency(e.target.value as ReferFrequency)}>
-                      <option value="weekly">Per week</option>
-                      <option value="monthly">Per month</option>
-                    </select>
-                  </div>
-                  <div style={field}>
-                    <label style={labelStyle}>How many</label>
-                    <input type="number" min={1} value={referCount} onChange={e => setReferCount(e.target.value)} required={canRefer} placeholder="e.g. 2" />
-                  </div>
+              <div style={field}>
+                <label style={labelStyle}>How many referrals can you do in a…</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <SegmentButton active={referFrequency === 'weekly'} onClick={() => setReferFrequency('weekly')}>Week</SegmentButton>
+                  <SegmentButton active={referFrequency === 'monthly'} onClick={() => setReferFrequency('monthly')}>Month</SegmentButton>
                 </div>
-              )}
+              </div>
+
+              <div style={field}>
+                <select value={referralCapacity} onChange={e => setReferralCapacity(e.target.value as ReferralViewCapacity)}>
+                  <option value="up_to_5">Max 5</option>
+                  <option value="5_to_10">5 - 10</option>
+                  <option value="10_to_20">10 - 20</option>
+                  <option value="no_cap">No Cap</option>
+                </select>
+              </div>
 
               <button
                 type="submit"
@@ -266,6 +260,29 @@ export default function JobrefRegister() {
         </p>
       </div>
     </BrandedPage>
+  )
+}
+
+function SegmentButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '0.55rem',
+        borderRadius: 'var(--radius-xs)',
+        border: `1px solid ${active ? 'var(--accent-border)' : 'var(--border-strong)'}`,
+        background: active ? 'var(--accent-glow)' : 'transparent',
+        color: active ? 'var(--accent)' : 'var(--text-2)',
+        fontWeight: 600,
+        fontSize: '0.85rem',
+        cursor: 'pointer',
+        transition: 'border-color 0.15s, background 0.15s, color 0.15s',
+      }}
+    >
+      {children}
+    </button>
   )
 }
 

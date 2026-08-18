@@ -9,9 +9,11 @@ export interface EmployeeDetails {
   company_name: string
   working_since: string // YYYY-MM-DD
   daily_referral_view_cap: ReferralViewCapacity
-  can_refer: boolean
-  refer_frequency?: ReferFrequency | null
-  refer_count?: number | null
+  // Always asked directly now — no more "can you refer at all?" gate.
+  // referral_capacity reuses the same bucketed scale as
+  // daily_referral_view_cap, per spec.
+  refer_frequency: ReferFrequency
+  referral_capacity: ReferralViewCapacity
   company_careers_url: string
 }
 

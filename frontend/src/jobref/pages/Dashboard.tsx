@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
+import type { ReferralViewCapacity } from '../api/auth'
+
+const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
+  up_to_5: 'Max 5',
+  '5_to_10': '5 - 10',
+  '10_to_20': '10 - 20',
+  no_cap: 'No cap',
+}
 
 export default function JobrefDashboard() {
   useDocumentTitle('Dashboard | Jobref')
@@ -37,12 +45,12 @@ export default function JobrefDashboard() {
               <Row label="Working since" value={user.employee_profile.working_since} />
               <Row label="Careers page" value={user.employee_profile.company_careers_url} link />
               <Row
-                label="Can refer"
-                value={
-                  user.employee_profile.can_refer
-                    ? `Yes — ${user.employee_profile.refer_count} / ${user.employee_profile.refer_frequency}`
-                    : 'No'
-                }
+                label="Referrals"
+                value={`${CAPACITY_LABEL[user.employee_profile.referral_capacity]} per ${user.employee_profile.refer_frequency === 'weekly' ? 'week' : 'month'}`}
+              />
+              <Row
+                label="Requests viewed"
+                value={`${CAPACITY_LABEL[user.employee_profile.daily_referral_view_cap]} per day`}
               />
             </>
           )}

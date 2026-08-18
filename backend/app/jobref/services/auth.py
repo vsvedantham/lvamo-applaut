@@ -88,9 +88,8 @@ async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession)
             company_name=details.company_name,
             working_since=details.working_since,
             daily_referral_view_cap=details.daily_referral_view_cap,
-            can_refer=details.can_refer,
             refer_frequency=details.refer_frequency,
-            refer_count=details.refer_count,
+            referral_capacity=details.referral_capacity,
             company_careers_url=details.company_careers_url,
         )
     )

@@ -15,9 +15,8 @@ class EmployeeProfileResponse(BaseModel):
     company_name: str
     working_since: date
     daily_referral_view_cap: ReferralViewCapacity
-    can_refer: bool
-    refer_frequency: Optional[ReferFrequency]
-    refer_count: Optional[int]
+    refer_frequency: ReferFrequency
+    referral_capacity: ReferralViewCapacity
     company_careers_url: str
 
     model_config = {"from_attributes": True}

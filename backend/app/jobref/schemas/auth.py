@@ -19,25 +19,16 @@ class EmployeeDetails(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
     working_since: date
     # How many incoming referral requests they're willing to view per day —
-    # always required, independent of can_refer below (that's about
-    # actively referring; this is about reviewing incoming requests).
+    # a distinct question from referral_capacity below (reviewing incoming
+    # requests vs. actively making referrals).
     daily_referral_view_cap: ReferralViewCapacity
-    can_refer: bool
-    refer_frequency: Optional[ReferFrequency] = None
-    refer_count: Optional[int] = Field(default=None, ge=1)
+    # Always asked directly now — no more "can you refer at all?" gate
+    # (Aug 2026 product decision). Uses the same bucketed scale as
+    # daily_referral_view_cap rather than a raw count, for both fields to
+    # read consistently.
+    refer_frequency: ReferFrequency
+    referral_capacity: ReferralViewCapacity
     company_careers_url: str = Field(min_length=1, max_length=1024)
-
-    @model_validator(mode="after")
-    def check_refer_fields(self) -> "EmployeeDetails":
-        if self.can_refer:
-            if self.refer_frequency is None or self.refer_count is None:
-                raise ValueError(
-                    "refer_frequency and refer_count are required when can_refer is true"
-                )
-        else:
-            self.refer_frequency = None
-            self.refer_count = None
-        return self
 
 
 class SeekerDetails(BaseModel):

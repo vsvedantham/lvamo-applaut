@@ -22,6 +22,20 @@
 
 See "New employee field + disclaimer reword" section below for full detail.
 
+**Same-day follow-up on top of that, committed locally — NOT yet
+pushed/deployed**: removed the "I can refer other candidates" checkbox
+entirely — referral capacity is now asked directly and unconditionally.
+"How many referrals can you do in a…" with a Week/Month segmented toggle,
+then the *same* bucketed options as the daily-view-cap field above it (`Max
+5`/`5-10`/`10-20`/`No Cap`) instead of a raw number — per the user's
+explicit request to reuse the same scale. `can_refer` and the old integer
+`refer_count` are gone from the schema entirely, replaced by a required
+`referral_capacity` (same enum as `daily_referral_view_cap`) and
+`refer_frequency` (now always required, was conditional before). Migration
+`0011`. See "Referral capacity: always-asked, bucketed scale" section below.
+**Once approved to deploy**: `git push`, `bash deploy.sh` (runs migration
+`0011`), Cloudflare Pages auto-redeploys.
+
 **Still outstanding, unchanged**: nobody has completed a real *job-seeker*
 registration through the actual LinkedIn consent screen and final form
 submission — only the OAuth handshake itself (real) and a mocked-token
@@ -32,9 +46,55 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production — includes the daily-referral-view-cap employee field and reworded seeker disclaimer, deployed Aug 2026
+## Status: Live in production (previous round) — a same-day follow-up (referral capacity: always-asked, bucketed scale, no more can_refer checkbox) is built and verified locally but NOT yet pushed/deployed
 
-## New employee field + disclaimer reword (Aug 2026, committed locally — not deployed)
+## Referral capacity: always-asked, bucketed scale (Aug 2026, committed locally — not deployed)
+
+Follow-up to the field added in the previous entry — user's explicit
+request: drop the "I can refer other candidates at my company" checkbox,
+ask the capacity question directly and unconditionally, and reuse the
+*same* bucketed answer scale as the daily-view-cap field instead of a free
+number.
+
+- **UI**: "How many referrals can you do in a…" followed by a Week/Month
+  segmented toggle (two buttons, not a dropdown — chosen for a binary
+  choice, matches the app's existing card/button visual language), then a
+  `<select>` with the same four options as `daily_referral_view_cap` (`Max
+  5`/`5 - 10`/`10 - 20`/`No Cap`). Always visible now — no conditional
+  reveal, no checkbox anywhere in the form.
+- **Backend**: `can_refer` (boolean) and `refer_count` (integer) dropped
+  entirely from `jobref_employee_profiles`. `refer_frequency` goes from
+  optional/conditional to always `NOT NULL`. New `referral_capacity` column
+  reuses the `ReferralViewCapacity` enum (same Python enum class as
+  `daily_referral_view_cap`, given a distinct SQL constraint name —
+  `jobref_referral_capacity` vs. `jobref_referral_view_capacity` — since two
+  CHECK constraints on the same table need distinct names even when they
+  share a value set). `EmployeeDetails`'s old conditional validator
+  (`check_refer_fields`) is gone too — nothing conditional left to validate.
+  Migration `0011`: drops the old `jobref_employee_refer_fields_chk`
+  constraint first (since it referenced the columns being dropped),
+  backfills the same handful of disposable test rows, enforces the new
+  `NOT NULL`s.
+- **Also updated**: `Dashboard.tsx` (which reads `employee_profile` fields)
+  — was still referencing `can_refer`/`refer_count`, caught immediately by
+  `tsc` failing the build. Now shows two rows: "Referrals" (bucketed
+  capacity + frequency) and "Requests viewed" (daily view cap), via a small
+  `CAPACITY_LABEL` lookup shared for both.
+
+**Verified locally** (real, not mocked): backend — register with both new
+fields → `201`; missing `referral_capacity` → `422`. Frontend — `tsc`/`vite
+build` clean (only after fixing the `Dashboard.tsx` fallout above — a real
+example of why a full build check catches more than just the page you're
+looking at); Playwright confirms zero checkboxes in the form, both toggle
+buttons present and functional (clicked "Month", it took), a full real
+browser submission through choice→employee form→both new fields→submit
+lands on `/jobref/dashboard`, which correctly displays the submitted values
+("10 - 20 Per Month", "5 - 10 Per Day" in this run).
+
+**Not yet done**: not pushed to `origin`, not deployed — see banner at top
+of this file.
+
+## New employee field + disclaimer reword (Aug 2026, live in production)
 
 Two small, unrelated changes requested together:
 
