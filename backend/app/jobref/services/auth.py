@@ -18,8 +18,13 @@ from app.core.security import (
 from app.db.session import get_db
 from app.jobref.models.jobref_employee_profile import JobrefEmployeeProfile
 from app.jobref.models.jobref_seeker_profile import JobrefSeekerProfile
-from app.jobref.models.jobref_user import JobrefUser, JobrefUserType
-from app.jobref.schemas.auth import LoginRequest, RegisterRequest
+from app.jobref.models.jobref_user import JobrefUser
+from app.jobref.schemas.auth import (
+    EmployeeRegisterRequest,
+    LoginRequest,
+    RegisterRequest,
+    SeekerRegisterRequest,
+)
 from app.jobref.services.linkedin import decode_registration_token
 
 bearer_scheme = HTTPBearer()
@@ -35,6 +40,67 @@ def _issue_token(user_id: uuid.UUID) -> str:
 
 
 async def register(payload: RegisterRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
+    # Two distinct paths sharing one endpoint (Pydantic discriminates on
+    # user_type — see schemas/auth.py): employees register directly,
+    # job seekers go through LinkedIn OAuth. Kept as separate helpers below
+    # rather than one branchy function, since the two paths differ in where
+    # identity/dedup come from, not just which child-profile table to use.
+    if isinstance(payload, EmployeeRegisterRequest):
+        return await _register_employee(payload, db)
+    return await _register_seeker(payload, db)
+
+
+async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
+    existing = await db.scalar(select(JobrefUser).where(JobrefUser.email == payload.email))
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    user = JobrefUser(
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        email=payload.email,
+        linkedin_id=None,
+        phone=payload.phone,
+        password_hash=hash_password(payload.password),
+        user_type=payload.user_type,
+        domain=payload.domain,
+    )
+    db.add(user)
+    try:
+        await db.flush()  # assign user.id before building the child profile row
+    except IntegrityError:
+        # Backstop for the race where two requests with the same email
+        # flush concurrently — the DB-level UNIQUE constraint on email is
+        # the real guarantee here.
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    details = payload.employee
+    db.add(
+        JobrefEmployeeProfile(
+            user_id=user.id,
+            company_name=details.company_name,
+            working_since=details.working_since,
+            can_refer=details.can_refer,
+            refer_frequency=details.refer_frequency,
+            refer_count=details.refer_count,
+            company_careers_url=details.company_careers_url,
+        )
+    )
+
+    await db.commit()
+    loaded = await _get_with_profiles(db, user.id)
+    assert loaded is not None
+    return loaded, _issue_token(loaded.id)
+
+
+async def _register_seeker(payload: SeekerRegisterRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
     # Identity (linkedin_id + verified email) always comes from the
     # LinkedIn-issued registration token, never from client-submitted
     # fields — see services/linkedin.py. This is what makes the LinkedIn id
@@ -75,31 +141,15 @@ async def register(payload: RegisterRequest, db: AsyncSession) -> tuple[JobrefUs
             detail="An account already exists for this LinkedIn profile — please sign in instead",
         )
 
-    if payload.user_type == JobrefUserType.EMPLOYEE:
-        details = payload.employee
-        assert details is not None  # enforced by RegisterRequest validator
-        db.add(
-            JobrefEmployeeProfile(
-                user_id=user.id,
-                company_name=details.company_name,
-                working_since=details.working_since,
-                can_refer=details.can_refer,
-                refer_frequency=details.refer_frequency,
-                refer_count=details.refer_count,
-                company_careers_url=details.company_careers_url,
-            )
+    details = payload.seeker
+    db.add(
+        JobrefSeekerProfile(
+            user_id=user.id,
+            current_job_status=details.current_job_status,
+            notice_join_date=details.notice_join_date,
+            cv_drive_link=details.cv_drive_link,
         )
-    else:
-        details = payload.seeker
-        assert details is not None  # enforced by RegisterRequest validator
-        db.add(
-            JobrefSeekerProfile(
-                user_id=user.id,
-                current_job_status=details.current_job_status,
-                notice_join_date=details.notice_join_date,
-                cv_drive_link=details.cv_drive_link,
-            )
-        )
+    )
 
     await db.commit()
     loaded = await _get_with_profiles(db, user.id)

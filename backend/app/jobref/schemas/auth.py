@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
-from typing import Optional
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
@@ -53,34 +53,57 @@ class SeekerDetails(BaseModel):
         return self
 
 
-class RegisterRequest(BaseModel):
-    # Proves the registrant completed LinkedIn OAuth and carries their
-    # verified LinkedIn id + email — see services/linkedin.py. Registration
-    # can no longer supply an arbitrary email directly; it's always sourced
-    # server-side from this token so it can't be spoofed or mismatched.
+class EmployeeRegisterRequest(BaseModel):
+    """Employees register directly — no LinkedIn involved (product
+    decision, Aug 2026: LinkedIn OAuth is job-seeker-only, see
+    services/linkedin.py). Dedup is by email, same as pre-LinkedIn."""
+
+    user_type: Literal[JobrefUserType.EMPLOYEE] = JobrefUserType.EMPLOYEE
+    first_name: str = Field(min_length=1, max_length=255)
+    last_name: str = Field(min_length=1, max_length=255)
+    email: EmailStr
+    phone: str
+    password: str = Field(min_length=8)
+    domain: str = Field(min_length=1, max_length=255)
+    employee: EmployeeDetails
+
+    @model_validator(mode="after")
+    def check_phone(self) -> "EmployeeRegisterRequest":
+        if not GERMAN_PHONE_RE.match(self.phone.strip()):
+            raise ValueError("phone must be a valid German phone number")
+        return self
+
+
+class SeekerRegisterRequest(BaseModel):
+    """Job seekers register via LinkedIn OAuth. Proves the registrant
+    completed the flow and carries their verified LinkedIn id + email — see
+    services/linkedin.py. No client-submitted email; it's always sourced
+    server-side from this token so it can't be spoofed or mismatched."""
+
+    user_type: Literal[JobrefUserType.JOB_SEEKER] = JobrefUserType.JOB_SEEKER
     registration_token: str
     first_name: str = Field(min_length=1, max_length=255)
     last_name: str = Field(min_length=1, max_length=255)
     phone: str
     password: str = Field(min_length=8)
-    user_type: JobrefUserType
     domain: str = Field(min_length=1, max_length=255)
-    employee: Optional[EmployeeDetails] = None
-    seeker: Optional[SeekerDetails] = None
+    seeker: SeekerDetails
 
     @model_validator(mode="after")
-    def check_phone_and_type_details(self) -> "RegisterRequest":
+    def check_phone(self) -> "SeekerRegisterRequest":
         if not GERMAN_PHONE_RE.match(self.phone.strip()):
             raise ValueError("phone must be a valid German phone number")
-        if self.user_type == JobrefUserType.EMPLOYEE:
-            if self.employee is None:
-                raise ValueError("employee details are required for user_type=employee")
-            self.seeker = None
-        else:
-            if self.seeker is None:
-                raise ValueError("seeker details are required for user_type=job_seeker")
-            self.employee = None
         return self
+
+
+# Discriminated on user_type — FastAPI/Pydantic route the request body to
+# the matching model automatically, so the two registration paths (direct
+# for employees, LinkedIn-token-based for job seekers) share one endpoint
+# without either shape leaking fields the other doesn't need.
+RegisterRequest = Annotated[
+    Union[EmployeeRegisterRequest, SeekerRegisterRequest],
+    Field(discriminator="user_type"),
+]
 
 
 class LoginRequest(BaseModel):

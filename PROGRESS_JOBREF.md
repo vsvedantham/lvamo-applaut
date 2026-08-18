@@ -7,28 +7,109 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Deployed to production (Aug 2026).** LinkedIn app created, credentials
-wired in both locally and on the VM, code pushed, backend migrated
-(`0007`+`0008`) and redeployed, frontend redeployed via Cloudflare Pages.
-See "Production deploy" below for the full log. One real gap remains:
+**Registration flow changed again (Aug 2026, same day) — LinkedIn is now
+job-seeker-only, not required for employees.** Code complete, verified
+locally (real browser submission end-to-end), **committed locally, NOT yet
+pushed/deployed** — see "Split registration: employees direct, job seekers
+via LinkedIn" below for the full change. Don't push/deploy without checking
+with the user first, per standing rule — this reshapes a flow that's
+already live in production.
 
-**Nobody has completed a real registration submission yet** — locally or in
-production. The LinkedIn OAuth handshake itself *was* verified for real
-(actual LinkedIn login + consent + prefill worked, confirmed via backend
-logs — see "LinkedIn OAuth registration" below), but the user stopped at the
-prefilled form and asked to deploy before submitting it. So `register()`'s
-actual account-creation path (password hashing, employee/seeker fields,
-`linkedin_id` insert) has only ever been exercised by Claude's own mocked
-test, never by a real browser submission. **First priority next session:**
-do one real register→LinkedIn→complete-form→submit→dashboard pass against
-production (`https://www.lvamo.com/jobref/register`), then a second attempt
-with the same LinkedIn account to confirm the dedup redirect
-(`/jobref/login?linkedin=existing`) fires correctly against real data, not
-just the mocked test from earlier this session.
+Once approved to deploy: `git push`, `bash deploy.sh` on the VM (runs
+migration `0009` — makes `linkedin_id` nullable), frontend redeploys via
+Cloudflare Pages automatically. No new env vars or LinkedIn app changes
+needed — the job-seeker LinkedIn path is unchanged, just no longer the only
+registration path.
+
+**Still outstanding from before**: nobody has completed a real *seeker*
+registration submission through the actual LinkedIn consent screen yet
+(only the OAuth handshake itself + a mocked-token submission have been
+verified for that path — see "LinkedIn OAuth registration" below). The
+employee path, by contrast, **has** now been verified with a real browser
+submission end-to-end (see below) — it just doesn't touch LinkedIn at all,
+so that verification doesn't cover the seeker side.
 
 ---
 
-## Status: Live in production — LinkedIn-gated registration + email/password login, deployed Aug 2026
+## Status: Live in production (previous version) — a same-day follow-up change (LinkedIn now job-seeker-only) is built and verified locally but NOT yet pushed/deployed
+
+## Split registration: employees direct, job seekers via LinkedIn (Aug 2026, committed locally — not deployed)
+
+Same-day follow-up to the LinkedIn-gated registration work above — user's
+explicit request: **employees should not have to go through LinkedIn at
+all.** Registration is now split into two independent paths sharing one
+page:
+
+- **`/jobref/register`** is now two side-by-side cards under a shared
+  "I am a" heading (stacks vertically on mobile via plain flexbox
+  `flexWrap` reflow — this codebase's existing responsive convention, no
+  CSS breakpoints needed): **Full-time Employee** (left) has the complete
+  registration form inline — name, email, phone, password, domain, company
+  fields — and submits directly, no LinkedIn involved at all. **Job
+  Seeker** (right) is unchanged from before: a short disclaimer + "Continue
+  with LinkedIn", flowing into `/jobref/register/complete` exactly as
+  before.
+- **Disclaimer copy updated** (user's request) — dropped the "we don't see
+  your connections, we never post on your behalf" language; now just:
+  "We only take your name and email address from your LinkedIn profile —
+  nothing else — just so you don't end up with more than one account."
+  Shorter, states the *reason* (dedup) rather than a list of things it
+  isn't.
+- **`/jobref/register/complete`** (the post-LinkedIn form) simplified —
+  dropped the "I am a" employee/seeker toggle and all employee-specific
+  fields, since this page is now only ever reached via the job-seeker
+  LinkedIn path. Seeker fields only.
+
+### Backend: discriminated union replaces the single conditional schema
+
+`RegisterRequest` was a single Pydantic model with optional
+`employee`/`seeker` fields and a manual validator enforcing "the one
+matching `user_type` must be set." Replaced with two separate models
+(`EmployeeRegisterRequest`, `SeekerRegisterRequest`) combined into a
+`Annotated[Union[...], Field(discriminator="user_type")]` — FastAPI/Pydantic
+route the request body to the correct model automatically, so each shape
+only carries the fields it actually needs (no `Optional[EmployeeDetails] =
+None` sitting on a seeker payload, no "must supply email OR
+registration_token depending on type" ambiguity). `services/auth.py`'s
+`register()` is now a thin dispatch (`isinstance` check) to
+`_register_employee` / `_register_seeker`, each with its own dedup logic:
+
+- **Employee**: dedup by email only (same as pre-LinkedIn registration
+  ever was) — `linkedin_id` is `NULL`.
+- **Seeker**: unchanged — dedup by `linkedin_id` (primary) or email
+  (defense in depth), identity sourced from the verified
+  `registration_token`, exactly as before.
+
+**DB change**: `jobref_users.linkedin_id` was `NOT NULL UNIQUE` — now just
+`UNIQUE` (nullable), migration `0009`. Postgres allows multiple `NULL`s
+under a `UNIQUE` constraint, so this doesn't weaken the seeker-side dedup
+at all; it just lets employees have no LinkedIn identity.
+
+### Verified locally (real, not mocked)
+
+- Backend: both paths exercised directly against the real local DB —
+  employee register → `201`, duplicate email → `409 "Email already
+  registered"`; seeker register (via a minted registration token, same
+  pattern as the earlier mocked test) → `201`; malformed employee payload
+  (missing `employee` key) → `422` with a clear field-location error.
+  Confirmed in DB: employee row has `linkedin_id = NULL`, seeker row has
+  the real value.
+- Frontend: `tsc --noEmit` + `vite build` clean. Playwright: desktop
+  screenshot shows the two-column split exactly as specified (single email
+  input — employee's — confirming no LinkedIn-path fields leaked into the
+  employee card); mobile screenshot confirms clean vertical stacking.
+  **Full real browser submission** of the employee form (fill every field,
+  click "Create account") → landed on `/jobref/dashboard`, zero console
+  errors — this is a real gap closed from the previous entry, where nobody
+  had completed an actual submission end-to-end through the UI.
+
+### Not yet done
+
+- Not pushed to `origin`, not deployed — see banner at top of this file.
+- The job-seeker path's *actual account-creation step* (as opposed to just
+  the OAuth handshake) still hasn't been exercised through a real LinkedIn
+  consent screen + real form submission — only via a minted token, same gap
+  noted before this change.
 
 Jobref is LVAMO's second vertical — a job-referral platform connecting job
 seekers with employees willing to refer them at their company. As of Aug

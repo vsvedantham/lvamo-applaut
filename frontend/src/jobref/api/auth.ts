@@ -19,7 +19,22 @@ export interface SeekerDetails {
   cv_drive_link: string
 }
 
-export interface RegisterPayload {
+// Two distinct shapes, matching the backend's discriminated union
+// (schemas/auth.py) — employees register directly, job seekers go through
+// LinkedIn OAuth first. See jobref/pages/Register.tsx for the split UI.
+export interface EmployeeRegisterPayload {
+  user_type: 'employee'
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  password: string
+  domain: string
+  employee: EmployeeDetails
+}
+
+export interface SeekerRegisterPayload {
+  user_type: 'job_seeker'
   // Proves LinkedIn OAuth was completed; the account's email/LinkedIn
   // identity is always sourced server-side from this token, never from a
   // client-submitted email field.
@@ -28,11 +43,11 @@ export interface RegisterPayload {
   last_name: string
   phone: string
   password: string
-  user_type: UserType
   domain: string
-  employee?: EmployeeDetails
-  seeker?: SeekerDetails
+  seeker: SeekerDetails
 }
+
+export type RegisterPayload = EmployeeRegisterPayload | SeekerRegisterPayload
 
 export interface LinkedInPrefill {
   first_name: string
