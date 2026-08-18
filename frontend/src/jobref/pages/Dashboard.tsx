@@ -5,7 +5,7 @@ import { useJobrefAuth } from '../context/AuthContext'
 import type { ReferralViewCapacity } from '../api/auth'
 
 const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
-  up_to_5: 'Max 5',
+  up_to_5: '≤ 5',
   '5_to_10': '5 - 10',
   '10_to_20': '10 - 20',
   no_cap: 'No cap',
