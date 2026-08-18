@@ -8,21 +8,21 @@
 ## 🎯 NEXT SESSION PRIMARY TASK
 
 **Registration UX changed again, same day — progressive disclosure, user's
-request.** `/jobref/register` no longer shows the choice + both mechanisms
-at once; it now shows *only* the "I am a" choice first (two cards, zero
-form fields), and reveals just the relevant path — full employee form, or
-the LinkedIn disclaimer+button — once clicked. User's own reasoning:
-looked fine on desktop already, but the two-column always-visible layout
-crowded mobile with a full form *and* a competing LinkedIn option stacked
-below it. Choice is carried in the URL (`?as=employee` / `?as=job_seeker`),
-not just component state, so both the in-page "Back" link and the browser's
-native back button correctly return to the choice screen — verified both
-ways. Frontend-only change (no backend/schema impact) — **committed
-locally, NOT yet pushed/deployed**, see "Progressive disclosure" section
-below.
-
-**Once approved to deploy**: pure frontend change, `git push` is enough —
-Cloudflare Pages auto-redeploys, no VM/migration step needed this time.
+request — deployed.** `/jobref/register` no longer shows the choice + both
+mechanisms at once; it now shows *only* the "I am a" choice first (two
+cards, zero form fields), and reveals just the relevant path — full
+employee form, or the LinkedIn disclaimer+button — once clicked. User's own
+reasoning: looked fine on desktop already, but the two-column
+always-visible layout crowded mobile with a full form *and* a competing
+LinkedIn option stacked below it. Choice is carried in the URL
+(`?as=employee` / `?as=job_seeker`), not just component state, so both the
+in-page "Back" link and the browser's native back button correctly return
+to the choice screen — verified both ways, locally and in production.
+Frontend-only change (no backend/schema impact) — pushed, Cloudflare Pages
+auto-redeployed, confirmed live at `https://www.lvamo.com/jobref/register`
+within moments of the push (zero-input choice screen, employee-card reveal,
+and real browser back-button behavior all re-verified against production).
+See "Progressive disclosure" section below.
 
 **Still outstanding, unchanged**: nobody has completed a real *job-seeker*
 registration through the actual LinkedIn consent screen and final form
@@ -34,9 +34,9 @@ change). **Next session**: one real seeker signup at
 
 ---
 
-## Status: Live in production — split registration (employees direct, job seekers via LinkedIn); a same-day progressive-disclosure UX refinement is built and verified locally but NOT yet pushed/deployed
+## Status: Live in production — split registration with progressive disclosure (choice screen first, then employee-direct or job-seeker-via-LinkedIn), deployed Aug 2026
 
-## Progressive disclosure: choice screen first, then the relevant path only (Aug 2026, committed locally — not deployed)
+## Progressive disclosure: choice screen first, then the relevant path only (Aug 2026, live in production)
 
 Same-day UX refinement on top of the split-registration work below — user's
 request, reasoning given directly: the always-visible two-column layout
@@ -72,8 +72,12 @@ real browser submission of the employee form through the new flow (choice →
 fill → submit) → landed on `/jobref/dashboard` cleanly, same as before this
 change.
 
-**Not yet done**: not pushed to `origin`, not deployed — pure frontend
-change, no migration needed this time, see banner at top of this file.
+**Deployed and re-verified in production** (pure frontend change, no
+migration needed): pushed, Cloudflare Pages auto-rebuilt, live within
+moments — re-ran the same checks against `https://www.lvamo.com/jobref/register`
+itself: zero-input choice screen, employee card reveals the form with the
+correct `?as=employee` URL, and the browser's actual back button correctly
+returns to the zero-input choice screen. Zero console errors.
 
 ## Split registration: employees direct, job seekers via LinkedIn (Aug 2026, live in production)
 
