@@ -107,23 +107,24 @@ export default function JobrefDashboard() {
             {companies && companies.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {companies.map((c) => (
-                  <div
+                  <Link
                     key={c.name + c.careers_url}
+                    to={`/jobref/refer?company=${encodeURIComponent(c.name)}&careers_url=${encodeURIComponent(c.careers_url)}`}
                     style={{
                       background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
                       padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
+                      textDecoration: 'none', cursor: 'pointer', transition: 'border-color 0.15s',
                     }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border)')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                   >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {c.name}
                       </div>
-                      <a
-                        href={c.careers_url} target="_blank" rel="noreferrer"
-                        style={{ color: 'var(--accent)', fontSize: '0.78rem' }}
-                      >
-                        Careers page ↗
-                      </a>
+                      <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                        Tap to request a referral
+                      </span>
                     </div>
                     <div style={{
                       flexShrink: 0, padding: '0.25rem 0.65rem', background: 'var(--success-bg)',
@@ -132,7 +133,7 @@ export default function JobrefDashboard() {
                     }}>
                       {c.referrer_count} {c.referrer_count === 1 ? 'referrer' : 'referrers'}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

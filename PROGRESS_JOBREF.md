@@ -7,6 +7,15 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Referral request flow added (Aug 2026, verified locally, not yet
+deployed)**: clicking a company tile on the seeker dashboard now opens a
+full request page — instructions (visit careers page → find a matching
+posting → tailor CV/cover letter → fill in the form) plus a form (name,
+job posting link, CV + cover letter Google Drive links, a 150-char message
+to the referrer) that POSTs to a new `jobref.referral_requests` table.
+See "Referral request flow" below. **Next session**: deploy to
+production.
+
 **Companies list on the job-seeker dashboard — deployed (Aug 2026)**: new
 `GET /api/v1/jobref/companies` endpoint (any authenticated Jobref user)
 returns `jobref.companies` grouped by `(name, careers_url)` with a
@@ -81,6 +90,92 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## Referral request flow (Aug 2026, verified locally)
+
+Follow-up to the companies list above — user's request: clicking a
+company tile should open a page with instructions (visit the careers
+page, find a matching posting, tailor CV/cover letter, fill in the form)
+and a form (first/last name, job posting link, CV + cover letter Google
+Drive links, a 150-char message to the referrer). Explicit go-ahead given
+to improvise the rest.
+
+**Design calls made**:
+- **New table, not a FK into `jobref.companies`** — `jobref.referral_requests`
+  snapshots `company_name`/`company_careers_url` at submission time rather
+  than pointing at a specific `jobref.companies` row. That table has one
+  row per employee (no dedup — see the companies-gathering entry below)
+  and the grouped `/companies` listing the tile comes from doesn't expose
+  individual row ids, so there's no single stable "company" to point at
+  yet, and no routing-to-a-specific-employee logic exists either (a real
+  design question, deliberately not answered here — see "Not yet
+  designed" below).
+- **CV and cover letter as two separate fields**, not one combined link —
+  the ask listed "CV and cover letter" as two documents; two separate
+  Google Drive link fields matches how `cv_drive_link` already works
+  elsewhere in this app (one link per document) rather than introducing a
+  single-shared-folder convention that doesn't exist anywhere else.
+- **First/last name prefilled from the seeker's own profile, still
+  editable** — asked again per the spec (not silently reused) in case
+  someone wants a different/more formal name to appear to the referrer,
+  but prefilling removes the friction of retyping it.
+- **Message required, hard-capped at 150 chars** both client-side (a live
+  `n/150` counter, input truncated as you type past the limit) and
+  server-side (Pydantic `max_length` + a `VARCHAR(150)` column — no DB
+  CHECK needed beyond the column's own length limit, unlike the enum-style
+  fields elsewhere in this schema).
+- **Submission restricted to job seekers at the API level** — unlike the
+  read-only `/companies` endpoint (left open to any authenticated user
+  since it's harmless to read), this write endpoint 403s if an employee's
+  token calls it. A referral request only makes sense coming from a
+  seeker.
+
+**Backend**: migration `0015` creates `jobref.referral_requests`
+(`seeker_user_id` FK `ON DELETE CASCADE`, the two company fields, name
+fields, `job_link`, `cv_drive_link`, `cover_letter_drive_link`, `message`).
+New `models/jobref_referral_request.py`, `schemas/referral_request.py`,
+`services/referral_request.py`, `api/v1/routers/referral_requests.py`
+(`POST /referral-requests`, 201, employee → 403).
+
+**Frontend**: Dashboard.tsx's company tiles are now themselves the link
+(the standalone "Careers page ↗" link is gone, replaced with a "Tap to
+request a referral" hint) — `to=/jobref/refer?company=&careers_url=`,
+same query-param pattern as `Register.tsx`'s `?as=employee`. New
+`pages/ReferralRequest.tsx`: numbered instructions list (step 1 is a real
+link to the careers page), the form, a success screen ("Request sent")
+replacing the form in place rather than an abrupt redirect, and a
+defensive empty-params error state (mirrors `RegisterComplete.tsx`'s
+"start over" pattern) if the page is reached without a company selected.
+
+**Touched `frontend/src/App.tsx`** (shared/out-of-scope file) to register
+the new `jobref/refer` route — flagged first, explicit go-ahead given
+before editing; the change itself is a single mirror of the existing
+`jobref/dashboard` route entry.
+
+**Verified locally** (real, not mocked, full real-browser flow via a
+small Playwright driver script): backend — unauthenticated → `403`;
+employee token → `403 "Only job seekers can submit referral requests"`;
+message > 150 chars → `422`; valid seeker submission → `201`, row
+confirmed in `jobref.referral_requests` with all fields correct. Frontend
+— logged in as a seeker, dashboard confirmed zero standalone "Careers
+page" links remain, clicked a company tile, landed on the request page
+with instructions + form, first/last name confirmed prefilled from the
+seeker's profile, filled and submitted the form, landed on the "Request
+sent" confirmation screen, zero console errors throughout. Deleting the
+seeker's user row cascaded to delete their referral request too — no
+orphans. `tsc --noEmit` clean. Applaut/Jobref regression clean. All test
+data cleaned up afterward (local DB + temp script files).
+
+**Not yet designed** (explicitly out of scope for this pass, same
+reasoning as the companies-gathering table's own "not yet designed" note):
+how a referral request actually reaches an employee to act on (no
+employee-facing inbox/notification exists yet), and whether/how multiple
+employees at one company get deduplicated into a single routable
+"company" entity. Both are real product questions for whenever the
+referral-matching feature gets designed properly.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
 
 ## Companies list on the seeker dashboard (Aug 2026, verified locally)
 

@@ -9,6 +9,7 @@ import JobrefLogin from './jobref/pages/Login'
 import JobrefRegister from './jobref/pages/Register'
 import JobrefRegisterComplete from './jobref/pages/RegisterComplete'
 import JobrefDashboard from './jobref/pages/Dashboard'
+import JobrefReferralRequest from './jobref/pages/ReferralRequest'
 import JobrefProtectedRoute from './jobref/components/ProtectedRoute'
 import Login from './applaut/pages/Login'
 import Register from './applaut/pages/Register'
@@ -39,6 +40,14 @@ export default function App() {
             element={
               <JobrefProtectedRoute>
                 <JobrefDashboard />
+              </JobrefProtectedRoute>
+            }
+          />
+          <Route
+            path="jobref/refer"
+            element={
+              <JobrefProtectedRoute>
+                <JobrefReferralRequest />
               </JobrefProtectedRoute>
             }
           />

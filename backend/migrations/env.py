@@ -19,7 +19,9 @@ from app.applaut.models import (  # noqa: E402, F401
     Application, GeneratedDocument, Notification, AuditLog,
 )
 from app.applaut.models.application_setting import ApplicationSetting  # noqa: E402, F401
-from app.jobref.models import JobrefCompany, JobrefUser  # noqa: E402, F401
+from app.jobref.models import (  # noqa: E402, F401
+    JobrefCompany, JobrefReferralRequest, JobrefUser,
+)
 
 config = context.config
 
