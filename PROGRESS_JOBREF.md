@@ -7,21 +7,31 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**DB restructured (Aug 2026, verified locally, not yet deployed): Jobref's
-3 tables merged into one flat `jobref.users` table** — `jobref_users` /
-`jobref_employee_profiles` / `jobref_seeker_profiles` (all in `public`) are
-now a single table in a dedicated `jobref` Postgres schema, `is_employee`
-boolean as the sole differentiator, every type-specific field `NULL` for
-the other type. See "DB restructure: single jobref.users table" below for
-the full write-up. **Next session**: decide whether/when to deploy this to
-production (holding for explicit go-ahead, since it also restructures the
-3 disposable test rows currently sitting in the prod table).
+**Auth is now fully closed out end-to-end, both paths, in production (Aug
+2026).** Two things landed this session:
 
-**Still the standing gap**: nobody has completed a real *job-seeker*
-registration through the actual LinkedIn consent screen and final form
-submission — only the OAuth handshake itself (real) and mocked-token
-submissions (most recently against the new merged table, see below) have
-exercised that path. Do this once the DB restructure is deployed.
+1. **DB restructured and deployed**: Jobref's 3 tables
+   (`jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles`, all
+   unschemaed in `public`) merged into one flat `jobref.users` table in a
+   dedicated `jobref` Postgres schema, `is_employee` boolean as the sole
+   differentiator, every type-specific field `NULL` for the other type
+   (migration `0013`). Deployed and verified in production. See "DB
+   restructure: single jobref.users table" below.
+2. **The last standing gap is closed**: the user completed a real
+   job-seeker registration through the actual LinkedIn consent screen
+   against production (`www.lvamo.com/jobref/register` → Job Seeker →
+   real LinkedIn login/approve → completed form) — confirmed via direct DB
+   query: a row with a real `linkedin_id` populated. Alongside a real
+   employee registration, both landed correctly in `jobref.users`. **Both
+   registration paths are now proven end-to-end in production with real
+   data, not mocks or minted tokens.**
+
+**Also this session**: the shared Postgres role/database was renamed
+`applaut` → `lvamo` (affects both verticals — see `PROGRESS.md`).
+
+**Next major work**: auth is done; the actual referral-matching product
+logic (how a job seeker gets connected to a referring employee at the same
+company/domain) is undesigned and is the next feature to scope.
 
 ---
 
@@ -141,14 +151,14 @@ authorize-redirect all unaffected. Frontend: `tsc --noEmit` clean with
 zero file changes on the frontend side, confirming the API contract really
 didn't move.
 
-**Not yet done**: not deployed — committed locally pending the user's
-go-ahead (see banner at the top of this file). Production currently holds
-3 disposable test rows in the old `public.jobref_users` (`claude.verify.
-employee@example.com`, `prod.fieldverify@example.com`, `prod.
-capacityverify@example.com` — all Claude's own earlier verification
-accounts, no real users yet) which the migration's `INSERT ... SELECT`
-will carry over into the merged table rather than lose, whenever it's
-deployed.
+**Deployed and re-verified in production**: migration `0013` ran clean on
+the VM. The 3 disposable test rows that were in the old
+`public.jobref_users` (`claude.verify.employee@example.com`, `prod.
+fieldverify@example.com`, `prod.capacityverify@example.com` — all Claude's
+own earlier verification accounts) carried over into `jobref.users`
+correctly via the migration's `INSERT ... SELECT`, confirmed via direct DB
+query. A real registration + cleanup against prod re-confirmed the write
+path; Applaut/Jobref health and login regression checks clean.
 
 ## Referral capacity: always-asked, bucketed scale (Aug 2026, live in production)
 
@@ -673,12 +683,9 @@ full log:
 
 ## Next steps
 
-- **Deploy the `jobref.users` DB restructure** (migration `0013`, see "DB
-  restructure: single jobref.users table" above) — verified locally,
-  holding for explicit go-ahead before touching production's 3 test rows.
-- **See the banner at the top of this file** — a real end-to-end register
-  submission (not just the LinkedIn handshake) is the one thing nobody's
-  verified yet, in local or prod. Do that first next session.
+- Auth is done — both registration paths (employee direct, job seeker via
+  real LinkedIn OAuth) are proven end-to-end in production with real data.
+  See the banner at the top of this file.
 - Beyond auth: the actual referral-matching product logic (how a job
   seeker gets connected to a referring employee at the same company/domain)
   is not yet designed — next major feature after this auth foundation ships.
