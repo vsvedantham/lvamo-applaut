@@ -7,13 +7,12 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Seeker "My requests" page (Aug 2026, verified locally, not yet
-deployed)**: a new page listing everything a seeker has sent — company,
-status, message, and for decided ones, either an acceptance confirmation
-or the employee's rejection reason. Reached via a new icon on the seeker
-dashboard (a paper-airplane, next to Profile/Logout). Read-only —
-symmetric to the employee inbox, but nothing here changes state. See
-"Seeker 'My requests' page" below. **Next session**: deploy to production.
+**Seeker "My requests" page — deployed (Aug 2026)**: a new page listing
+everything a seeker has sent — company, status, message, and for decided
+ones, either an acceptance confirmation or the employee's rejection
+reason. Reached via a new icon on the seeker dashboard (a paper-airplane,
+next to Profile/Logout). Read-only — symmetric to the employee inbox, but
+nothing here changes state. See "Seeker 'My requests' page" below.
 
 **Status (Aug 2026): the entire referral request lifecycle is live in
 production**, built and deployed across one long session — auth through
@@ -132,8 +131,15 @@ new icon is entirely absent from the employee dashboard (seeker-only, as
 intended). `tsc --noEmit` clean. Applaut/Jobref regression clean. Cascade
 delete confirmed clean.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: no migration needed (pure
+API/frontend addition). Real end-to-end run against prod: registered an
+employee + seeker, submitted a real request, had the employee reject it
+with a real reason, then confirmed the seeker's own `GET
+/referral-requests` correctly returned `rejection_reason: "Prod
+verification reject reason"` — the exact text the employee sent. Cloudflare
+Pages auto-rebuilt — confirmed both "My referral requests" and "Accepted
+and sent for referral" strings present in the live built JS bundle. Test
+data cleaned up, Applaut regression clean.
 
 ## Employee actions on a referral request (Aug 2026, verified locally)
 
