@@ -184,7 +184,7 @@ export default function JobrefRegisterComplete() {
               <div style={field}>
                 <label style={labelStyle}>
                   CV Google Drive link{' '}
-                  <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>("Anyone with the link" access)</span>
+                  <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(anyone with the link should be able to access it)</span>
                 </label>
                 <input type="url" value={cvDriveLink} onChange={e => setCvDriveLink(e.target.value)} required placeholder="https://drive.google.com/file/d/..." />
               </div>
