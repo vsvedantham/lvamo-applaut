@@ -35,6 +35,18 @@ export default function JobrefRegisterComplete() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Same reasoning as the employee form on Register.tsx — don't leave
+  // "Create account" clickable until the required fields are actually
+  // filled in.
+  const formValid =
+    firstName.trim() !== '' &&
+    lastName.trim() !== '' &&
+    phone.trim() !== '' &&
+    password.length >= 8 &&
+    domain.trim() !== '' &&
+    cvDriveLink.trim() !== '' &&
+    (jobStatus !== 'serving_notice' || noticeJoinDate !== '')
+
   useEffect(() => {
     if (!token) {
       setPrefillError('Missing LinkedIn sign-in — please start over.')
@@ -179,8 +191,13 @@ export default function JobrefRegisterComplete() {
 
               <button
                 type="submit"
-                disabled={loading}
-                style={{ marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem', opacity: loading ? 0.7 : 1 }}
+                disabled={loading || !formValid}
+                style={{
+                  marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff',
+                  border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem',
+                  opacity: loading || !formValid ? 0.5 : 1,
+                  cursor: loading || !formValid ? 'not-allowed' : 'pointer',
+                }}
               >
                 {loading ? 'Creating account…' : 'Create account'}
               </button>

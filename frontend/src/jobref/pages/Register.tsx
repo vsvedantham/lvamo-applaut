@@ -47,6 +47,21 @@ export default function JobrefRegister() {
   const [referralCapacity, setReferralCapacity] = useState<ReferralViewCapacity>('up_to_5')
   const [companyCareersUrl, setCompanyCareersUrl] = useState('')
 
+  // Disable "Create account" until every required field is actually
+  // filled in — was previously always clickable, relying only on the
+  // browser's native `required` validation to silently block an empty
+  // submit, giving no visual signal the form wasn't ready.
+  const employeeFormValid =
+    firstName.trim() !== '' &&
+    lastName.trim() !== '' &&
+    email.trim() !== '' &&
+    phone.trim() !== '' &&
+    password.length >= 8 &&
+    domain.trim() !== '' &&
+    companyName.trim() !== '' &&
+    workingSince !== '' &&
+    companyCareersUrl.trim() !== ''
+
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -214,8 +229,13 @@ export default function JobrefRegister() {
 
               <button
                 type="submit"
-                disabled={loading}
-                style={{ marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem', opacity: loading ? 0.7 : 1 }}
+                disabled={loading || !employeeFormValid}
+                style={{
+                  marginTop: '0.25rem', padding: '0.625rem', background: 'var(--accent)', color: '#fff',
+                  border: 'none', borderRadius: 'var(--radius-xs)', fontWeight: 600, fontSize: '0.9rem',
+                  opacity: loading || !employeeFormValid ? 0.5 : 1,
+                  cursor: loading || !employeeFormValid ? 'not-allowed' : 'pointer',
+                }}
               >
                 {loading ? 'Creating account…' : 'Create account'}
               </button>
