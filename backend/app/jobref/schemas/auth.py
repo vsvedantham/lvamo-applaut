@@ -6,9 +6,12 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
-from app.jobref.models.jobref_employee_profile import ReferFrequency, ReferralViewCapacity
-from app.jobref.models.jobref_seeker_profile import JobSeekerStatus
-from app.jobref.models.jobref_user import JobrefUserType
+from app.jobref.models.enums import (
+    JobSeekerStatus,
+    JobrefUserType,
+    ReferFrequency,
+    ReferralViewCapacity,
+)
 
 # Loose German phone number check: optional +49/0049/0 prefix, then 6-14
 # digits (spaces/hyphens allowed for readability).

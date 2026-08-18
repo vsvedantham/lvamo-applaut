@@ -1,18 +1,15 @@
-from app.jobref.models.jobref_user import JobrefUser, JobrefUserType
-from app.jobref.models.jobref_employee_profile import (
-    JobrefEmployeeProfile,
-    ReferFrequency,
-)
-from app.jobref.models.jobref_seeker_profile import (
-    JobrefSeekerProfile,
+from app.jobref.models.enums import (
     JobSeekerStatus,
+    JobrefUserType,
+    ReferFrequency,
+    ReferralViewCapacity,
 )
+from app.jobref.models.jobref_user import JobrefUser
 
 __all__ = [
     "JobrefUser",
     "JobrefUserType",
-    "JobrefEmployeeProfile",
     "ReferFrequency",
-    "JobrefSeekerProfile",
+    "ReferralViewCapacity",
     "JobSeekerStatus",
 ]

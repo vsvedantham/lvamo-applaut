@@ -7,6 +7,26 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**DB restructured (Aug 2026, verified locally, not yet deployed): Jobref's
+3 tables merged into one flat `jobref.users` table** — `jobref_users` /
+`jobref_employee_profiles` / `jobref_seeker_profiles` (all in `public`) are
+now a single table in a dedicated `jobref` Postgres schema, `is_employee`
+boolean as the sole differentiator, every type-specific field `NULL` for
+the other type. See "DB restructure: single jobref.users table" below for
+the full write-up. **Next session**: decide whether/when to deploy this to
+production (holding for explicit go-ahead, since it also restructures the
+3 disposable test rows currently sitting in the prod table).
+
+**Still the standing gap**: nobody has completed a real *job-seeker*
+registration through the actual LinkedIn consent screen and final form
+submission — only the OAuth handshake itself (real) and mocked-token
+submissions (most recently against the new merged table, see below) have
+exercised that path. Do this once the DB restructure is deployed.
+
+---
+
+## Older: employee registration form settled (Aug 2026, deployed)
+
 **Employee registration form is now fully settled (Aug 2026, deployed) —
 three rounds same day, all live:**
 
@@ -38,6 +58,97 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## DB restructure: single `jobref.users` table (Aug 2026, verified locally)
+
+User's explicit request: replace the 3-table split
+(`jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles`, all
+unschemaed in `public`) with **one** table, `jobref.users` — living in the
+`jobref` Postgres schema (created empty in migration `0012`, see
+`PROGRESS_APPLAUT.md`; this is the deferred follow-up that closes that
+out), with `is_employee` (boolean) as the sole differentiator and every
+field only meaningful to one user type left `NULL` for the other.
+
+**Decisions clarified before implementing** (flagged since several parts
+of the original ask were non-standard vs. how the rest of the app is
+built — user's own house rule is to call these out):
+- **`NULL` for "not applicable" fields, not the literal string `"NA"`** —
+  keeps `working_since` a real `DATE`, the four bucketed fields real
+  constrained values, etc. Matches the existing `linkedin_id` column's
+  convention (already nullable UNIQUE) rather than forcing every column to
+  plain text.
+- **A 5-digit auto-increment user ID was dropped entirely** — first
+  proposed as a friendly extra column, but once discussed further the user
+  concluded it's unnecessary since UUID is already the primary key. No
+  integer ID column exists on the merged table.
+
+**Migration `0013_jobref_merge_users_table.py`**: creates `jobref.users`
+with all columns from the 3 old tables flattened in, `is_employee` in
+place of the old `user_type` enum, 4 enum-membership CHECK constraints (as
+before — Jobref's enums have always been plain `VARCHAR` + `CHECK`, not
+native Postgres enum types, unlike Applaut's) plus 5 new CHECK constraints
+enforcing the employee/seeker field-presence rules at the DB level
+(defense in depth over the existing Pydantic conditional validation) —
+required-when-employee, absent-when-seeker, required-when-seeker,
+absent-when-employee, and the `notice_join_date`-iff-`serving_notice` rule.
+Data is carried over via `INSERT ... SELECT` with a `LEFT JOIN` across the
+3 old tables (not a destructive rebuild) before they're dropped.
+`downgrade()` reverses it faithfully — recreates the 3 old tables in their
+exact pre-migration shape (matching the cumulative result of migrations
+`0007`–`0011`) and splits the data back out.
+
+**Code changes**:
+- `models/enums.py` (new) — `JobrefUserType`, `ReferFrequency`,
+  `ReferralViewCapacity`, `JobSeekerStatus` all consolidated here (matches
+  the `app/applaut/models/enums.py` convention already used on the Applaut
+  side). `JobrefUserType` survives as a pure API-level type (still backs
+  `RegisterRequest`'s discriminated union) even though it's no longer a DB
+  column.
+- `models/jobref_user.py` — single `JobrefUser` model, `__tablename__ =
+  "users"`, `__table_args__ = {"schema": "jobref"}`. `models/
+  jobref_employee_profile.py` and `models/jobref_seeker_profile.py`
+  deleted (their model classes no longer exist; their enums moved to
+  `enums.py`).
+- `services/auth.py` — `_register_employee`/`_register_seeker` now build
+  one `JobrefUser` row with every field set directly, instead of a user
+  row plus a separate child-profile row across two inserts.
+  `get_current_user` does a plain `db.get(JobrefUser, id)` — the old
+  `_get_with_profiles` `selectinload` helper is gone, nothing to eager-load
+  any more.
+- `schemas/user.py` — **API response contract deliberately left
+  unchanged** (still nested `employee_profile`/`seeker_profile` objects
+  under `JobrefUserResponse`, still a `user_type` field) so **zero
+  frontend changes were needed**. Added `JobrefUserResponse.from_user()`,
+  which reshapes the flat ORM row back into that nested shape; the `/me`
+  route now calls it explicitly rather than relying on Pydantic
+  `from_attributes` against relationship attributes that no longer exist.
+- `migrations/env.py` — updated the now-stale
+  `JobrefEmployeeProfile`/`JobrefSeekerProfile` import.
+
+**Verified locally** (real, not mocked): migration applied cleanly;
+`\d jobref.users` confirms the exact intended shape (21 columns, all 9
+CHECK constraints, both UNIQUE constraints); old 3 tables gone. Full API
+round trip after a backend restart: employee register → `201`, `/login` →
+`200`, `/me` → `200` with `employee_profile` correctly populated and
+`seeker_profile: null`; missing a required employee field → `422`; job
+seeker register via a minted registration token (same pattern used for
+LinkedIn-flow testing when real credentials aren't being exercised) →
+`201`, `/me` → `200` with `seeker_profile` populated (incl.
+`notice_join_date`) and `employee_profile: null`. Direct DB check confirms
+one row per user with the other type's fields genuinely `NULL` (not
+`"NA"`). Regression: Applaut health/login and Jobref health/LinkedIn-
+authorize-redirect all unaffected. Frontend: `tsc --noEmit` clean with
+zero file changes on the frontend side, confirming the API contract really
+didn't move.
+
+**Not yet done**: not deployed — committed locally pending the user's
+go-ahead (see banner at the top of this file). Production currently holds
+3 disposable test rows in the old `public.jobref_users` (`claude.verify.
+employee@example.com`, `prod.fieldverify@example.com`, `prod.
+capacityverify@example.com` — all Claude's own earlier verification
+accounts, no real users yet) which the migration's `INSERT ... SELECT`
+will carry over into the merged table rather than lose, whenever it's
+deployed.
 
 ## Referral capacity: always-asked, bucketed scale (Aug 2026, live in production)
 
@@ -562,13 +673,9 @@ full log:
 
 ## Next steps
 
-- **Move Jobref's own tables (`jobref_users`, `jobref_employee_profiles`,
-  `jobref_seeker_profiles`) from `public` into a `jobref` Postgres schema**
-  — the `jobref` schema itself already exists (created alongside `applaut`
-  in migration `0012`, see `PROGRESS_APPLAUT.md`'s "Postgres schema
-  separation" entry and `PROGRESS.md`'s Multi-Vertical Architecture
-  section), but Jobref's tables were deliberately left unmoved as a
-  separate task. This is queued as the next piece of DB work.
+- **Deploy the `jobref.users` DB restructure** (migration `0013`, see "DB
+  restructure: single jobref.users table" above) — verified locally,
+  holding for explicit go-ahead before touching production's 3 test rows.
 - **See the banner at the top of this file** — a real end-to-end register
   submission (not just the LinkedIn handshake) is the one thing nobody's
   verified yet, in local or prod. Do that first next session.

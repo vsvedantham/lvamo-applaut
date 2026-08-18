@@ -29,4 +29,4 @@ async def login_user(
 
 @router.get("/me", response_model=JobrefUserResponse)
 async def me(current_user: JobrefUser = Depends(get_current_user)):
-    return current_user
+    return JobrefUserResponse.from_user(current_user)

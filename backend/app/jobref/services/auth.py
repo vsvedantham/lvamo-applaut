@@ -5,7 +5,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from sqlalchemy.exc import IntegrityError
 
@@ -16,8 +15,6 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
-from app.jobref.models.jobref_employee_profile import JobrefEmployeeProfile
-from app.jobref.models.jobref_seeker_profile import JobrefSeekerProfile
 from app.jobref.models.jobref_user import JobrefUser
 from app.jobref.schemas.auth import (
     EmployeeRegisterRequest,
@@ -41,10 +38,12 @@ def _issue_token(user_id: uuid.UUID) -> str:
 
 async def register(payload: RegisterRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
     # Two distinct paths sharing one endpoint (Pydantic discriminates on
-    # user_type — see schemas/auth.py): employees register directly,
-    # job seekers go through LinkedIn OAuth. Kept as separate helpers below
-    # rather than one branchy function, since the two paths differ in where
-    # identity/dedup come from, not just which child-profile table to use.
+    # user_type — see schemas/auth.py): employees register directly, job
+    # seekers go through LinkedIn OAuth. Both write to the same flat
+    # jobref.users row (is_employee is the sole differentiator, see
+    # models/jobref_user.py) — kept as separate helpers since the two paths
+    # differ in where identity/dedup comes from, not just which fields they
+    # populate.
     if isinstance(payload, EmployeeRegisterRequest):
         return await _register_employee(payload, db)
     return await _register_seeker(payload, db)
@@ -58,6 +57,7 @@ async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession)
             detail="Email already registered",
         )
 
+    details = payload.employee
     user = JobrefUser(
         first_name=payload.first_name,
         last_name=payload.last_name,
@@ -65,15 +65,21 @@ async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession)
         linkedin_id=None,
         phone=payload.phone,
         password_hash=hash_password(payload.password),
-        user_type=payload.user_type,
+        is_employee=True,
         domain=payload.domain,
+        company_name=details.company_name,
+        working_since=details.working_since,
+        daily_referral_view_cap=details.daily_referral_view_cap,
+        refer_frequency=details.refer_frequency,
+        referral_capacity=details.referral_capacity,
+        company_careers_url=details.company_careers_url,
     )
     db.add(user)
     try:
-        await db.flush()  # assign user.id before building the child profile row
+        await db.commit()
     except IntegrityError:
         # Backstop for the race where two requests with the same email
-        # flush concurrently — the DB-level UNIQUE constraint on email is
+        # commit concurrently — the DB-level UNIQUE constraint on email is
         # the real guarantee here.
         await db.rollback()
         raise HTTPException(
@@ -81,23 +87,7 @@ async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession)
             detail="Email already registered",
         )
 
-    details = payload.employee
-    db.add(
-        JobrefEmployeeProfile(
-            user_id=user.id,
-            company_name=details.company_name,
-            working_since=details.working_since,
-            daily_referral_view_cap=details.daily_referral_view_cap,
-            refer_frequency=details.refer_frequency,
-            referral_capacity=details.referral_capacity,
-            company_careers_url=details.company_careers_url,
-        )
-    )
-
-    await db.commit()
-    loaded = await _get_with_profiles(db, user.id)
-    assert loaded is not None
-    return loaded, _issue_token(loaded.id)
+    return user, _issue_token(user.id)
 
 
 async def _register_seeker(payload: SeekerRegisterRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
@@ -118,6 +108,7 @@ async def _register_seeker(payload: SeekerRegisterRequest, db: AsyncSession) -> 
             detail="An account already exists for this LinkedIn profile — please sign in instead",
         )
 
+    details = payload.seeker
     user = JobrefUser(
         first_name=payload.first_name,
         last_name=payload.last_name,
@@ -125,15 +116,18 @@ async def _register_seeker(payload: SeekerRegisterRequest, db: AsyncSession) -> 
         linkedin_id=claims.linkedin_id,
         phone=payload.phone,
         password_hash=hash_password(payload.password),
-        user_type=payload.user_type,
+        is_employee=False,
         domain=payload.domain,
+        current_job_status=details.current_job_status,
+        notice_join_date=details.notice_join_date,
+        cv_drive_link=details.cv_drive_link,
     )
     db.add(user)
     try:
-        await db.flush()  # assign user.id before building the child profile row
+        await db.commit()
     except IntegrityError:
         # Backstop for the race where two requests carrying the same
-        # LinkedIn identity flush concurrently — the DB-level UNIQUE
+        # LinkedIn identity commit concurrently — the DB-level UNIQUE
         # constraint on linkedin_id/email is the real guarantee here.
         await db.rollback()
         raise HTTPException(
@@ -141,20 +135,7 @@ async def _register_seeker(payload: SeekerRegisterRequest, db: AsyncSession) -> 
             detail="An account already exists for this LinkedIn profile — please sign in instead",
         )
 
-    details = payload.seeker
-    db.add(
-        JobrefSeekerProfile(
-            user_id=user.id,
-            current_job_status=details.current_job_status,
-            notice_join_date=details.notice_join_date,
-            cv_drive_link=details.cv_drive_link,
-        )
-    )
-
-    await db.commit()
-    loaded = await _get_with_profiles(db, user.id)
-    assert loaded is not None
-    return loaded, _issue_token(loaded.id)
+    return user, _issue_token(user.id)
 
 
 async def login(payload: LoginRequest, db: AsyncSession) -> tuple[JobrefUser, str]:
@@ -170,17 +151,6 @@ async def login(payload: LoginRequest, db: AsyncSession) -> tuple[JobrefUser, st
             detail="Account disabled",
         )
     return user, _issue_token(user.id)
-
-
-async def _get_with_profiles(db: AsyncSession, user_id: uuid.UUID) -> JobrefUser | None:
-    return await db.scalar(
-        select(JobrefUser)
-        .where(JobrefUser.id == user_id)
-        .options(
-            selectinload(JobrefUser.employee_profile),
-            selectinload(JobrefUser.seeker_profile),
-        )
-    )
 
 
 async def get_current_user(
@@ -199,7 +169,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
-    user = await _get_with_profiles(db, uuid.UUID(payload["sub"]))
+    user = await db.get(JobrefUser, uuid.UUID(payload["sub"]))
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
