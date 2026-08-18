@@ -7,12 +7,19 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Companies-gathering step added and deployed (Aug 2026)**: employee
-registration now also writes a row to a new `jobref.companies` table
-(`name`, `careers_url`, `user_id` FK back to the registering employee) —
-migration `0014`, backfilled from every existing employee. Seed data for
-the future referral-matching feature. See "Companies-gathering step"
-below.
+**Companies list now shown on the job-seeker dashboard (Aug 2026, verified
+locally, not yet deployed)**: new `GET /api/v1/jobref/companies` endpoint
+(any authenticated Jobref user) returns `jobref.companies` grouped by
+`(name, careers_url)` with a `referrer_count`, so a seeker sees each
+company once even though the table itself has one row per employee.
+Dashboard.tsx shows it under "Companies available for referrals" —
+seeker-only in the UI. See "Companies list on the seeker dashboard" below.
+**Next session**: deploy to production.
+
+**Companies-gathering step (Aug 2026, deployed)**: employee registration
+writes a row to `jobref.companies` (`name`, `careers_url`, `user_id` FK
+back to the registering employee) — migration `0014`. Seed data for the
+above. See "Companies-gathering step" below.
 
 **Auth is fully closed out end-to-end, both paths, in production (Aug
 2026).** Two things landed the session before this:
@@ -76,7 +83,49 @@ change). **Next session**: one real seeker signup at
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
 
-## Companies-gathering step (Aug 2026, verified locally)
+## Companies list on the seeker dashboard (Aug 2026, verified locally)
+
+Follow-up to the companies-gathering step below — user's request: show
+`jobref.companies` to job seekers on their dashboard, under a heading like
+"Companies available for referrals", improvising the rest.
+
+**Backend**: new `GET /api/v1/jobref/companies` (`api/v1/routers/
+companies.py`, `services/company.py`, `schemas/company.py`) — grouped by
+`(name, careers_url)` with a `referrer_count` (`COUNT`), since
+`jobref.companies` has one un-deduplicated row per employee registration
+(see below) and a seeker shouldn't see "Acme Corp" listed three times just
+because three employees registered there. Sorted alphabetically by name.
+Behind `get_current_user` like everything else in Jobref, but not
+restricted to seekers specifically — it's non-sensitive directory data
+(a company name + a careers URL an employee chose to share), and the
+dashboard is what decides who sees it, not the API.
+
+**Frontend**: `jobref/api/companies.ts` (thin `listCompanies()` wrapper),
+`Dashboard.tsx` fetches it in a `useEffect` gated on `!isEmployee` and
+renders a card per company (name, "Careers page ↗" link, a
+`referrer_count` badge reusing the `--success` token to read as a
+positive/available signal, distinct from the existing `--warn`-colored
+role pill). Loading/error/empty states handled explicitly rather than a
+blank gap. Employees see nothing new — the section doesn't render for
+them at all.
+
+**Verified locally** (real, not mocked): registered two employees at the
+same company name to confirm the grouped count (`referrer_count: 2`)
+alongside a third at a different company (`referrer_count: 1`); confirmed
+`GET /companies` requires auth (`403` unauthenticated). Full real-browser
+check via a small Playwright driver script (Vite dev server + tokens
+seeded directly into `localStorage`, since driving the actual
+login/LinkedIn forms wasn't needed to test this specific page): seeker
+dashboard screenshot shows the "Companies available for referrals" heading
+with a company card, correct careers link, and a "1 referrer" badge;
+employee dashboard screenshot confirms the section is entirely absent.
+Zero console errors on either. `tsc --noEmit` clean. Test data cleaned up
+afterward on both frontend and DB.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
+
+## Companies-gathering step (Aug 2026, deployed)
 
 User's request: during employee registration, capture the company name +
 careers page URL the employee entered into a dedicated `jobref.companies`

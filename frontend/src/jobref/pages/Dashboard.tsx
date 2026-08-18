@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
+import { listCompanies, type Company } from '../api/companies'
 import type { ReferralViewCapacity } from '../api/auth'
 
 const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
@@ -14,10 +16,29 @@ const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
 export default function JobrefDashboard() {
   useDocumentTitle('Dashboard | Jobref')
   const { user, logout } = useJobrefAuth()
+  const isEmployee = user?.user_type === 'employee'
+
+  // Companies list is seeker-only in the UI (employees have no use for it),
+  // fetched once the dashboard knows it's dealing with a seeker.
+  const [companies, setCompanies] = useState<Company[] | null>(null)
+  const [companiesError, setCompaniesError] = useState(false)
+
+  useEffect(() => {
+    if (!user || isEmployee) return
+    let cancelled = false
+    listCompanies()
+      .then((data) => {
+        if (!cancelled) setCompanies(data)
+      })
+      .catch(() => {
+        if (!cancelled) setCompaniesError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user, isEmployee])
 
   if (!user) return null
-
-  const isEmployee = user.user_type === 'employee'
 
   return (
     <BrandedPage>
@@ -64,6 +85,59 @@ export default function JobrefDashboard() {
             </>
           )}
         </div>
+
+        {!isEmployee && (
+          <div style={{ marginTop: '1.75rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.85rem' }}>
+              Companies available for referrals
+            </h2>
+            {companiesError && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+                Couldn't load companies right now — try refreshing the page.
+              </p>
+            )}
+            {!companiesError && companies === null && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>Loading…</p>
+            )}
+            {companies && companies.length === 0 && (
+              <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+                No companies yet — check back soon as more employees join.
+              </p>
+            )}
+            {companies && companies.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {companies.map((c) => (
+                  <div
+                    key={c.name + c.careers_url}
+                    style={{
+                      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.name}
+                      </div>
+                      <a
+                        href={c.careers_url} target="_blank" rel="noreferrer"
+                        style={{ color: 'var(--accent)', fontSize: '0.78rem' }}
+                      >
+                        Careers page ↗
+                      </a>
+                    </div>
+                    <div style={{
+                      flexShrink: 0, padding: '0.25rem 0.65rem', background: 'var(--success-bg)',
+                      border: '1px solid var(--success-border)', borderRadius: '999px', fontSize: '0.7rem',
+                      fontWeight: 600, color: 'var(--success)', whiteSpace: 'nowrap',
+                    }}>
+                      {c.referrer_count} {c.referrer_count === 1 ? 'referrer' : 'referrers'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <p style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           <button
