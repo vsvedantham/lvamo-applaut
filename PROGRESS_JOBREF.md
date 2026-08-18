@@ -7,13 +7,12 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Companies-gathering step added (Aug 2026, verified locally, not yet
-deployed)**: employee registration now also writes a row to a new
-`jobref.companies` table (`name`, `careers_url`, `user_id` FK back to the
-registering employee) — migration `0014`, backfilled from every existing
-employee. Seed data for the future referral-matching feature. See
-"Companies-gathering step" below. **Next session**: deploy to production
-once reviewed.
+**Companies-gathering step added and deployed (Aug 2026)**: employee
+registration now also writes a row to a new `jobref.companies` table
+(`name`, `careers_url`, `user_id` FK back to the registering employee) —
+migration `0014`, backfilled from every existing employee. Seed data for
+the future referral-matching feature. See "Companies-gathering step"
+below.
 
 **Auth is fully closed out end-to-end, both paths, in production (Aug
 2026).** Two things landed the session before this:
@@ -133,11 +132,16 @@ health + login checks clean. Frontend: `tsc --noEmit` clean (no frontend
 files touched — this is a pure backend/DB change, no API/UI surface added
 yet).
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file). No API endpoint exposes
-`jobref.companies` yet (e.g. for a future "browse companies" page) —
-intentionally out of scope until the referral-matching feature gets
-designed and needs it.
+**Deployed and re-verified in production**: migration `0014` ran clean on
+the VM; backfill correctly populated one row per each of the 4
+already-registered employees (confirmed via a DB join). A real
+registration against prod → `201`, company row confirmed correctly linked,
+then deleted — cascaded to remove the company row too, no orphans.
+Applaut/Jobref health regression clean.
+
+No API endpoint exposes `jobref.companies` yet (e.g. for a future "browse
+companies" page) — intentionally out of scope until the referral-matching
+feature gets designed and needs it.
 
 ## DB restructure: single `jobref.users` table (Aug 2026, verified locally)
 
