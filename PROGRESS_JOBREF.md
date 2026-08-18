@@ -7,16 +7,15 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Dashboard redesign: profile moved into a slide-out panel (Aug 2026,
-verified locally, not yet deployed)**: the main dashboard now shows just
-one thing — "Companies available for referrals" (seeker) or "Referral
-requests" (employee), laid out as a responsive grid (1 column on mobile,
-auto-fills more on wide screens). Profile info moved out of the main flow
-entirely, into a slide-out panel opened via a new profile icon at the
-top-right (next to a new logout icon, replacing the old inline "Sign out"
-button). The panel also gained real editing — every profile field except
-email, via a new `PATCH /api/v1/jobref/auth/me`. See "Dashboard redesign"
-below. **Next session**: deploy to production.
+**Dashboard redesign: profile moved into a slide-out panel — deployed
+(Aug 2026)**: the main dashboard now shows just one thing — "Companies
+available for referrals" (seeker) or "Referral requests" (employee), laid
+out as a responsive grid (1 column on mobile, auto-fills more on wide
+screens). Profile info moved out of the main flow entirely, into a
+slide-out panel opened via a new profile icon at the top-right (next to a
+new logout icon, replacing the old inline "Sign out" button). The panel
+also gained real editing — every profile field except email, via a new
+`PATCH /api/v1/jobref/auth/me`. See "Dashboard redesign" below.
 
 **Employee-side referral inbox + routing algorithm — deployed (Aug
 2026)**: referral requests now route to a specific employee (`to_user_id`)
@@ -188,8 +187,13 @@ status-row styling) — `ViewRow` now only capitalizes where asked
 `tsc --noEmit` clean. Applaut/Jobref regression clean. Cascade delete
 confirmed clean across all three jobref tables after test cleanup.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: no migration needed (pure
+API/frontend change). Real employee registration + a real `PATCH
+/auth/me` against the live API → `200` with the edited values reflected
+immediately; `jobref.companies` confirmed updated to match the edited
+company name/URL via direct DB query. Cloudflare Pages auto-rebuilt —
+confirmed both "Edit profile" and "can't be changed" strings present in
+the live built JS bundle. Test data cleaned up, Applaut regression clean.
 
 ## Employee referral inbox + routing (Aug 2026, verified locally)
 
