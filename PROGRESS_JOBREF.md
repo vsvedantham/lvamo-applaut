@@ -7,14 +7,12 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Referral request flow added (Aug 2026, verified locally, not yet
-deployed)**: clicking a company tile on the seeker dashboard now opens a
-full request page — instructions (visit careers page → find a matching
-posting → tailor CV/cover letter → fill in the form) plus a form (name,
-job posting link, CV + cover letter Google Drive links, a 150-char message
-to the referrer) that POSTs to a new `jobref.referral_requests` table.
-See "Referral request flow" below. **Next session**: deploy to
-production.
+**Referral request flow — deployed (Aug 2026)**: clicking a company tile
+on the seeker dashboard now opens a full request page — instructions
+(visit careers page → find a matching posting → tailor CV/cover letter →
+fill in the form) plus a form (name, job posting link, CV + cover letter
+Google Drive links, a 150-char message to the referrer) that POSTs to a
+new `jobref.referral_requests` table. See "Referral request flow" below.
 
 **Companies list on the job-seeker dashboard — deployed (Aug 2026)**: new
 `GET /api/v1/jobref/companies` endpoint (any authenticated Jobref user)
@@ -174,8 +172,18 @@ employees at one company get deduplicated into a single routable
 "company" entity. Both are real product questions for whenever the
 referral-matching feature gets designed properly.
 
-**Not yet done**: not deployed — committed locally pending go-ahead (see
-banner at the top of this file).
+**Deployed and re-verified in production**: migration `0015` ran clean.
+Confirmed `403` for both unauthenticated and employee-token requests
+against the real prod API. Full real end-to-end write: minted a
+registration token via the actual prod backend container (same technique
+used throughout this session for testing the seeker path without the real
+LinkedIn handshake — not the same as mocking LinkedIn's own API), real
+seeker registration → `201`, fetched `/companies` as that seeker, POSTed a
+real referral request → `201`, DB row confirmed correct via direct query.
+Cloudflare Pages auto-rebuilt — confirmed both "Tap to request a referral"
+and "Request a referral at" strings present in the live built JS bundle.
+All test data (2 users, 1 referral request) deleted afterward, cascade
+confirmed clean. Applaut regression clean.
 
 ## Companies list on the seeker dashboard (Aug 2026, verified locally)
 
