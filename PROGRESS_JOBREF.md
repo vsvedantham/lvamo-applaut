@@ -7,30 +7,73 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Deployed to production (Aug 2026, same day as the split-registration and
-mobile-CSS changes below).** `git push` → `deploy.sh` on the VM (migration
-`0009` ran clean) → Cloudflare Pages auto-redeploy. Verified for real in
-production: a genuine employee account created end-to-end via `curl`
-against `https://api.jobref.lvamo.com` (`201`), duplicate-email dedup
-(`409`), login with that account (`200`), LinkedIn authorize redirect still
-correct, Applaut regression clean. Frontend verified live at
-`https://www.lvamo.com/jobref/register` — the split two-column layout,
-updated disclaimer copy, and the 16px-font/46px-tap-target mobile fix all
-confirmed present via `getComputedStyle`, not just a screenshot.
+**Registration UX changed again, same day — progressive disclosure, user's
+request.** `/jobref/register` no longer shows the choice + both mechanisms
+at once; it now shows *only* the "I am a" choice first (two cards, zero
+form fields), and reveals just the relevant path — full employee form, or
+the LinkedIn disclaimer+button — once clicked. User's own reasoning:
+looked fine on desktop already, but the two-column always-visible layout
+crowded mobile with a full form *and* a competing LinkedIn option stacked
+below it. Choice is carried in the URL (`?as=employee` / `?as=job_seeker`),
+not just component state, so both the in-page "Back" link and the browser's
+native back button correctly return to the choice screen — verified both
+ways. Frontend-only change (no backend/schema impact) — **committed
+locally, NOT yet pushed/deployed**, see "Progressive disclosure" section
+below.
 
-**One gap remains, unchanged from before**: nobody has completed a real
-*job-seeker* registration through the actual LinkedIn consent screen and
-final form submission — only the OAuth handshake itself (real, verified
-earlier this session) and a mocked-token submission have exercised that
-path. The employee path, by contrast, is now fully verified end-to-end in
-production with real data. **Next session**: do one real seeker signup at
-`https://www.lvamo.com/jobref/register` (Job Seeker column) to close this
-out, plus a second attempt with the same LinkedIn account to confirm the
-`/jobref/login?linkedin=existing` dedup redirect fires for real.
+**Once approved to deploy**: pure frontend change, `git push` is enough —
+Cloudflare Pages auto-redeploys, no VM/migration step needed this time.
+
+**Still outstanding, unchanged**: nobody has completed a real *job-seeker*
+registration through the actual LinkedIn consent screen and final form
+submission — only the OAuth handshake itself (real) and a mocked-token
+submission have exercised that path. The employee path is fully verified
+end-to-end in production with real data (both before and after this UX
+change). **Next session**: one real seeker signup at
+`https://www.lvamo.com/jobref/register` (Job Seeker card) to close this out.
 
 ---
 
-## Status: Live in production — split registration (employees direct, job seekers via LinkedIn), deployed Aug 2026
+## Status: Live in production — split registration (employees direct, job seekers via LinkedIn); a same-day progressive-disclosure UX refinement is built and verified locally but NOT yet pushed/deployed
+
+## Progressive disclosure: choice screen first, then the relevant path only (Aug 2026, committed locally — not deployed)
+
+Same-day UX refinement on top of the split-registration work below — user's
+request, reasoning given directly: the always-visible two-column layout
+(full employee form + LinkedIn card side by side) "looks okay" on desktop
+but crowds mobile with a full form and a competing option both visible at
+once. Changed `/jobref/register` to a three-state flow instead:
+
+1. **Choice screen** (default, no query param) — just "I am a" + two large
+   tappable cards (Full-time Employee / Job Seeker), zero form fields, zero
+   LinkedIn button. Nothing to scroll past on mobile.
+2. **`?as=employee`** — the full direct-registration form (unchanged
+   fields/logic from the split-registration work), plus a "← Back" link.
+3. **`?as=job_seeker`** — the disclaimer + "Continue with LinkedIn" button
+   (unchanged), plus "← Back".
+
+**Why a URL param instead of just `useState`**: so the browser's native
+back button works correctly (returns to the choice screen, not off the
+page or to a stale form) and a direct link/refresh to `?as=employee` lands
+correctly too — both verified via Playwright (`page.goBack()` after
+picking a path correctly landed back on the zero-input choice screen).
+
+Backend untouched — this is purely `frontend/src/jobref/pages/Register.tsx`
+restructured around the same `EmployeeRegisterPayload`/LinkedIn-authorize
+logic as before; `RegisterComplete.tsx` (the post-LinkedIn seeker form) is
+unaffected.
+
+**Verified locally**: `tsc --noEmit` + `vite build` clean. Playwright across
+desktop + mobile viewports: choice screen has zero `<input>`/LinkedIn-button
+elements; clicking each card updates the URL and reveals only that path's
+content; "Back" link and the browser's actual back button both correctly
+return to the zero-input choice screen; zero console errors throughout. Full
+real browser submission of the employee form through the new flow (choice →
+fill → submit) → landed on `/jobref/dashboard` cleanly, same as before this
+change.
+
+**Not yet done**: not pushed to `origin`, not deployed — pure frontend
+change, no migration needed this time, see banner at top of this file.
 
 ## Split registration: employees direct, job seekers via LinkedIn (Aug 2026, live in production)
 

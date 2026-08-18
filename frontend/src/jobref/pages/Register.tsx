@@ -9,23 +9,29 @@ import type { EmployeeRegisterPayload, ReferFrequency } from '../api/auth'
 const field: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' }
 const labelStyle: React.CSSProperties = { fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)' }
 
-const column: React.CSSProperties = {
-  flex: '1 1 360px',
+const panel: React.CSSProperties = {
   background: 'var(--bg-surface)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius)',
   padding: '1.75rem',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1rem',
 }
+
+const backLink: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+  color: 'var(--text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '1.25rem',
+}
+
+// Which path the user picked — carried in the URL (not just component state)
+// so the browser back button and a page refresh both behave correctly.
+type Choice = 'employee' | 'job_seeker' | null
 
 export default function JobrefRegister() {
   useDocumentTitle('Create account | Jobref')
   const { register } = useJobrefAuth()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const linkedinError = params.get('linkedin') === 'error'
+  const choice = (params.get('as') as Choice) ?? null
 
   // Employee form state
   const [firstName, setFirstName] = useState('')
@@ -82,37 +88,59 @@ export default function JobrefRegister() {
     }
   }
 
+  const goBack = () => setParams({}, { replace: false })
+
   return (
     <BrandedPage>
-      <div style={{ width: '100%', maxWidth: '980px' }}>
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.35rem' }}>I am a</h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Choose how you'd like to join Jobref</p>
-        </div>
-
+      <div style={{ width: '100%', maxWidth: choice ? '460px' : '760px' }}>
         {linkedinError && (
-          <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
             <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0, textAlign: 'center' }}>
               LinkedIn sign-in was cancelled or failed. Please try again.
             </p>
           </div>
         )}
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-start' }}>
-          {/* Left: Full-time Employee — direct registration, no LinkedIn */}
-          <div style={column}>
-            <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.2rem' }}>Full-time Employee</h2>
-              <p style={{ color: 'var(--text-2)', fontSize: '0.8rem' }}>Register directly and start referring candidates at your company</p>
+        {choice === null && (
+          <>
+            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.35rem' }}>I am a</h1>
+              <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>Choose how you'd like to join Jobref</p>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem' }}>
+              <ChoiceCard
+                title="Full-time Employee"
+                description="Register directly and start referring candidates at your company"
+                onClick={() => setParams({ as: 'employee' })}
+              />
+              <ChoiceCard
+                title="Job Seeker"
+                description="Sign in with LinkedIn and get discovered by employees willing to refer you"
+                onClick={() => setParams({ as: 'job_seeker' })}
+              />
+            </div>
+          </>
+        )}
+
+        {choice === 'employee' && (
+          <div style={panel}>
+            <a href="#" onClick={e => { e.preventDefault(); goBack() }} style={backLink}>
+              <BackArrow /> Back
+            </a>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.2rem' }}>Full-time Employee</h2>
+              <p style={{ color: 'var(--text-2)', fontSize: '0.825rem' }}>Register directly — no LinkedIn required</p>
             </div>
 
             {error && (
-              <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)' }}>
+              <div style={{ padding: '0.7rem 0.875rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem' }}>
                 <p style={{ color: 'var(--danger)', fontSize: '0.825rem', margin: 0 }}>{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleEmployeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <form onSubmit={handleEmployeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <div style={field}>
                   <label style={labelStyle}>First name</label>
@@ -187,15 +215,20 @@ export default function JobrefRegister() {
               </button>
             </form>
           </div>
+        )}
 
-          {/* Right: Job Seeker — LinkedIn-gated */}
-          <div style={column}>
-            <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.2rem' }}>Job Seeker</h2>
-              <p style={{ color: 'var(--text-2)', fontSize: '0.8rem' }}>Get discovered by employees willing to refer you</p>
+        {choice === 'job_seeker' && (
+          <div style={panel}>
+            <a href="#" onClick={e => { e.preventDefault(); goBack() }} style={backLink}>
+              <BackArrow /> Back
+            </a>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.2rem' }}>Job Seeker</h2>
+              <p style={{ color: 'var(--text-2)', fontSize: '0.825rem' }}>Get discovered by employees willing to refer you</p>
             </div>
 
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
               We use LinkedIn to sign you in. We only take your <strong>name and
               email address</strong> from your LinkedIn profile — nothing else —
               just so you don't end up with more than one account.
@@ -213,7 +246,7 @@ export default function JobrefRegister() {
               Continue with LinkedIn
             </a>
           </div>
-        </div>
+        )}
 
         <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-2)', fontSize: '0.85rem' }}>
           Already have an account?{' '}
@@ -221,6 +254,41 @@ export default function JobrefRegister() {
         </p>
       </div>
     </BrandedPage>
+  )
+}
+
+function ChoiceCard({ title, description, onClick }: { title: string; description: string; onClick: () => void }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick() }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        flex: '1 1 300px',
+        cursor: 'pointer',
+        background: 'var(--bg-surface)',
+        border: `1px solid ${hover ? 'var(--accent-border)' : 'var(--border)'}`,
+        borderRadius: 'var(--radius)',
+        padding: '1.75rem',
+        transition: 'border-color 0.15s, background 0.15s',
+        ...(hover ? { background: 'var(--accent-glow)' } : {}),
+      }}
+    >
+      <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.4rem', color: hover ? 'var(--accent)' : 'var(--text-1)' }}>{title}</h2>
+      <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', lineHeight: 1.5 }}>{description}</p>
+    </div>
+  )
+}
+
+function BackArrow() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
   )
 }
 
