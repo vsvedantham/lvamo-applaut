@@ -5,7 +5,7 @@ import axios from 'axios'
 export const TOKEN_KEY = 'applaut_access_token'
 
 const client = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/applaut',
+  baseURL: (import.meta.env.VITE_APPLAUT_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/applaut',
   headers: { 'Content-Type': 'application/json' },
 })
 

@@ -71,7 +71,8 @@ cd frontend
 npm install
 
 # Create a local .env (Vite reads .env in the frontend/ directory)
-echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
+echo "VITE_APPLAUT_API_BASE_URL=http://localhost:8000
+VITE_JOBREF_API_BASE_URL=http://localhost:8000" > .env.local
 
 npm run dev
 ```

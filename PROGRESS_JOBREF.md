@@ -27,10 +27,13 @@ one, not `api.applaut.lvamo.com`.
    register→LinkedIn→callback→complete-form→dashboard pass, plus the
    "already registered" dedup path (try registering the same LinkedIn
    account twice).
-4. **User adds `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com` as a
-   Cloudflare Pages build environment variable** (Pages project → Settings →
-   Environment variables) — Claude's Cloudflare API token is DNS-only scoped
-   and can't do this step; dashboard-only.
+4. **User updates Cloudflare Pages build environment variables** (Pages
+   project → Settings → Environment variables) — Claude's Cloudflare API
+   token is DNS-only scoped and can't reach the Pages API at all:
+   - Rename existing `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL`
+     (same value, just the new name — **skipping this breaks Applaut in
+     prod on the next frontend deploy**, not just Jobref).
+   - Add new `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`.
 5. Once verified locally end-to-end: push, deploy (migration `0008`, backend
    redeploy — `.env.production` on the VM needs
    `JOBREF_LINKEDIN_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` added, matching
@@ -214,10 +217,20 @@ deployed as part of this.
    gated Jobref feature deploy — also committed to git locally.
 4. Frontend: `jobref/api/client.ts` and `jobref/api/auth.ts` now read
    `VITE_JOBREF_API_BASE_URL` (own env var) instead of sharing Applaut's
-   `VITE_API_BASE_URL` — both fall back to `http://localhost:8000` in dev
-   (single shared backend container locally, so no behavior change there;
-   verified via a real dev-server + Playwright check that the LinkedIn
-   button's href is unchanged locally).
+   base URL var — both fall back to `http://localhost:8000` in dev (single
+   shared backend container locally, so no behavior change there; verified
+   via a real dev-server + Playwright check that the LinkedIn button's href
+   is unchanged locally).
+5. **Applaut's own var renamed too, for consistency**: `VITE_API_BASE_URL` →
+   `VITE_APPLAUT_API_BASE_URL` (user's request, once two verticals existed
+   side by side, `VITE_API_BASE_URL` was ambiguous about which backend it
+   pointed at). Updated in `applaut/api/client.ts`, `.env`/`.env.example`,
+   `README.md`.
+   **⚠️ This one is already live in production** (unlike
+   `VITE_JOBREF_API_BASE_URL`, which is net-new) — the Cloudflare Pages
+   build var must be renamed too, in the same dashboard step as adding the
+   Jobref one below, or the next Applaut frontend redeploy will silently
+   fall back to `localhost:8000` and break the production API base URL.
 
 **Verified:** new hostname serves the correct cert (`CN=api.jobref.lvamo.com`)
 and correctly proxies to the shared backend (tested via the existing Applaut
@@ -227,10 +240,12 @@ after the frontend env-var split.
 
 **Still needed (can't be done without dashboard/LinkedIn access — see
 banner at top of this file):**
-- User adds `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com` as a
-  Cloudflare Pages build environment variable (the API token in use is
-  DNS-only scoped for the zone — confirmed it can't reach the Pages API at
-  all, `10000 Authentication error` — so this is dashboard-only).
+- User updates Cloudflare Pages build environment variables (the API token
+  in use is DNS-only scoped for the zone — confirmed it can't reach the
+  Pages API at all, `10000 Authentication error` — so this is
+  dashboard-only): rename `VITE_API_BASE_URL` → `VITE_APPLAUT_API_BASE_URL`
+  (same value — **skipping this breaks Applaut in prod**, not just Jobref),
+  and add `VITE_JOBREF_API_BASE_URL=https://api.jobref.lvamo.com`.
 - User registers `https://api.jobref.lvamo.com/api/v1/jobref/auth/linkedin/callback`
   as the production redirect URI on the LinkedIn app (not
   `api.applaut.lvamo.com` — that would point at the wrong hostname now).
