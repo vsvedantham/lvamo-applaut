@@ -7,8 +7,16 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-**Auth is now fully closed out end-to-end, both paths, in production (Aug
-2026).** Two things landed this session:
+**Companies-gathering step added (Aug 2026, verified locally, not yet
+deployed)**: employee registration now also writes a row to a new
+`jobref.companies` table (`name`, `careers_url`, `user_id` FK back to the
+registering employee) — migration `0014`, backfilled from every existing
+employee. Seed data for the future referral-matching feature. See
+"Companies-gathering step" below. **Next session**: deploy to production
+once reviewed.
+
+**Auth is fully closed out end-to-end, both paths, in production (Aug
+2026).** Two things landed the session before this:
 
 1. **DB restructured and deployed**: Jobref's 3 tables
    (`jobref_users`/`jobref_employee_profiles`/`jobref_seeker_profiles`, all
@@ -68,6 +76,68 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## Companies-gathering step (Aug 2026, verified locally)
+
+User's request: during employee registration, capture the company name +
+careers page URL the employee entered into a dedicated `jobref.companies`
+table, linked back to the registering employee's UUID. Framed as seed data
+for the future referral-matching feature — a job seeker will eventually
+browse a companies list to find one with employees willing to refer,
+rather than that living only inside individual employee rows.
+
+**Design calls made** (the ask specified what to capture; the shape below
+was improvised, per the go-ahead to do so):
+- **Own table, own `id`** — `jobref.companies` has its own UUID primary
+  key rather than reusing `user_id` as the PK (the pattern the old,
+  pre-merge `jobref_employee_profiles` used). Company rows aren't
+  guaranteed to stay 1:1 with employees forever — if a future dedup pass
+  wants multiple employees pointing at the same company, or a company row
+  gets referenced from elsewhere, having its own stable identity avoids a
+  PK migration later.
+- **One row per employee registration for now, `user_id` UNIQUE** — no
+  deduplication by company name across different employees registering at
+  the same company. Two employees at "Acme Corp" today get two separate
+  `jobref.companies` rows. Left deliberately unresolved: deduping (by
+  name? by careers URL? fuzzy-matched?) is a real design question that
+  belongs with the referral-matching feature itself, not bolted on here
+  ahead of that design.
+- **Columns named `name`/`careers_url`, not `company_name`/
+  `company_careers_url`** — dropped the `company_` prefix since it's
+  redundant once the table itself is named `companies`
+  (`companies.company_name` reads worse than `companies.name`).
+- **`ON DELETE CASCADE`** from `jobref.users` — matches the cascade
+  convention used everywhere else in this app; if an employee's account is
+  deleted, their company entry goes with it.
+
+**Migration `0014_jobref_companies.py`**: creates the table, then
+backfills one row per existing employee (`WHERE is_employee`) so no
+already-registered employee's company data is missing from the new table.
+
+**Code changes**: new `models/jobref_company.py` (`JobrefCompany`).
+`services/auth.py`'s `_register_employee` now flushes the `JobrefUser`
+insert first (to get its generated `id`), then adds the `JobrefCompany`
+row in the same transaction before committing — atomic: either both rows
+land or neither does. Job-seeker registration is untouched (no company
+data to capture there).
+
+**Verified locally** (real, not mocked): migration applied, `\d
+jobref.companies` confirms the exact shape (own PK, `user_id` UNIQUE FK,
+CASCADE). Real employee registration → `201`, DB join confirms the
+`jobref.companies` row landed correctly linked to the new employee's
+`user_id`. Real job-seeker registration alongside it → confirmed it does
+**not** create a companies row (row count stayed at 1 after both
+registrations). Deleting the employee's user row cascaded correctly to
+delete their companies row too — no orphans. Regression: Applaut/Jobref
+health + login checks clean. Frontend: `tsc --noEmit` clean (no frontend
+files touched — this is a pure backend/DB change, no API/UI surface added
+yet).
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file). No API endpoint exposes
+`jobref.companies` yet (e.g. for a future "browse companies" page) —
+intentionally out of scope until the referral-matching feature gets
+designed and needs it.
 
 ## DB restructure: single `jobref.users` table (Aug 2026, verified locally)
 

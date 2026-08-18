@@ -15,6 +15,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
+from app.jobref.models.jobref_company import JobrefCompany
 from app.jobref.models.jobref_user import JobrefUser
 from app.jobref.schemas.auth import (
     EmployeeRegisterRequest,
@@ -76,16 +77,28 @@ async def _register_employee(payload: EmployeeRegisterRequest, db: AsyncSession)
     )
     db.add(user)
     try:
-        await db.commit()
+        await db.flush()  # assign user.id before building the companies row
     except IntegrityError:
         # Backstop for the race where two requests with the same email
-        # commit concurrently — the DB-level UNIQUE constraint on email is
+        # flush concurrently — the DB-level UNIQUE constraint on email is
         # the real guarantee here.
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered",
         )
+
+    # Companies-gathering step: every employee registration seeds
+    # jobref.companies with the company they named, for the future
+    # referral-matching feature — see models/jobref_company.py.
+    db.add(
+        JobrefCompany(
+            user_id=user.id,
+            name=details.company_name,
+            careers_url=details.company_careers_url,
+        )
+    )
+    await db.commit()
 
     return user, _issue_token(user.id)
 
