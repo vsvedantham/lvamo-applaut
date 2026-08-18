@@ -3,21 +3,11 @@ import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
 import { listCompanies, type Company } from '../api/companies'
-import {
-  listMyReferralRequests,
-  type ReferralRequestItem,
-  type ReferralRequestStatus,
-} from '../api/referralRequests'
+import { listMyReferralRequests, type ReferralRequestItem } from '../api/referralRequests'
+import { STATUS_COLOR, STATUS_LABEL } from '../constants'
 import { Link } from 'react-router-dom'
 import ProfilePanel from '../components/ProfilePanel'
 import { LogoutIcon, ProfileIcon } from '../components/Icons'
-
-// Only one status exists today — more get added once the employee-side
-// action flow (accept/decline/etc.) is built. Keeping this as a lookup
-// rather than a raw string makes that later addition a one-line change.
-const STATUS_LABEL: Record<ReferralRequestStatus, string> = {
-  pending_review: 'Pending review',
-}
 
 // created_at is an ISO-8601 UTC instant (e.g. "2026-08-18T16:41:46Z") —
 // the first 10 characters are the UTC calendar date, matching the
@@ -214,43 +204,48 @@ export default function JobrefDashboard() {
             )}
             {myRequests && myRequests.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0.75rem' }}>
-                {myRequests.map((r) => (
-                  <div
-                    key={r.id}
-                    style={{
-                      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-                      padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)' }}>
-                          {r.first_name} {r.last_name}
+                {myRequests.map((r) => {
+                  const color = STATUS_COLOR[r.status]
+                  return (
+                    <Link
+                      key={r.id}
+                      to={`/jobref/requests/${r.id}`}
+                      style={{
+                        background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                        padding: '0.9rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem',
+                        textDecoration: 'none', cursor: 'pointer', transition: 'border-color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border)')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)' }}>
+                            {r.first_name} {r.last_name}
+                          </div>
+                          <div style={{ color: 'var(--text-3)', fontSize: '0.75rem' }}>
+                            {new Date(r.created_at).toLocaleString()}
+                          </div>
                         </div>
-                        <div style={{ color: 'var(--text-3)', fontSize: '0.75rem' }}>
-                          {new Date(r.created_at).toLocaleString()}
+                        <div style={{
+                          flexShrink: 0, padding: '0.25rem 0.65rem', background: color.bg,
+                          border: `1px solid ${color.border}`, borderRadius: '999px', fontSize: '0.7rem',
+                          fontWeight: 600, color: color.fg, whiteSpace: 'nowrap',
+                        }}>
+                          {STATUS_LABEL[r.status]}
                         </div>
                       </div>
-                      <div style={{
-                        flexShrink: 0, padding: '0.25rem 0.65rem', background: 'var(--warn-bg)',
-                        border: '1px solid var(--warn-border)', borderRadius: '999px', fontSize: '0.7rem',
-                        fontWeight: 600, color: 'var(--warn)', whiteSpace: 'nowrap',
-                      }}>
-                        {STATUS_LABEL[r.status]}
-                      </div>
-                    </div>
 
-                    <p style={{ color: 'var(--text-2)', fontSize: '0.83rem', margin: 0, fontStyle: 'italic' }}>
-                      "{r.message}"
-                    </p>
+                      <p style={{ color: 'var(--text-2)', fontSize: '0.83rem', margin: 0, fontStyle: 'italic' }}>
+                        "{r.message}"
+                      </p>
 
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.78rem' }}>
-                      <a href={r.job_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Job posting ↗</a>
-                      <a href={r.cv_drive_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>CV ↗</a>
-                      <a href={r.cover_letter_drive_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Cover letter ↗</a>
-                    </div>
-                  </div>
-                ))}
+                      <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                        Tap to review
+                      </span>
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </>

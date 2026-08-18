@@ -68,7 +68,20 @@ class JobrefReferralRequest(Base, UUIDPrimaryKey, TimestampMixin):
         nullable=False,
         default=ReferralRequestStatus.PENDING_REVIEW,
     )
-    # Set once the employee acts on the request — nothing sets this yet
-    # (no employee-action endpoint exists in this pass), but the column is
-    # ready for when one does.
+    # Set when the employee makes a final decision (accept or reject) —
+    # not when merely opened (that's what UNDER_REVIEW itself signals).
     reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    # Required when status is REJECTED, absent otherwise (see migration
+    # 0018's CHECK constraint). Free text, 150-char cap per the product
+    # spec — the frontend offers canned suggestions but doesn't constrain
+    # to them.
+    rejection_reason: Mapped[Optional[str]] = mapped_column(String(150))
+
+    # Both set together when the employee opts to share referral evidence
+    # on accept, both absent otherwise — optional, per the spec ("if no,
+    # no worries"). r2_key follows the same "local/" prefix convention as
+    # Applaut's resume uploads when R2 isn't configured (see
+    # services/referral_request.py).
+    evidence_r2_key: Mapped[Optional[str]] = mapped_column(String(1000))
+    evidence_file_name: Mapped[Optional[str]] = mapped_column(String(500))

@@ -37,11 +37,15 @@ class JobSeekerStatus(str, enum.Enum):
 
 
 class ReferralRequestStatus(str, enum.Enum):
-    """Only one value for now, per the user's explicit note: further
-    statuses (accepted/declined/referred/etc.) get decided once the
-    employee-side action flow itself is built — this just needs to exist
-    and be extensible today (migration 0016 uses a single-value CHECK
-    constraint, the same ALTER-to-add-a-value pattern already used for
-    ReferralViewCapacity in migrations 0010/0011)."""
+    """Migration 0016 shipped with only PENDING_REVIEW, deliberately —
+    the employee-side action flow wasn't built yet. Migration 0018 adds
+    the rest, once it was (widening the DB CHECK constraint the same way
+    ReferralViewCapacity's was widened in migrations 0010/0011)."""
 
     PENDING_REVIEW = "pending_review"
+    # Set the moment an employee opens the request (see
+    # services/referral_request.py::get_request_detail).
+    UNDER_REVIEW = "under_review"
+    # Terminal states — set via the accept/reject endpoints.
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"

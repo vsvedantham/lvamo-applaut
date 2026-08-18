@@ -1,6 +1,6 @@
 import client from './client'
 
-export type ReferralRequestStatus = 'pending_review'
+export type ReferralRequestStatus = 'pending_review' | 'under_review' | 'accepted' | 'rejected'
 
 export interface ReferralRequestPayload {
   company_name: string
@@ -44,5 +44,47 @@ export async function submitReferralRequest(
 
 export async function listMyReferralRequests(): Promise<ReferralRequestItem[]> {
   const { data } = await client.get<ReferralRequestItem[]>('/referral-requests')
+  return data
+}
+
+// The employee's single-request review page. Fetching this is what moves
+// a request from pending_review to under_review server-side — the "open
+// = mark as being looked at" side effect described in the product spec.
+export interface ReferralRequestDetail {
+  id: string
+  seeker_user_id: string
+  first_name: string
+  last_name: string
+  company_name: string
+  job_link: string
+  cv_drive_link: string
+  cover_letter_drive_link: string
+  message: string
+  status: ReferralRequestStatus
+  rejection_reason: string | null
+  evidence_file_name: string | null
+  created_at: string
+  reviewed_at: string | null
+  job_posting_request_count: number
+  seeker_request_count: number
+}
+
+export async function getReferralRequestDetail(id: string): Promise<ReferralRequestDetail> {
+  const { data } = await client.get<ReferralRequestDetail>(`/referral-requests/${id}`)
+  return data
+}
+
+export async function acceptReferralRequest(
+  id: string,
+  evidence?: File | null
+): Promise<ReferralRequestDetail> {
+  const form = new FormData()
+  if (evidence) form.append('evidence', evidence)
+  const { data } = await client.post<ReferralRequestDetail>(`/referral-requests/${id}/accept`, form)
+  return data
+}
+
+export async function rejectReferralRequest(id: string, reason: string): Promise<ReferralRequestDetail> {
+  const { data } = await client.post<ReferralRequestDetail>(`/referral-requests/${id}/reject`, { reason })
   return data
 }

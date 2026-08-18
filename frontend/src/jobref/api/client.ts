@@ -24,6 +24,13 @@ client.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // The instance default is 'application/json', which would break a
+  // FormData body (e.g. accept-with-evidence's file upload) — that needs
+  // 'multipart/form-data' with a boundary the browser computes itself,
+  // which only happens if Content-Type is left unset.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
   return config
 })
 

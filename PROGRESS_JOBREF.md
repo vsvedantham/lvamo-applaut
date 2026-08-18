@@ -7,6 +7,18 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Employee actions on a referral request (Aug 2026, verified locally, not
+yet deployed)**: clicking a request tile now opens a detail page instead
+of just showing CV/cover-letter/job links inline — opening it moves the
+request `pending_review` → `under_review`. The employee sees the seeker's
+info plus two counts (how many total requests this seeker has sent them,
+how many total requests exist for this exact job posting), then decides:
+**Accept** (asks whether to share evidence — optional file upload, image
+or PDF — then marks `accepted`) or **Reject** (a required 150-char
+response to the seeker, with clickable suggested reasons, then marks
+`rejected`). See "Employee actions on a referral request" below. **Next
+session**: deploy to production.
+
 **Status (Aug 2026): the full referral request loop is live in
 production**, built and deployed across one long session:
 
@@ -37,12 +49,10 @@ and re-verified against the real production API immediately after (not
 just locally) — see the dated entries below for the full build log and
 verification detail of each one.
 
-**Next up**: nothing on the employee side *acts* on a request yet — no
-accept/decline, no "mark reviewed." `status` (only `pending_review` is a
-valid value today — DB `CHECK` constraint) and `reviewed_at` both already
-exist on `jobref.referral_requests` (migration `0016`) ready for this, but
-nothing sets them yet. That's the natural next feature — see "Next steps"
-near the bottom of this file.
+Employee actions on a request (accept/reject, with evidence-sharing and a
+rejection response) shipped right after — see the banner entry above this
+one for that, and "Next steps" near the bottom of this file for what's
+still open beyond it.
 
 ---
 
@@ -79,6 +89,111 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — auth, companies, and the full referral request flow (routing, employee inbox, seeker daily limits) all deployed, Aug 2026
+
+## Employee actions on a referral request (Aug 2026, verified locally)
+
+Follow-up to the employee inbox — user's explicit spec: remove the CV/
+cover-letter/job links from the inbox tile, make the tile itself
+clickable into a detail page. Opening it moves the request to "under
+review." The detail page shows the seeker's info plus two counts (from
+this seeker, for this job posting), then two decisions: **Accept**
+("Request accepted and sent for referral" — optionally with uploaded
+evidence of the referral) or **Reject** (a required 150-char response to
+the seeker, with suggested reasons).
+
+**Status lifecycle**: `pending_review` → `under_review` (automatic, on
+first open) → `accepted` or `rejected` (terminal, employee decision).
+Migration `0018` widens the single-value `status` `CHECK` constraint from
+migration `0016` to allow all four (same widen-the-constraint pattern used
+for `ReferralViewCapacity` back in migrations `0010`/`0011`).
+
+**New columns**: `rejection_reason` (`VARCHAR(150)`, required iff
+`status = 'rejected'` — DB `CHECK` biconditional, same pattern as the
+seeker profile's `notice_join_date`-iff-`serving_notice` rule from
+earlier in this schema), `evidence_r2_key` + `evidence_file_name` (both
+set together iff evidence was shared, and only when `status = 'accepted'`
+— also DB `CHECK`-enforced). `reviewed_at` (already existed, unused since
+migration `0016`) is now finally set — on the *decision* (accept/reject),
+not on the "opened" transition, which is what `under_review` itself
+signals.
+
+**The two counts**: `job_posting_request_count` is every request (from
+any seeker) sharing this exact `(company_name, job_link)` pair;
+`seeker_request_count` is every request this specific seeker has sent
+*this specific employee* (not a global count across all employees at the
+company — the more useful signal when an employee is asking "have I seen
+this person before").
+
+**Evidence upload reuses Applaut's existing R2 client** (`app.core.
+storage`, shared/generic infra, imported without modifying it) and its
+exact graceful-degradation convention for when R2 isn't configured
+(`services/resume.py`'s `if settings.r2_bucket_name: upload_file(...)
+else: r2_key = f"local/{r2_key}"`) — **worth knowing: R2 is not actually
+configured anywhere yet, neither locally nor in production** (`R2_
+ACCOUNT_ID` etc. are all empty in both `.env` and `.env.production`,
+confirmed by grep). So evidence files today always take the `local/`
+key path — the upload endpoint, validation, and DB record all work
+correctly, but no bytes actually reach Cloudflare until real R2
+credentials are added. Applaut has the identical gap (its own resume
+uploads are in the same state) — not something introduced here, and not
+blocking this feature, since sharing evidence is optional either way.
+
+**Backend**: `GET /referral-requests/{id}` (the "open = mark under
+review" side effect, employee-only, 404 if not routed to the caller —
+same `_get_owned_request` ownership check reused by all three new
+endpoints so none of them can read/act on someone else's inbox item),
+`POST /referral-requests/{id}/accept` (multipart, optional `evidence`
+file — JPEG/PNG/WebP/PDF, 5 MB cap, same limits as Applaut's resume
+upload), `POST /referral-requests/{id}/reject` (JSON, `reason` 1-150
+chars). Both decision endpoints `409` if the request is already
+`accepted`/`rejected` — no re-deciding.
+
+**Frontend**: Dashboard.tsx's inbox tiles dropped the Job posting/CV/
+Cover letter links, tile itself is now a `Link` to
+`/jobref/requests/:id` (new route, `frontend/src/App.tsx` — flagged and
+confirmed before editing, same as the last two route additions). New
+`pages/ReferralRequestDetail.tsx`: seeker info + both counts, and — while
+undecided — an Accept/Reject choice that branches into the evidence
+Yes/No prompt (Yes reveals a file input) or the reject form (a live
+150-char counter plus four clickable suggestion chips that fill the
+textarea, editable after). New `constants.ts` holds a shared
+`STATUS_LABEL`/`STATUS_COLOR` lookup (pending/under-review render as
+warn-colored, accepted success-colored, rejected danger-colored) — reused
+by both Dashboard.tsx and the new detail page rather than duplicated.
+
+**A real bug caught while wiring the upload**: `jobref/api/client.ts`'s
+axios instance hardcodes `Content-Type: application/json` as a default
+header, which silently breaks a `FormData` body (multipart needs a
+browser-computed boundary in the header, which only happens if
+`Content-Type` is left unset). Fixed in the existing request interceptor
+— deletes the header when `config.data instanceof FormData`. Caught this
+before it ever reached a live test, not after.
+
+**Verified locally** (real, not mocked): seeded 1 employee + 3 seekers, 2
+of them requesting the *same* job link at the same company (to produce a
+real `job_posting_request_count` of 2) — opening one via `GET .../{id}`
+correctly flipped it to `under_review` (idempotent on a second open,
+counts correct: 2 for the shared job posting, 1 for that seeker). Reject
+→ `200`, correct `rejection_reason` stored, re-rejecting the same
+request → `409`; over-length reason → `422`. Accept without evidence →
+`200`, `evidence_file_name: null`. Accept **with** a real multipart file
+upload → `200`, DB confirmed `evidence_r2_key` correctly prefixed
+`local/...` and `evidence_file_name` set. Full real-browser Playwright
+flow twice over (once for accept-with-evidence, once for reject): dashboard
+tile → detail page (status visibly "Under review" on load) → evidence
+Yes → file picked → "Accepted" screen showing the evidence filename; and
+separately, Reject → suggestion chip clicked → fills textarea → "Rejected"
+screen showing the exact response sent. Zero console errors both times.
+Confirmed the CV/cover-letter links are gone from the dashboard tile
+itself. `tsc --noEmit` clean. Applaut/Jobref regression clean. Cascade
+delete confirmed clean.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file). Evidence files can't actually be
+downloaded/viewed anywhere yet (only the filename is shown as
+confirmation) — deliberately out of scope until R2 is actually
+configured, since a download flow would be untestable either way right
+now.
 
 ## Seeker request limits (Aug 2026, verified locally)
 
@@ -1152,17 +1267,16 @@ full log:
 
 ## Next steps
 
-- **Employee actions on a referral request** — accept/decline/mark
-  reviewed. `status`/`reviewed_at` columns already exist on
-  `jobref.referral_requests` (migration `0016`) but nothing sets them yet;
-  only `pending_review` is a valid `status` value today (DB `CHECK`
-  constraint), so adding a real status also needs a migration to widen it.
-  This is the natural next feature — see the banner at the top of this
-  file.
-- Beyond that: how does a seeker find out their request was
-  accepted/declined? No notification mechanism exists yet in either
-  vertical (email, in-app, or otherwise) — worth deciding once the above
-  exists to act on.
+- **How does a seeker find out their request was accepted/rejected?** No
+  notification mechanism exists yet in either vertical (email, in-app, or
+  otherwise) — the natural next feature now that there's a real decision
+  to notify about. See "Employee actions on a referral request" above.
+- **R2 isn't actually configured** (neither locally nor in production —
+  confirmed empty `R2_*` vars both places) — the evidence-upload feature
+  degrades gracefully today (same convention Applaut's resume upload
+  already uses), but no uploaded evidence file is actually retrievable
+  until real credentials are added. Same gap exists for Applaut's resumes,
+  not new here, but worth fixing at some point for either vertical.
 - The latent `api.applaut.lvamo.com` cert auto-renewal risk noted in
   "Dedicated hostname" above (due ~mid-Oct 2026) is still unfixed — worth
   doing before then, low effort (switch to `--webroot` like Jobref's cert).

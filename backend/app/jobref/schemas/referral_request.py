@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -43,3 +44,32 @@ class ReferralRequestInboxItem(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ReferralRequestDetail(BaseModel):
+    """GET /referral-requests/{id} — the employee's single-request review
+    page. Includes two counts alongside the request's own fields:
+    job_posting_request_count (how many requests, from anyone, name this
+    same company+job_link) and seeker_request_count (how many requests
+    this specific seeker has sent this specific employee)."""
+
+    id: uuid.UUID
+    seeker_user_id: uuid.UUID
+    first_name: str
+    last_name: str
+    company_name: str
+    job_link: str
+    cv_drive_link: str
+    cover_letter_drive_link: str
+    message: str
+    status: ReferralRequestStatus
+    rejection_reason: Optional[str]
+    evidence_file_name: Optional[str]
+    created_at: datetime
+    reviewed_at: Optional[datetime]
+    job_posting_request_count: int
+    seeker_request_count: int
+
+
+class RejectRequestPayload(BaseModel):
+    reason: str = Field(min_length=1, max_length=150)

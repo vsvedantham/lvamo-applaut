@@ -2,16 +2,27 @@ import random
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.jobref.models.enums import ReferralViewCapacity
+from app.config import settings
+from app.core.storage import upload_file
+from app.jobref.models.enums import ReferralRequestStatus, ReferralViewCapacity
 from app.jobref.models.jobref_company import JobrefCompany
 from app.jobref.models.jobref_referral_request import JobrefReferralRequest
 from app.jobref.models.jobref_user import JobrefUser
 from app.jobref.schemas.referral_request import ReferralRequestCreate
+
+# Evidence of a completed referral is meant to be a screenshot/photo of
+# something concrete (an email sent, a form filled, a response received) —
+# images plus PDF covers that without opening up arbitrary file types.
+# Same 5 MB ceiling as Applaut's resume uploads.
+EVIDENCE_MAX_FILE_SIZE = 5 * 1024 * 1024
+EVIDENCE_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+
+_DECIDED_STATUSES = {ReferralRequestStatus.ACCEPTED, ReferralRequestStatus.REJECTED}
 
 # The upper bound of each bucketed daily_referral_view_cap value, used as
 # that employee's effective daily cap for routing purposes — e.g. an
@@ -160,3 +171,120 @@ async def list_my_requests(seeker_id: uuid.UUID, db: AsyncSession) -> list[Jobre
         .order_by(JobrefReferralRequest.created_at.desc())
     )
     return list((await db.scalars(stmt)).all())
+
+
+async def _get_owned_request(
+    request_id: uuid.UUID, employee: JobrefUser, db: AsyncSession
+) -> JobrefReferralRequest:
+    """Fetch a request, verifying it's actually routed to this employee —
+    shared by the detail/accept/reject endpoints so none of them can be
+    used to read or act on someone else's inbox item."""
+    request = await db.get(JobrefReferralRequest, request_id)
+    if not request or request.to_user_id != employee.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Referral request not found")
+    return request
+
+
+async def count_for_job_posting(company_name: str, job_link: str, db: AsyncSession) -> int:
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(JobrefReferralRequest)
+            .where(
+                JobrefReferralRequest.company_name == company_name,
+                JobrefReferralRequest.job_link == job_link,
+            )
+        )
+        or 0
+    )
+
+
+async def count_from_seeker(seeker_id: uuid.UUID, employee_id: uuid.UUID, db: AsyncSession) -> int:
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(JobrefReferralRequest)
+            .where(
+                JobrefReferralRequest.seeker_user_id == seeker_id,
+                JobrefReferralRequest.to_user_id == employee_id,
+            )
+        )
+        or 0
+    )
+
+
+async def get_request_detail(
+    request_id: uuid.UUID, employee: JobrefUser, db: AsyncSession
+) -> JobrefReferralRequest:
+    """Opening the request is what moves it from PENDING_REVIEW to
+    UNDER_REVIEW — a side effect of the read, matching the "opening an
+    email marks it read" pattern the product spec describes. Idempotent:
+    re-opening an already-under-review (or decided) request changes
+    nothing."""
+    request = await _get_owned_request(request_id, employee, db)
+    if request.status == ReferralRequestStatus.PENDING_REVIEW:
+        request.status = ReferralRequestStatus.UNDER_REVIEW
+        await db.commit()
+        await db.refresh(request)
+    return request
+
+
+async def accept_referral_request(
+    request_id: uuid.UUID,
+    employee: JobrefUser,
+    evidence: UploadFile | None,
+    db: AsyncSession,
+) -> JobrefReferralRequest:
+    request = await _get_owned_request(request_id, employee, db)
+    if request.status in _DECIDED_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This request has already been decided.",
+        )
+
+    if evidence is not None:
+        if evidence.content_type not in EVIDENCE_ALLOWED_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Evidence must be a JPEG/PNG/WebP image or a PDF.",
+            )
+        data = await evidence.read()
+        if len(data) > EVIDENCE_MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Evidence file must not exceed 5 MB.",
+            )
+        r2_key = f"jobref/referral-evidence/{request.id}/{uuid.uuid4()}/{evidence.filename}"
+        if settings.r2_bucket_name:
+            upload_file(r2_key, data, evidence.content_type)
+        else:
+            # Same convention as Applaut's resume uploads: don't attempt a
+            # doomed network call when R2 isn't configured, just mark
+            # where the key would have gone.
+            r2_key = f"local/{r2_key}"
+        request.evidence_r2_key = r2_key
+        request.evidence_file_name = evidence.filename or "evidence"
+
+    request.status = ReferralRequestStatus.ACCEPTED
+    request.reviewed_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(request)
+    return request
+
+
+async def reject_referral_request(
+    request_id: uuid.UUID, employee: JobrefUser, reason: str, db: AsyncSession
+) -> JobrefReferralRequest:
+    request = await _get_owned_request(request_id, employee, db)
+    if request.status in _DECIDED_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This request has already been decided.",
+        )
+
+    request.status = ReferralRequestStatus.REJECTED
+    request.rejection_reason = reason
+    request.reviewed_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(request)
+    return request
