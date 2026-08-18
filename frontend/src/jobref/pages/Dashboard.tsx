@@ -7,7 +7,7 @@ import { listMyReferralRequests, type ReferralRequestItem } from '../api/referra
 import { STATUS_COLOR, STATUS_LABEL } from '../constants'
 import { Link } from 'react-router-dom'
 import ProfilePanel from '../components/ProfilePanel'
-import { LogoutIcon, ProfileIcon } from '../components/Icons'
+import { LogoutIcon, ProfileIcon, SentIcon } from '../components/Icons'
 
 // created_at is an ISO-8601 UTC instant (e.g. "2026-08-18T16:41:46Z") —
 // the first 10 characters are the UTC calendar date, matching the
@@ -90,6 +90,11 @@ export default function JobrefDashboard() {
           layout (which we deliberately don't touch — it's shared across
           verticals). */}
       <div style={{ position: 'fixed', top: '1.5rem', right: '1.75rem', display: 'flex', gap: '0.6rem', zIndex: 10 }}>
+        {!isEmployee && (
+          <IconLink to="/jobref/requests" title="My requests">
+            <SentIcon width={19} height={19} />
+          </IconLink>
+        )}
         <IconButton title="Profile" onClick={() => setProfileOpen(true)}>
           <ProfileIcon width={19} height={19} />
         </IconButton>
@@ -275,5 +280,22 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
     >
       {children}
     </button>
+  )
+}
+
+function IconLink({ to, title, children }: { to: string; title: string; children: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      title={title}
+      aria-label={title}
+      style={{
+        width: '2.5rem', height: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '999px',
+        color: 'var(--text-2)', textDecoration: 'none',
+      }}
+    >
+      {children}
+    </Link>
   )
 }

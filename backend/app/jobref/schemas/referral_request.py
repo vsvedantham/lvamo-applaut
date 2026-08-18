@@ -29,8 +29,12 @@ class ReferralRequestResponse(BaseModel):
 
 
 class ReferralRequestInboxItem(BaseModel):
-    """One row in an employee's referral inbox — see
-    GET /api/v1/jobref/referral-requests."""
+    """One row — dual-purpose, matches the endpoint: an employee's own
+    inbox item, or a seeker's own sent-request item (see
+    GET /api/v1/jobref/referral-requests and pages/MyReferralRequests.tsx).
+    rejection_reason/evidence_file_name are included so a seeker can see
+    why they were rejected without needing the employee-only detail
+    endpoint."""
 
     id: uuid.UUID
     first_name: str
@@ -41,6 +45,8 @@ class ReferralRequestInboxItem(BaseModel):
     cover_letter_drive_link: str
     message: str
     status: ReferralRequestStatus
+    rejection_reason: Optional[str]
+    evidence_file_name: Optional[str]
     created_at: datetime
 
     model_config = {"from_attributes": True}

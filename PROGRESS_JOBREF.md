@@ -7,6 +7,14 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Seeker "My requests" page (Aug 2026, verified locally, not yet
+deployed)**: a new page listing everything a seeker has sent — company,
+status, message, and for decided ones, either an acceptance confirmation
+or the employee's rejection reason. Reached via a new icon on the seeker
+dashboard (a paper-airplane, next to Profile/Logout). Read-only —
+symmetric to the employee inbox, but nothing here changes state. See
+"Seeker 'My requests' page" below. **Next session**: deploy to production.
+
 **Status (Aug 2026): the entire referral request lifecycle is live in
 production**, built and deployed across one long session — auth through
 a decided request, employee-side:
@@ -81,6 +89,51 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — auth, companies, the full referral request flow (routing, seeker limits) and employee decisions (accept/reject, evidence upload) all deployed, Aug 2026
+
+## Seeker "My requests" page (Aug 2026, verified locally)
+
+Follow-up to employee actions above — the seeker side of the same
+lifecycle: a page listing everything they've sent and what happened to
+it, since requests now actually reach a real outcome (accepted/rejected)
+worth checking back on.
+
+**Backend**: no new endpoint — `GET /referral-requests` already
+dual-purposed to return a seeker's own sent-request history (built
+earlier for the companies-badge/daily-limit-note logic, see "Companies
+list on the seeker dashboard"). Extended `ReferralRequestInboxItem` (the
+shared list-item schema) with `rejection_reason`/`evidence_file_name` so
+a seeker can see *why* they were rejected directly from the list, without
+needing the employee-only detail endpoint (`GET .../{id}`, which also has
+the side effect of marking a request `under_review` — not something a
+seeker's own read should ever trigger).
+
+**Frontend**: new `pages/MyReferralRequests.tsx` (route `/jobref/requests`
+— distinct from `/jobref/requests/:id`, the employee's per-item detail
+page; no actual routing collision, just a shared path prefix), reached
+via a new icon on the seeker dashboard (`components/Icons.tsx`'s
+`SentIcon`, a paper airplane — themed around "requests you've sent" rather
+than a generic list glyph), positioned before Profile/Logout in the same
+top-right icon row, seeker-only. Same status pill styling
+(`STATUS_COLOR`/`STATUS_LABEL` from `constants.ts`, already shared with
+the employee inbox) — accepted shows a green confirmation banner,
+rejected shows the employee's response in a red banner, pending/under
+review just show the status pill with no extra banner. Read-only: no
+buttons, no state changes — this page only reports.
+
+**Verified locally** (real, not mocked): seeded one seeker, backdated two
+of their three requests by a day each to get around the once-per-day
+limit (matching the same technique used to verify that limit originally),
+had the employee accept one, reject one, and merely open (not decide) the
+third. Full real-browser Playwright check of `/jobref/requests`: all
+three rendered correctly — "Accepted" (green, confirmation text),
+"Rejected" (red, showing the exact reason the employee sent), "Under
+review" (no banner) — newest-first, zero console errors. Confirmed the
+new icon is entirely absent from the employee dashboard (seeker-only, as
+intended). `tsc --noEmit` clean. Applaut/Jobref regression clean. Cascade
+delete confirmed clean.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
 
 ## Employee actions on a referral request (Aug 2026, verified locally)
 

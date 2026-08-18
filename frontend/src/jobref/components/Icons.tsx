@@ -29,3 +29,14 @@ export function CloseIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+// A sent-mail paper airplane — for the seeker's "My requests" link,
+// thematically matching "requests you've sent" rather than a generic list.
+export function SentIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 3L11 13" />
+      <path d="M21 3l-7 18-4-8-8-4 19-6z" />
+    </svg>
+  )
+}

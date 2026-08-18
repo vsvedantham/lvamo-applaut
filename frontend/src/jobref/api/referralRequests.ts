@@ -32,6 +32,8 @@ export interface ReferralRequestItem {
   cover_letter_drive_link: string
   message: string
   status: ReferralRequestStatus
+  rejection_reason: string | null
+  evidence_file_name: string | null
   created_at: string
 }
 
