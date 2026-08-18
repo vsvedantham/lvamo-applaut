@@ -104,6 +104,28 @@ RegisterRequest = Annotated[
 ]
 
 
+class ProfileUpdate(BaseModel):
+    """Editable profile fields — everything except email (never editable,
+    it's the account's stable identity/dedup key) and the system fields
+    (id, is_active, created_at). Mirrors registration's shape: exactly one
+    of employee/seeker must be set, matching the caller's own account
+    type — enforced server-side in services/auth.py since Pydantic alone
+    can't know which type the authenticated user is."""
+
+    first_name: str = Field(min_length=1, max_length=255)
+    last_name: str = Field(min_length=1, max_length=255)
+    phone: str
+    domain: str = Field(min_length=1, max_length=255)
+    employee: Optional[EmployeeDetails] = None
+    seeker: Optional[SeekerDetails] = None
+
+    @model_validator(mode="after")
+    def check_phone(self) -> "ProfileUpdate":
+        if not GERMAN_PHONE_RE.match(self.phone.strip()):
+            raise ValueError("phone must be a valid German phone number")
+        return self
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str

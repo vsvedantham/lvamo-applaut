@@ -7,6 +7,17 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Dashboard redesign: profile moved into a slide-out panel (Aug 2026,
+verified locally, not yet deployed)**: the main dashboard now shows just
+one thing — "Companies available for referrals" (seeker) or "Referral
+requests" (employee), laid out as a responsive grid (1 column on mobile,
+auto-fills more on wide screens). Profile info moved out of the main flow
+entirely, into a slide-out panel opened via a new profile icon at the
+top-right (next to a new logout icon, replacing the old inline "Sign out"
+button). The panel also gained real editing — every profile field except
+email, via a new `PATCH /api/v1/jobref/auth/me`. See "Dashboard redesign"
+below. **Next session**: deploy to production.
+
 **Employee-side referral inbox + routing algorithm — deployed (Aug
 2026)**: referral requests now route to a specific employee (`to_user_id`)
 at submission time — among a company's employees, one is picked at random
@@ -98,6 +109,87 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## Dashboard redesign: profile panel + PC layout (Aug 2026, verified locally)
+
+User's observation: the dashboard's old layout (role pill + welcome +
+domain, then a full profile card, then the companies/inbox list below it)
+worked fine on mobile but wasted a lot of horizontal space and looked
+sparse on desktop. Explicit request: profile info into a slide-out panel
+behind a top-right profile icon (plus a logout icon beside it), leaving
+the main page down to just two things — companies (seeker) or referral
+requests (employee) — with an edit option in the panel for everything
+except email, and it needed to look good on both PC and mobile.
+
+**Design calls made**:
+- **Didn't touch `components/BrandedPage.tsx`** (shared across verticals,
+  flagged out-of-scope) — the new top-right icon bar and the slide-out
+  panel are both `position: fixed`, so they sit correctly regardless of
+  BrandedPage's own centered-flex layout, entirely from within
+  Dashboard.tsx/a new Jobref-owned component. No shared file needed
+  editing this time.
+- **Responsive grid, not a breakpoint** — the companies/inbox lists use
+  `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))`, which
+  naturally renders 1 column on mobile and multiple on wide screens with
+  zero `@media` queries, matching the project's existing preference for
+  flexbox/grid reflow over explicit breakpoints (same convention already
+  used for the employee/seeker registration cards).
+- **Hand-rolled SVG icons** — no icon library exists in this project's
+  dependencies; adding one for two icons wasn't worth it, so
+  `components/Icons.tsx` has small inline SVGs (profile, logout, close).
+- **Editing scope: everything except email** — read literally. Reuses
+  `EmployeeDetails`/`SeekerDetails` (the same nested schemas registration
+  already validates with) inside a new `ProfileUpdate` schema, so the edit
+  form gets the exact same conditional validation (e.g. `notice_join_date`
+  required-iff-`serving_notice`) for free rather than re-implementing it.
+- **Editing an employee's company name/URL also updates their
+  `jobref.companies` row** — that row was seeded once at registration
+  (see the companies-gathering entry below); without this sync, editing a
+  profile would silently make the seeker-facing companies list stale.
+- **Panel always mounted, `transform`/`opacity` toggled** — not
+  conditionally rendered — so the CSS slide-in/fade transition actually
+  has something to animate from/to.
+
+**Backend**: `ProfileUpdate` schema (`schemas/auth.py`) — `first_name`,
+`last_name`, `phone`, `domain` always required, plus exactly one of
+`employee`/`seeker` (reusing `EmployeeDetails`/`SeekerDetails`), matching
+the authenticated user's own type — enforced in the new
+`services/auth.py::update_profile()` (`400` if the wrong/missing one is
+sent). New `PATCH /api/v1/jobref/auth/me`, returns the same
+`JobrefUserResponse` shape `/me` already does.
+
+**Frontend**: `api/auth.ts` (+`ProfileUpdatePayload`, +`updateProfile()`),
+`context/AuthContext.tsx` (+`updateProfile` in the context, updates `user`
+state from the response). New `components/ProfilePanel.tsx` (view mode +
+edit mode, reusing the exact field/label style vocabulary already
+established in `Register.tsx`/`RegisterComplete.tsx`) and
+`components/Icons.tsx`. `pages/Dashboard.tsx` rewritten: fixed top-right
+icon bar (profile + logout), page heading, grid-based list, `ProfilePanel`
+mounted at the bottom. No new route — the panel is part of the dashboard
+page, not a separate URL.
+
+**Verified locally** (real, not mocked, full real-browser flow across
+viewports): desktop (1440×900) — companies grid correctly shows 3 columns
+for 3 seeded companies; profile panel slides in cleanly over a dimmed
+backdrop; clicked "Edit profile," changed the domain field, saved, panel
+returned to view mode showing the new value, confirmed via a second
+`/me` fetch under the hood (the `AuthContext` update). Mobile (390×844) —
+single-column grid, icon bar fits without crowding the logo, panel takes
+`min(400px, 100vw)` so it's fully readable rather than cramped. Employee
+side — same panel with employee-specific fields (company name/working
+since/careers URL/both capacity dropdowns/Week-Month toggle), pre-filled
+correctly. Logout icon confirmed to actually clear the token and redirect
+to login (only reachable once the panel itself is closed — by design, it
+sits under the panel while open, same as any drawer). Found and fixed one
+real bug from screenshots: the profile view accidentally
+`text-transform: capitalize`'d the email address (inherited from the old
+status-row styling) — `ViewRow` now only capitalizes where asked
+(`current_job_status`), not by default. Zero console errors throughout.
+`tsc --noEmit` clean. Applaut/Jobref regression clean. Cascade delete
+confirmed clean across all three jobref tables after test cleanup.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
 
 ## Employee referral inbox + routing (Aug 2026, verified locally)
 

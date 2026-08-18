@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
@@ -9,14 +8,9 @@ import {
   type ReferralInboxItem,
   type ReferralRequestStatus,
 } from '../api/referralRequests'
-import type { ReferralViewCapacity } from '../api/auth'
-
-const CAPACITY_LABEL: Record<ReferralViewCapacity, string> = {
-  up_to_5: '≤ 5',
-  '5_to_10': '5 - 10',
-  '10_to_20': '10 - 20',
-  no_cap: 'No cap',
-}
+import { Link } from 'react-router-dom'
+import ProfilePanel from '../components/ProfilePanel'
+import { LogoutIcon, ProfileIcon } from '../components/Icons'
 
 // Only one status exists today — more get added once the employee-side
 // action flow (accept/decline/etc.) is built. Keeping this as a lookup
@@ -29,6 +23,8 @@ export default function JobrefDashboard() {
   useDocumentTitle('Dashboard | Jobref')
   const { user, logout } = useJobrefAuth()
   const isEmployee = user?.user_type === 'employee'
+
+  const [profileOpen, setProfileOpen] = useState(false)
 
   // Companies list is seeker-only in the UI (employees have no use for it),
   // fetched once the dashboard knows it's dealing with a seeker.
@@ -74,55 +70,26 @@ export default function JobrefDashboard() {
 
   return (
     <BrandedPage>
-      <div style={{ width: '100%', maxWidth: '520px' }}>
-        <div style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
-          <div style={{
-            display: 'inline-block', padding: '0.3rem 0.8rem', background: 'var(--warn-bg)',
-            border: '1px solid var(--warn-border)', borderRadius: '999px', fontSize: '0.75rem',
-            fontWeight: 500, color: 'var(--warn)', letterSpacing: '0.04em', marginBottom: '1.25rem',
-          }}>
-            {isEmployee ? 'Employee' : 'Job seeker'}
-          </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.35rem' }}>
-            Welcome, {user.first_name}
-          </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>
-            Domain: {user.domain}
-          </p>
-        </div>
+      {/* Fixed top-right — stays put regardless of how much content the
+          page grows to, independent of BrandedPage's own centered flex
+          layout (which we deliberately don't touch — it's shared across
+          verticals). */}
+      <div style={{ position: 'fixed', top: '1.5rem', right: '1.75rem', display: 'flex', gap: '0.6rem', zIndex: 10 }}>
+        <IconButton title="Profile" onClick={() => setProfileOpen(true)}>
+          <ProfileIcon width={19} height={19} />
+        </IconButton>
+        <IconButton title="Sign out" onClick={logout}>
+          <LogoutIcon width={19} height={19} />
+        </IconButton>
+      </div>
 
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {isEmployee && user.employee_profile && (
-            <>
-              <Row label="Company" value={user.employee_profile.company_name} />
-              <Row label="Working since" value={user.employee_profile.working_since} />
-              <Row label="Careers page" value={user.employee_profile.company_careers_url} link />
-              <Row
-                label="Referrals"
-                value={`${CAPACITY_LABEL[user.employee_profile.referral_capacity]} per ${user.employee_profile.refer_frequency === 'weekly' ? 'week' : 'month'}`}
-              />
-              <Row
-                label="Requests reviewed"
-                value={`${CAPACITY_LABEL[user.employee_profile.daily_referral_view_cap]} per day`}
-              />
-            </>
-          )}
-          {!isEmployee && user.seeker_profile && (
-            <>
-              <Row label="Status" value={user.seeker_profile.current_job_status.replace('_', ' ')} />
-              {user.seeker_profile.notice_join_date && (
-                <Row label="Available from" value={user.seeker_profile.notice_join_date} />
-              )}
-              <Row label="CV" value={user.seeker_profile.cv_drive_link} link />
-            </>
-          )}
-        </div>
+      <div style={{ width: '100%', maxWidth: '900px' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+          {isEmployee ? 'Referral requests' : 'Companies available for referrals'}
+        </h1>
 
         {!isEmployee && (
-          <div style={{ marginTop: '1.75rem' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.85rem' }}>
-              Companies available for referrals
-            </h2>
+          <>
             {companiesError && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
                 Couldn't load companies right now — try refreshing the page.
@@ -137,7 +104,7 @@ export default function JobrefDashboard() {
               </p>
             )}
             {companies && companies.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
                 {companies.map((c) => (
                   <Link
                     key={c.name + c.careers_url}
@@ -169,14 +136,11 @@ export default function JobrefDashboard() {
                 ))}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {isEmployee && (
-          <div style={{ marginTop: '1.75rem' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.85rem' }}>
-              Referral requests
-            </h2>
+          <>
             {inboxError && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
                 Couldn't load your requests right now — try refreshing the page.
@@ -191,7 +155,7 @@ export default function JobrefDashboard() {
               </p>
             )}
             {inbox && inbox.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0.75rem' }}>
                 {inbox.map((r) => (
                   <div
                     key={r.id}
@@ -231,36 +195,32 @@ export default function JobrefDashboard() {
                 ))}
               </div>
             )}
-          </div>
+          </>
         )}
 
-        <p style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <button
-            onClick={logout}
-            style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-2)', borderRadius: 'var(--radius-xs)', padding: '0.5rem 1.25rem', fontSize: '0.85rem', cursor: 'pointer' }}
-          >
-            Sign out
-          </button>
-        </p>
-        <p style={{ marginTop: '0.75rem', textAlign: 'center', color: 'var(--text-3)', fontSize: '0.8rem' }}>
-          <Link to="/" style={{ color: 'var(--text-3)' }}>Back to LVAMO</Link>
+        <p style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <Link to="/" style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>Back to LVAMO</Link>
         </p>
       </div>
+
+      <ProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} />
     </BrandedPage>
   )
 }
 
-function Row({ label, value, link }: { label: string; value: string; link?: boolean }) {
+function IconButton({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', fontSize: '0.85rem' }}>
-      <span style={{ color: 'var(--text-2)' }}>{label}</span>
-      {link ? (
-        <a href={value} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '260px' }}>
-          {value}
-        </a>
-      ) : (
-        <span style={{ color: 'var(--text-1)', fontWeight: 500, textTransform: 'capitalize' }}>{value}</span>
-      )}
-    </div>
+    <button
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      style={{
+        width: '2.5rem', height: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '999px',
+        color: 'var(--text-2)', cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
   )
 }

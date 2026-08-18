@@ -20,6 +20,7 @@ from app.jobref.models.jobref_user import JobrefUser
 from app.jobref.schemas.auth import (
     EmployeeRegisterRequest,
     LoginRequest,
+    ProfileUpdate,
     RegisterRequest,
     SeekerRegisterRequest,
 )
@@ -164,6 +165,53 @@ async def login(payload: LoginRequest, db: AsyncSession) -> tuple[JobrefUser, st
             detail="Account disabled",
         )
     return user, _issue_token(user.id)
+
+
+async def update_profile(user: JobrefUser, payload: ProfileUpdate, db: AsyncSession) -> JobrefUser:
+    """Edits everything except email (identity/dedup key, never editable)
+    and the system fields. Exactly one of employee/seeker must be set,
+    matching the caller's own account type — checked here since Pydantic
+    alone can't know which type the authenticated user is."""
+    if user.is_employee:
+        if payload.employee is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="employee details are required",
+            )
+        details = payload.employee
+        user.company_name = details.company_name
+        user.working_since = details.working_since
+        user.daily_referral_view_cap = details.daily_referral_view_cap
+        user.refer_frequency = details.refer_frequency
+        user.referral_capacity = details.referral_capacity
+        user.company_careers_url = details.company_careers_url
+
+        # Keep the jobref.companies row (seeded at registration — see
+        # _register_employee) in sync so the companies list a seeker sees
+        # doesn't go stale against the employee's own current profile.
+        company = await db.scalar(select(JobrefCompany).where(JobrefCompany.user_id == user.id))
+        if company:
+            company.name = details.company_name
+            company.careers_url = details.company_careers_url
+    else:
+        if payload.seeker is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="seeker details are required",
+            )
+        details = payload.seeker
+        user.current_job_status = details.current_job_status
+        user.notice_join_date = details.notice_join_date
+        user.cv_drive_link = details.cv_drive_link
+
+    user.first_name = payload.first_name
+    user.last_name = payload.last_name
+    user.phone = payload.phone
+    user.domain = payload.domain
+
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 
 async def get_current_user(

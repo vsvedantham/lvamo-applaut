@@ -105,3 +105,20 @@ export async function getMe(): Promise<JobrefUser> {
   const { data } = await client.get<JobrefUser>('/auth/me')
   return data
 }
+
+// Everything editable except email (identity/dedup key — never editable).
+// Mirrors RegisterPayload's shape: exactly one of employee/seeker, matching
+// the caller's own account type.
+export interface ProfileUpdatePayload {
+  first_name: string
+  last_name: string
+  phone: string
+  domain: string
+  employee?: EmployeeDetails
+  seeker?: SeekerDetails
+}
+
+export async function updateProfile(payload: ProfileUpdatePayload): Promise<JobrefUser> {
+  const { data } = await client.patch<JobrefUser>('/auth/me', payload)
+  return data
+}

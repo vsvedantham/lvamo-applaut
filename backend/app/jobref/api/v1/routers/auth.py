@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.jobref.models.jobref_user import JobrefUser
-from app.jobref.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.jobref.schemas.auth import LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse
 from app.jobref.schemas.user import JobrefUserResponse
-from app.jobref.services.auth import get_current_user, login, register
+from app.jobref.services.auth import get_current_user, login, register, update_profile
 
 router = APIRouter(prefix="/auth")
 
@@ -30,3 +30,13 @@ async def login_user(
 @router.get("/me", response_model=JobrefUserResponse)
 async def me(current_user: JobrefUser = Depends(get_current_user)):
     return JobrefUserResponse.from_user(current_user)
+
+
+@router.patch("/me", response_model=JobrefUserResponse)
+async def update_me(
+    payload: ProfileUpdate,
+    current_user: JobrefUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    updated = await update_profile(current_user, payload, db)
+    return JobrefUserResponse.from_user(updated)
