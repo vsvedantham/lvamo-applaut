@@ -7,6 +7,16 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
+**Seeker request limits + "already requested" badge (Aug 2026, verified
+locally, not yet deployed)**: a seeker can now send only **one referral
+request per UTC calendar day**, across any company — the dashboard shows
+a note (in the seeker's own local time) and greys out every company tile
+once they've used today's request; companies they've ever messaged get a
+"Requested" badge. Re-requesting the same company on a later day is
+allowed, but not with a job posting link already used there (`409` if it
+matches). See "Seeker request limits" below. **Next session**: deploy to
+production.
+
 **Dashboard redesign: profile moved into a slide-out panel — deployed
 (Aug 2026)**: the main dashboard now shows just one thing — "Companies
 available for referrals" (seeker) or "Referral requests" (employee), laid
@@ -108,6 +118,80 @@ change). **Next session**: one real seeker signup at
 ---
 
 ## Status: Live in production — employee registration form fully settled (referral capacity always-asked and bucketed, no can_refer checkbox), deployed Aug 2026
+
+## Seeker request limits (Aug 2026, verified locally)
+
+User's explicit spec: 1 referral request per seeker per day globally, a
+badge on companies already requested, a dashboard note explaining the
+once-a-day reset ("after 00:00"), and — when re-requesting the same
+company on a later day — the job link must differ from any used there
+before.
+
+**Two independent rules, both enforced server-side in
+`services/referral_request.py::create_referral_request`, checked before
+the existing routing/capacity logic**:
+1. **One request per seeker per UTC calendar day, any company** — `429
+   Too Many Requests` once hit (chose 429 over 409 deliberately: this is
+   a rate limit, not a resource-state conflict — the company-capacity
+   case from the earlier routing work stays `409`, keeping the two
+   distinct). Checked via a live `COUNT` on `created_at::date = today`,
+   same self-resetting-at-UTC-midnight approach as the employee-capacity
+   check.
+2. **No repeat `(seeker, company_name, job_link)`** — `409` with a message
+   naming the exact reason. Backed by a genuine DB-level `UNIQUE` index
+   (migration `0017`) as well as the application check, so a race between
+   two near-simultaneous requests can't slip through.
+
+**A real Postgres wall hit while building #1's DB backstop**: tried adding
+a matching `UNIQUE` index on `(seeker_user_id, created_at::date)` too, but
+Postgres rejected it — `functions in index expression must be marked
+IMMUTABLE`. A `timestamptz::date` cast depends on the session's `timezone`
+setting, so Postgres classifies it `STABLE`, not `IMMUTABLE`, and won't
+allow it in an index expression regardless of how deterministic the
+result actually is in practice (this DB's session timezone is confirmed
+`UTC`, verified via `SHOW timezone`). The usual workaround is a custom SQL
+function explicitly marked `IMMUTABLE` — decided against introducing one
+for this: it's a new kind of schema object nothing else in this codebase
+uses, just to backstop a rule the application layer already enforces
+correctly. **Rule #1 has application-level enforcement only, no DB-level
+backstop** — a real asymmetry worth knowing if this code is touched again;
+rule #2 has both.
+
+**Backend**: `GET /api/v1/jobref/referral-requests` (previously
+employee-inbox-only) is now genuinely dual-purpose — a seeker calling it
+gets their own sent-request history (new `list_my_requests()`, symmetric
+to `list_inbox()`), reusing the same `ReferralRequestInboxItem` response
+shape for both audiences.
+
+**Frontend**: `api/referralRequests.ts`'s `listReferralInbox` renamed to
+`listMyReferralRequests` (both types now call the same function).
+Dashboard.tsx: a warning-colored note above the companies grid, shown only
+once the seeker has sent today's request, naming the reset moment via
+`nextUtcMidnight().toLocaleString()` — computed as the next UTC-midnight
+instant from *now*, rendered in the browser's own local timezone rather
+than making the seeker do UTC math. Every company tile becomes a plain
+(non-clickable) `div` instead of a `Link` while locked, with reduced
+opacity and a "Locked until tomorrow" subtitle. Independently, any company
+the seeker has ever messaged gets a second small "Requested" badge
+stacked under the referrer-count badge — this persists across days,
+separate from the daily lockout state.
+
+**Verified locally** (real, not mocked): backend — 1st request today →
+`201`; 2nd request same day to a *different* company → `429` with the
+exact message; backdated the first request's `created_at` by a day via
+direct DB update to simulate "yesterday," then confirmed re-requesting
+the same company with the *same* job link → `409`, and with a *different*
+job link → `201`. `GET /referral-requests` as a seeker confirmed returns
+their own history (not another seeker's). Full real-browser Playwright
+flow: dashboard before any request shows normal tiles, no note; after
+sending one, screenshot confirms the note (with a real localized
+timestamp), both companies greyed out and non-clickable
+("Locked until tomorrow"), and the messaged company alone carrying the
+"Requested" badge. Zero console errors. `tsc --noEmit` clean.
+Applaut/Jobref regression clean. Cascade delete confirmed clean.
+
+**Not yet done**: not deployed — committed locally pending go-ahead (see
+banner at the top of this file).
 
 ## Dashboard redesign: profile panel + PC layout (Aug 2026, verified locally)
 

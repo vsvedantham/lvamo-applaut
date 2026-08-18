@@ -4,8 +4,8 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
 import { listCompanies, type Company } from '../api/companies'
 import {
-  listReferralInbox,
-  type ReferralInboxItem,
+  listMyReferralRequests,
+  type ReferralRequestItem,
   type ReferralRequestStatus,
 } from '../api/referralRequests'
 import { Link } from 'react-router-dom'
@@ -17,6 +17,25 @@ import { LogoutIcon, ProfileIcon } from '../components/Icons'
 // rather than a raw string makes that later addition a one-line change.
 const STATUS_LABEL: Record<ReferralRequestStatus, string> = {
   pending_review: 'Pending review',
+}
+
+// created_at is an ISO-8601 UTC instant (e.g. "2026-08-18T16:41:46Z") —
+// the first 10 characters are the UTC calendar date, matching the
+// backend's own UTC-day boundary for the once-per-day limit.
+function utcDateOf(iso: string): string {
+  return iso.slice(0, 10)
+}
+
+function todayUTC(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+// The backend resets the once-per-day limit at UTC midnight; rendered via
+// toLocaleString() so the seeker sees it in their own browser's timezone
+// rather than having to do UTC math themselves.
+function nextUtcMidnight(): Date {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0))
 }
 
 export default function JobrefDashboard() {
@@ -46,27 +65,33 @@ export default function JobrefDashboard() {
     }
   }, [user, isEmployee])
 
-  // Referral inbox is employee-only, symmetric to the seeker's companies
-  // list above.
-  const [inbox, setInbox] = useState<ReferralInboxItem[] | null>(null)
-  const [inboxError, setInboxError] = useState(false)
+  // GET /referral-requests is dual-purpose server-side: an employee's own
+  // inbox, or a seeker's own sent-request history (used here for the
+  // "already requested" company badge and the once-per-day note/lockout).
+  const [myRequests, setMyRequests] = useState<ReferralRequestItem[] | null>(null)
+  const [myRequestsError, setMyRequestsError] = useState(false)
 
   useEffect(() => {
-    if (!user || !isEmployee) return
+    if (!user) return
     let cancelled = false
-    listReferralInbox()
+    listMyReferralRequests()
       .then((data) => {
-        if (!cancelled) setInbox(data)
+        if (!cancelled) setMyRequests(data)
       })
       .catch(() => {
-        if (!cancelled) setInboxError(true)
+        if (!cancelled) setMyRequestsError(true)
       })
     return () => {
       cancelled = true
     }
-  }, [user, isEmployee])
+  }, [user])
 
   if (!user) return null
+
+  // Seeker-only derived state: which companies they've already messaged
+  // (ever), and whether they've used up today's one-request allowance.
+  const requestedCompanyNames = new Set((myRequests ?? []).map(r => r.company_name))
+  const sentToday = !isEmployee && (myRequests ?? []).some(r => utcDateOf(r.created_at) === todayUTC())
 
   return (
     <BrandedPage>
@@ -90,6 +115,15 @@ export default function JobrefDashboard() {
 
         {!isEmployee && (
           <>
+            {sentToday && (
+              <div style={{
+                padding: '0.75rem 1rem', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)',
+                borderRadius: 'var(--radius-xs)', marginBottom: '1.25rem', fontSize: '0.83rem', color: 'var(--warn)',
+              }}>
+                You've already sent a referral request today. You can send your next one after{' '}
+                <strong>{nextUtcMidnight().toLocaleString()}</strong>.
+              </div>
+            )}
             {companiesError && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
                 Couldn't load companies right now — try refreshing the page.
@@ -105,35 +139,59 @@ export default function JobrefDashboard() {
             )}
             {companies && companies.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
-                {companies.map((c) => (
-                  <Link
-                    key={c.name + c.careers_url}
-                    to={`/jobref/refer?company=${encodeURIComponent(c.name)}&careers_url=${encodeURIComponent(c.careers_url)}`}
-                    style={{
-                      background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-                      padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
-                      textDecoration: 'none', cursor: 'pointer', transition: 'border-color 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {c.name}
+                {companies.map((c) => {
+                  const alreadyRequested = requestedCompanyNames.has(c.name)
+                  const locked = sentToday
+                  const cardStyle: React.CSSProperties = {
+                    background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                    padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
+                    textDecoration: 'none', transition: 'border-color 0.15s',
+                    opacity: locked ? 0.55 : 1, cursor: locked ? 'not-allowed' : 'pointer',
+                  }
+                  const content = (
+                    <>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {c.name}
+                        </div>
+                        <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                          {locked ? 'Locked until tomorrow' : 'Tap to request a referral'}
+                        </span>
                       </div>
-                      <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
-                        Tap to request a referral
-                      </span>
-                    </div>
-                    <div style={{
-                      flexShrink: 0, padding: '0.25rem 0.65rem', background: 'var(--success-bg)',
-                      border: '1px solid var(--success-border)', borderRadius: '999px', fontSize: '0.7rem',
-                      fontWeight: 600, color: 'var(--success)', whiteSpace: 'nowrap',
-                    }}>
-                      {c.referrer_count} {c.referrer_count === 1 ? 'referrer' : 'referrers'}
-                    </div>
-                  </Link>
-                ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem', flexShrink: 0 }}>
+                        <div style={{
+                          padding: '0.25rem 0.65rem', background: 'var(--success-bg)',
+                          border: '1px solid var(--success-border)', borderRadius: '999px', fontSize: '0.7rem',
+                          fontWeight: 600, color: 'var(--success)', whiteSpace: 'nowrap',
+                        }}>
+                          {c.referrer_count} {c.referrer_count === 1 ? 'referrer' : 'referrers'}
+                        </div>
+                        {alreadyRequested && (
+                          <div style={{
+                            padding: '0.2rem 0.55rem', background: 'var(--accent-glow)',
+                            border: '1px solid var(--accent-border)', borderRadius: '999px', fontSize: '0.68rem',
+                            fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap',
+                          }}>
+                            Requested
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )
+                  return locked ? (
+                    <div key={c.name + c.careers_url} style={cardStyle}>{content}</div>
+                  ) : (
+                    <Link
+                      key={c.name + c.careers_url}
+                      to={`/jobref/refer?company=${encodeURIComponent(c.name)}&careers_url=${encodeURIComponent(c.careers_url)}`}
+                      style={cardStyle}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-border)')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >
+                      {content}
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </>
@@ -141,22 +199,22 @@ export default function JobrefDashboard() {
 
         {isEmployee && (
           <>
-            {inboxError && (
+            {myRequestsError && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
                 Couldn't load your requests right now — try refreshing the page.
               </p>
             )}
-            {!inboxError && inbox === null && (
+            {!myRequestsError && myRequests === null && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>Loading…</p>
             )}
-            {inbox && inbox.length === 0 && (
+            {myRequests && myRequests.length === 0 && (
               <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
                 No referral requests yet — job seekers will show up here once they reach out.
               </p>
             )}
-            {inbox && inbox.length > 0 && (
+            {myRequests && myRequests.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0.75rem' }}>
-                {inbox.map((r) => (
+                {myRequests.map((r) => (
                   <div
                     key={r.id}
                     style={{

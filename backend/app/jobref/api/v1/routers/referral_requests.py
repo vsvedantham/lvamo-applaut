@@ -9,7 +9,11 @@ from app.jobref.schemas.referral_request import (
     ReferralRequestResponse,
 )
 from app.jobref.services.auth import get_current_user
-from app.jobref.services.referral_request import create_referral_request, list_inbox
+from app.jobref.services.referral_request import (
+    create_referral_request,
+    list_inbox,
+    list_my_requests,
+)
 
 router = APIRouter(prefix="/referral-requests")
 
@@ -32,13 +36,14 @@ async def submit_referral_request(
 
 
 @router.get("", response_model=list[ReferralRequestInboxItem])
-async def referral_inbox(
+async def my_referral_requests(
     current_user: JobrefUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user.is_employee:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only employees have a referral inbox",
-        )
-    return await list_inbox(current_user.id, db)
+    # Dual-purpose, like /auth/me: an employee's own inbox (requests
+    # routed to them), or a seeker's own sent-request history (used for
+    # the "already requested" company badge and the daily-limit note on
+    # Dashboard.tsx).
+    if current_user.is_employee:
+        return await list_inbox(current_user.id, db)
+    return await list_my_requests(current_user.id, db)

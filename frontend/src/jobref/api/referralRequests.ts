@@ -19,7 +19,10 @@ export interface ReferralRequestResponse {
   created_at: string
 }
 
-export interface ReferralInboxItem {
+// One row shape, two audiences — GET /referral-requests is dual-purpose
+// server-side (see api/v1/routers/referral_requests.py): an employee's own
+// inbox (requests routed to them), or a seeker's own sent-request history.
+export interface ReferralRequestItem {
   id: string
   first_name: string
   last_name: string
@@ -39,7 +42,7 @@ export async function submitReferralRequest(
   return data
 }
 
-export async function listReferralInbox(): Promise<ReferralInboxItem[]> {
-  const { data } = await client.get<ReferralInboxItem[]>('/referral-requests')
+export async function listMyReferralRequests(): Promise<ReferralRequestItem[]> {
+  const { data } = await client.get<ReferralRequestItem[]>('/referral-requests')
   return data
 }
