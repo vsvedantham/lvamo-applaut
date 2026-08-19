@@ -39,10 +39,13 @@ _CAP_UPPER_BOUND: dict[ReferralViewCapacity, int | None] = {
 async def _find_eligible_referrer(
     db: AsyncSession, company_name: str, company_careers_url: str
 ) -> JobrefUser | None:
-    """Among the employees who registered this company, pick one at random
-    from those who haven't hit their own daily_referral_view_cap yet today
-    (UTC calendar day). Returns None if the company has no employees at
-    all, or if every employee there is already at capacity for today."""
+    """Among the *active* employees who registered this company, pick one
+    at random from those who haven't hit their own daily_referral_view_cap
+    yet today (UTC calendar day). Returns None if the company has no active
+    employees at all, or if every active employee there is already at
+    capacity for today. An inactive employee (e.g. no longer at the
+    company) is excluded here the same way they're excluded from the
+    companies listing — they can't log in to review a request anyway."""
     employees = (
         await db.scalars(
             select(JobrefUser)
@@ -50,6 +53,7 @@ async def _find_eligible_referrer(
             .where(
                 JobrefCompany.name == company_name,
                 JobrefCompany.careers_url == company_careers_url,
+                JobrefUser.is_active.is_(True),
             )
         )
     ).all()
