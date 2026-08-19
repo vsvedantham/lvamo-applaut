@@ -28,3 +28,16 @@ def upload_file(key: str, data: bytes, content_type: str) -> None:
 def delete_file(key: str) -> None:
     client = get_r2_client()
     client.delete_object(Bucket=settings.r2_bucket_name, Key=key)
+
+
+def generate_presigned_url(key: str, expires_in: int = 300) -> str:
+    """A short-lived signed GET URL for an object that isn't otherwise
+    public — R2 buckets in this project aren't. Callers own their own
+    authorization check (is this caller allowed to see this specific
+    object?) before calling this; it does no such check itself."""
+    client = get_r2_client()
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.r2_bucket_name, "Key": key},
+        ExpiresIn=expires_in,
+    )

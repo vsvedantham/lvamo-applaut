@@ -3,7 +3,7 @@ import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useJobrefAuth } from '../context/AuthContext'
 import { listCompanies, type Company } from '../api/companies'
-import { listMyReferralRequests, type ReferralRequestItem } from '../api/referralRequests'
+import { getEvidenceUrl, listMyReferralRequests, type ReferralRequestItem } from '../api/referralRequests'
 import { STATUS_COLOR, STATUS_LABEL } from '../constants'
 import { Link } from 'react-router-dom'
 import ProfilePanel from '../components/ProfilePanel'
@@ -60,6 +60,26 @@ export default function JobrefDashboard() {
   // "already requested" company badge and the once-per-day note/lockout).
   const [myRequests, setMyRequests] = useState<ReferralRequestItem[] | null>(null)
   const [myRequestsError, setMyRequestsError] = useState(false)
+
+  // Per-row state for the "See referral evidence" link — the URL is
+  // fetched fresh on every click (it's short-lived server-side) rather
+  // than fetched once and cached, so there's no state to hold beyond
+  // "which row is currently fetching" and "did the last attempt fail".
+  const [evidenceLoadingId, setEvidenceLoadingId] = useState<string | null>(null)
+  const [evidenceErrorId, setEvidenceErrorId] = useState<string | null>(null)
+
+  async function handleViewEvidence(id: string) {
+    setEvidenceErrorId(null)
+    setEvidenceLoadingId(id)
+    try {
+      const url = await getEvidenceUrl(id)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setEvidenceErrorId(id)
+    } finally {
+      setEvidenceLoadingId(null)
+    }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -308,6 +328,26 @@ export default function JobrefDashboard() {
                             <p style={{ color: 'var(--success)', fontSize: '0.78rem', margin: 0 }}>
                               Accepted and sent for referral!
                             </p>
+                            {r.evidence_file_name && (
+                              <button
+                                type="button"
+                                onClick={() => handleViewEvidence(r.id)}
+                                disabled={evidenceLoadingId === r.id}
+                                style={{
+                                  marginTop: '0.4rem', background: 'none', border: 'none', padding: 0,
+                                  color: 'var(--success)', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline',
+                                  cursor: evidenceLoadingId === r.id ? 'default' : 'pointer',
+                                  opacity: evidenceLoadingId === r.id ? 0.6 : 1,
+                                }}
+                              >
+                                {evidenceLoadingId === r.id ? 'Opening…' : 'See referral evidence ↗'}
+                              </button>
+                            )}
+                            {evidenceErrorId === r.id && (
+                              <p style={{ color: 'var(--danger)', fontSize: '0.72rem', margin: '0.3rem 0 0' }}>
+                                Couldn't open the evidence — try again.
+                              </p>
+                            )}
                           </div>
                         )}
                         {r.status === 'rejected' && (

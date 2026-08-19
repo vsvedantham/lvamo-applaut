@@ -18,6 +18,7 @@ from app.jobref.services.referral_request import (
     count_for_job_posting,
     count_from_seeker,
     create_referral_request,
+    get_evidence_url,
     get_request_detail,
     list_inbox,
     list_my_requests,
@@ -122,3 +123,16 @@ async def reject_request(
     _require_employee(current_user)
     request = await reject_referral_request(request_id, current_user, payload.reason, db)
     return await _to_detail(request, db)
+
+
+@router.get("/{request_id}/evidence")
+async def referral_request_evidence_url(
+    request_id: uuid.UUID,
+    current_user: JobrefUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Open to either party on the request (the seeker it belongs to, or the
+    # employee it's routed to) — no is_employee gate here, unlike the
+    # review endpoints above.
+    url = await get_evidence_url(request_id, current_user, db)
+    return {"url": url}

@@ -4,6 +4,7 @@ import BrandedPage from '../../components/BrandedPage'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import {
   acceptReferralRequest,
+  getEvidenceUrl,
   getReferralRequestDetail,
   rejectReferralRequest,
   type ReferralRequestDetail as Detail,
@@ -33,6 +34,25 @@ export default function JobrefReferralRequestDetail() {
 
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
+
+  // Same "fetch fresh on click" pattern as Dashboard.tsx's seeker-side
+  // evidence link — the signed URL is short-lived server-side.
+  const [evidenceUrlLoading, setEvidenceUrlLoading] = useState(false)
+  const [evidenceUrlError, setEvidenceUrlError] = useState(false)
+
+  async function handleViewEvidence() {
+    if (!id) return
+    setEvidenceUrlError(false)
+    setEvidenceUrlLoading(true)
+    try {
+      const url = await getEvidenceUrl(id)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setEvidenceUrlError(true)
+    } finally {
+      setEvidenceUrlLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -152,10 +172,30 @@ export default function JobrefReferralRequestDetail() {
             <div style={{ padding: '0.7rem 0.875rem', background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: 'var(--radius-xs)' }}>
               <p style={{ color: 'var(--success)', fontSize: '0.83rem', margin: 0 }}>
                 Marked as accepted and sent for referral.
-                {request.evidence_file_name
-                  ? ` Evidence shared: ${request.evidence_file_name}`
-                  : ' No evidence was shared.'}
+                {!request.evidence_file_name && ' No evidence was shared.'}
               </p>
+              {request.evidence_file_name && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleViewEvidence}
+                    disabled={evidenceUrlLoading}
+                    style={{
+                      marginTop: '0.4rem', background: 'none', border: 'none', padding: 0,
+                      color: 'var(--success)', fontSize: '0.83rem', fontWeight: 600, textDecoration: 'underline',
+                      cursor: evidenceUrlLoading ? 'default' : 'pointer',
+                      opacity: evidenceUrlLoading ? 0.6 : 1,
+                    }}
+                  >
+                    {evidenceUrlLoading ? 'Opening…' : 'See referral evidence ↗'}
+                  </button>
+                  {evidenceUrlError && (
+                    <p style={{ color: 'var(--danger)', fontSize: '0.78rem', margin: '0.3rem 0 0' }}>
+                      Couldn't open the evidence — try again.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
           {decided && request.status === 'rejected' && (

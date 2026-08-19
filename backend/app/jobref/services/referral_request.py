@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.storage import upload_file
+from app.core.storage import generate_presigned_url, upload_file
 from app.jobref.models.enums import ReferralRequestStatus, ReferralViewCapacity
 from app.jobref.models.jobref_company import JobrefCompany
 from app.jobref.models.jobref_referral_request import JobrefReferralRequest
@@ -292,3 +292,28 @@ async def reject_referral_request(
     await db.commit()
     await db.refresh(request)
     return request
+
+
+EVIDENCE_URL_EXPIRES_IN = 300  # 5 minutes — short-lived, re-requested per click rather than cached
+
+
+async def get_evidence_url(request_id: uuid.UUID, user: JobrefUser, db: AsyncSession) -> str:
+    """Either party on the request (the seeker it belongs to, or the
+    employee it's routed to) can view the evidence — not just whichever
+    endpoint's own dependency happens to require one type. 404s rather
+    than 403s for a request that exists but isn't the caller's own, same
+    reasoning as _get_owned_request: don't reveal existence to a caller
+    with no legitimate claim to it."""
+    request = await db.get(JobrefReferralRequest, request_id)
+    if not request or (request.seeker_user_id != user.id and request.to_user_id != user.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Referral request not found")
+    if not request.evidence_r2_key:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No evidence was shared for this request")
+    if request.evidence_r2_key.startswith("local/"):
+        # Same convention as the upload side: don't attempt a doomed R2
+        # call when it was never actually uploaded there in the first place.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Evidence storage isn't available in this environment",
+        )
+    return generate_presigned_url(request.evidence_r2_key, expires_in=EVIDENCE_URL_EXPIRES_IN)

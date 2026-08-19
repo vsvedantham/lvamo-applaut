@@ -90,3 +90,11 @@ export async function rejectReferralRequest(id: string, reason: string): Promise
   const { data } = await client.post<ReferralRequestDetail>(`/referral-requests/${id}/reject`, { reason })
   return data
 }
+
+// Evidence isn't public in R2, so this returns a short-lived signed URL
+// (re-fetch on every click rather than caching it — it expires server-side
+// after 5 minutes). Open to either party on the request.
+export async function getEvidenceUrl(id: string): Promise<string> {
+  const { data } = await client.get<{ url: string }>(`/referral-requests/${id}/evidence`)
+  return data.url
+}

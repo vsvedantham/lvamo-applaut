@@ -7,18 +7,12 @@
 
 ## 🎯 NEXT SESSION PRIMARY TASK
 
-None open. Most recent work — bug fix: session didn't persist through
-the LVAMO hub — is deployed and verified in production (Aug 2026). User
-reported that clicking the logo/"Back to LVAMO" while logged in, then
-clicking back into Jobref from the hub, landed on the marketing landing
-page (Get started/Sign in) again instead of continuing to the dashboard —
-even though the session was still valid the whole time. Root cause:
-`pages/Jobref.tsx` (and, found while checking for the same pattern,
-`Login.tsx`/`Register.tsx`/`RegisterComplete.tsx`) never checked auth
-state at all — always rendered their logged-out content unconditionally.
-All four now redirect to `/jobref/dashboard` if a valid session already
-exists. See "Bug fix: auth pages didn't check for an existing session"
-below.
+None open. Most recent work (Aug 2026, deployed and verified in
+production): Jobref made public-ready for community sharing while
+Applaut stays private — see "Jobref shared publicly: hub visibility
+config + employee active/inactive" below for the full detail. Before
+that: a bug fix so session persists through the LVAMO hub (see "Bug fix:
+auth pages didn't check for an existing session" further below).
 
 **Seeker dashboard merged into one two-column view + 5-min idle timeout —
 deployed (Aug 2026)**: user's explicit follow-up to the "My requests"
@@ -69,6 +63,112 @@ detail of each one.
 **Next up**: nothing notifies a seeker when their request gets decided —
 no email, no in-app signal, nothing. That's the natural next feature; see
 "Next steps" near the bottom of this file.
+
+---
+
+## Jobref shared publicly: hub visibility config + employee active/inactive (Aug 2026, deployed and verified in production)
+
+User's goal: share Jobref with their community while keeping Applaut
+private but still personally usable — not a hard cutoff, a "don't let
+people stumble into it" ask. Landed as two independent pieces, both
+config-driven rather than a code-level gate, so neither needs a deploy to
+adjust going forward.
+
+### 1. Hub visibility via `applaut.application_settings.verticals_enabled`
+
+Rather than hardcoding which vertical cards `frontend/src/pages/Hub.tsx`
+(shared, flagged before editing per this session's scoping rules) shows,
+it now fetches a `verticals_enabled` setting and only renders cards whose
+name is in that comma-separated, lowercase list. Applaut's own
+`/applaut/*` routes are completely unaffected — direct URLs still work
+exactly as before; this only controls what's *listed* on the hub.
+
+**Reused existing infra rather than building new**: `application_settings`
+(id/setting_name/value/description) already existed — built in an earlier
+Applaut session (migration `0006`), later moved into the `applaut`
+Postgres schema (migration `0012`) — with a public, unauthenticated
+`GET /api/v1/applaut/settings/{setting_name}` endpoint and one existing
+row (`allow_new_registrations`). Migration `0019` just adds a second row:
+`verticals_enabled = 'jobref'`. No new table, no new backend endpoint.
+
+**Fails closed**: if the settings fetch errors for any reason, Hub.tsx
+shows no cards at all rather than risk exposing a hidden vertical.
+Rendering is also gated on the fetch actually completing (`enabled` starts
+`null`, not `[]`) so there's no flash-of-Applaut before the real value
+loads.
+
+**Also fixed while in this file** (surfaced by the change, not requested):
+the "Open X" card button text was hardcoded to "Open Applaut" for any
+`status: 'live'` card — harmless while Applaut was the only live vertical,
+wrong now that Jobref is genuinely live too (its badge was still saying
+"Coming soon"). Now uses the vertical's own name; Jobref's badge updated
+to "Live" to match its actual shipped status.
+
+**To re-enable Applaut on the hub** (for the user personally, or when
+ready for others), no deploy needed — just update the row directly:
+`UPDATE applaut.application_settings SET value = 'applaut,jobref' WHERE
+setting_name = 'verticals_enabled';`
+
+**Verified**: locally via Playwright (hub shows only the Jobref card,
+direct `/applaut` nav still fully renders, zero console errors) and again
+against the real production site (`www.lvamo.com`) the same way, plus a
+direct hit on the live settings endpoint.
+
+### 2. Employee active/inactive, reusing `jobref.users.is_active`
+
+Follow-up to a request to delete a test employee account (the user's own,
+"Zalando") and its company row — investigating first surfaced that it had
+a real **accepted** referral request against it (with an uploaded evidence
+file), from what looked like the user's own second test account. A hard
+delete would have cascade-deleted that request. User's decision: build a
+proper active/inactive mechanism instead of deleting, so this kind of data
+can be hidden without being destroyed.
+
+**Reused existing infra again**: `jobref.users.is_active` (boolean,
+default `true`) already existed and was **already enforced** at both
+`login()` and `get_current_user()` (`services/auth.py`) — so "an inactive
+employee can't log in, and an already-logged-in one gets kicked on their
+next request" was already fully built. The originally-proposed new
+`User_status` column was dropped as a duplicate once this was found.
+
+**What was actually missing**, now fixed in two places:
+- `services/company.py::list_companies()` — now joins to `JobrefUser` and
+  filters `is_active = true` before grouping, so both the companies
+  listing itself and each `referrer_count` reflect only active employees.
+  A company with at least one other active employee still shows normally
+  — verified with two employees at one company: deactivating one dropped
+  `referrer_count` from 2→1 and kept the company listed; deactivating the
+  second made the company disappear entirely.
+- `services/referral_request.py::_find_eligible_referrer()` — the routing
+  algorithm now excludes inactive employees too. This wasn't explicitly
+  asked for but is a real gap the same feature exposed: without it, an
+  inactive employee could still be randomly assigned a new referral
+  request despite being unable to log in to review it.
+
+**No new migration** — pure code change, `is_active` already existed and
+already had the right default.
+
+**Verified locally** (real, not mocked): registered two employees at one
+company, confirmed `referrer_count: 2`; deactivated one via direct SQL,
+confirmed `referrer_count: 1` and a login attempt for that account
+returned `403 "Account disabled"`; deactivated the second, confirmed the
+company fully disappears from `/companies` and the routing query returns
+zero eligible employees. Cascade-delete of the test accounts confirmed
+clean afterward. `tsc --noEmit` clean (no frontend files touched).
+Applaut regression clean.
+
+**Deployed and re-verified in production**: `bash deploy.sh` ran clean
+(no migration this round). The original test employee
+(`vsvedantham@gmail.com`, company "Zalando") was set `is_active = false`
+directly in production rather than deleted — its one accepted referral
+request (with real R2 evidence) is preserved, not cascade-deleted. Confirmed
+via direct DB query that the live `/companies` query now excludes it
+(0 rows — it was the only company registered in production so far).
+
+**Not yet built**: no admin UI for toggling `is_active` — both changes
+above were applied via direct SQL through an SSH session, same as the
+`verticals_enabled` row. Worth a real admin surface if this needs to
+happen more than occasionally.
 
 ---
 
