@@ -1,6 +1,31 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+
+// Which vertical cards show here is driven by the `verticals_enabled` row in
+// `applaut.application_settings` (comma-separated, lowercase names) rather
+// than hardcoded — lets a vertical be hidden from casual browsing (e.g. kept
+// private while still used directly by URL) without a code deploy. This is
+// display-only: it never affects whether a vertical's own routes work, only
+// whether its card appears here. The endpoint lives under Applaut's API
+// namespace since that's where the settings table already lives (see
+// PROGRESS.md), even though the setting itself is platform-level.
+const APPLAUT_API_BASE = (import.meta.env.VITE_APPLAUT_API_BASE_URL ?? 'http://localhost:8000') + '/api/v1/applaut'
+
+async function fetchEnabledVerticals(): Promise<string[]> {
+  try {
+    const res = await fetch(`${APPLAUT_API_BASE}/settings/verticals_enabled`)
+    if (!res.ok) throw new Error(`settings fetch failed: ${res.status}`)
+    const data: { value: string } = await res.json()
+    return data.value.split(',').map(v => v.trim().toLowerCase()).filter(Boolean)
+  } catch (err) {
+    // Fail closed: if the setting can't be read, show nothing rather than
+    // risk exposing a vertical that was deliberately hidden.
+    console.error('Failed to load verticals_enabled setting', err)
+    return []
+  }
+}
 
 const IconApplaut = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -49,7 +74,7 @@ const verticals: Vertical[] = [
     name: 'Jobref',
     tagline: 'Referrals from people who already work there',
     description: 'Connecting job seekers with employees willing to refer them — because a referral beats a cold application.',
-    status: 'soon',
+    status: 'live',
   },
 ]
 
@@ -116,7 +141,7 @@ function VerticalCard({ v }: { v: Vertical }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-1)', marginTop: 'auto' }}>
-        {v.status === 'live' ? 'Open Applaut' : 'Learn more'}
+        {v.status === 'live' ? `Open ${v.name}` : 'Learn more'}
         <IconArrow />
       </div>
     </Link>
@@ -125,6 +150,19 @@ function VerticalCard({ v }: { v: Vertical }) {
 
 export default function Hub() {
   useDocumentTitle('LVAMO — a suite of tools to get you hired')
+
+  // null = not loaded yet; render no cards until then to avoid a flash of a
+  // hidden vertical before the setting comes back.
+  const [enabled, setEnabled] = useState<string[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchEnabledVerticals().then(v => { if (!cancelled) setEnabled(v) })
+    return () => { cancelled = true }
+  }, [])
+
+  const visibleVerticals = verticals.filter(v => enabled?.includes(v.to.slice(1).toLowerCase()))
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -163,7 +201,7 @@ export default function Hub() {
         width: '100%',
         maxWidth: '760px',
       }}>
-        {verticals.map(v => <VerticalCard key={v.to} v={v} />)}
+        {visibleVerticals.map(v => <VerticalCard key={v.to} v={v} />)}
       </div>
 
       <p style={{ marginTop: '3.5rem', fontSize: '0.75rem', color: 'var(--text-3)' }}>
